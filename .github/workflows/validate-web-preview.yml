@@ -31,7 +31,7 @@ jobs:
           import re
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
-          modules = re.findall(r'<script\\b(?=[^>]*\\btype=["\\']module["\\'])[^>]*>(.*?)</script>', html, flags=re.I | re.S)
+          modules = re.findall(r'<script\\b[^>]*type="module"[^>]*>(.*?)</script>', html, flags=re.I | re.S)
           if len(modules) != 1:
               raise SystemExit(f"Expected one app module, found {len(modules)}")
           Path("/tmp/my-world-app.mjs").write_text(modules[0], encoding="utf-8")
