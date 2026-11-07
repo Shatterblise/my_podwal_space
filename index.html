@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#11141c">
+<meta name="description" content="MY WORLD — интерактивная браузерная демонстрация автономной цифровой психики персонажей">
+<meta name="mobile-web-app-capable" content="yes">
+
+<title>MY WORLD · Interactive Demo</title>
+<style>
+:root{color-scheme:dark;--bg:#10131a;--panel:#181e29;--panel2:#202938;--line:#303b4d;--text:#edf1f7;--muted:#9ca9bc;--accent:#a78bfa;--teal:#76c5b8;--gold:#e4c27d;--red:#e58f9b;--radius:17px}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 18% 0%,#25243a 0,#10131a 48%);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}body{min-height:100vh;overflow-x:hidden}button,input,textarea,select{font:inherit}button{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 13px;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:#6d55b5;border-color:#8b72d4}button.soft{background:transparent}button.danger{color:#ffb9c3}input,textarea,select{width:100%;background:#111722;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px}textarea{min-height:90px;resize:vertical}label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.app{max-width:1180px;margin:auto;padding:18px 16px 110px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.brand{font-size:18px;font-weight:850;letter-spacing:.14em}.brand small{display:block;font-size:11px;letter-spacing:.04em;color:var(--muted);font-weight:400}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#202938;border-radius:99px;padding:5px 10px;font-size:11px;color:#cbd6e6}.pill.good{border-color:#397364;color:#9be0cc}.pill.warn{border-color:#77623b;color:#f0d49a}.hero{background:linear-gradient(135deg,#27243b,#1b2831);border:1px solid #3b4055;border-radius:22px;padding:18px;margin-bottom:14px}.heroGrid{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}.clock{font-size:34px;font-weight:800;letter-spacing:-.04em}.muted{color:var(--muted)}.small{font-size:12px}.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.controls button{flex:0 0 auto}.tabs{display:flex;gap:6px;overflow:auto;padding:5px 0 13px;position:sticky;top:0;z-index:5;background:#10131aeF}.tab{white-space:nowrap;border-radius:99px;padding:8px 12px;font-size:13px}.tab.active{background:#55458c;border-color:#8871c8}.panel{background:#191f2b;border:1px solid var(--line);border-radius:var(--radius);padding:15px;margin-bottom:13px;min-width:0}.panel h2{font-size:16px;margin:0}.sectionhead,.between{display:flex;justify-content:space-between;align-items:center;gap:8px}.sectionhead{margin-bottom:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{background:#202938;border:1px solid #344052;border-radius:15px;padding:13px;min-width:0}.personhead{display:flex;align-items:center;gap:10px;margin-bottom:9px}.avatar{width:42px;height:42px;border-radius:13px;background:#39344f;display:grid;place-items:center;font-size:21px;flex:none}.personname{font-weight:750;overflow-wrap:anywhere}.tag{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold)}.barrow{display:grid;grid-template-columns:78px 1fr 32px;align-items:center;gap:8px;margin:8px 0}.barlabel,.barval{font-size:11px;color:var(--muted)}.barval{text-align:right;font-variant-numeric:tabular-nums}.bar{height:7px;border-radius:99px;background:#354052;overflow:hidden}.fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#72b7aa,#a78bfa)}.pillset{margin-top:7px}.badge{display:inline-block;font-size:10px;border-radius:99px;background:#2d3749;color:#cbd6e5;padding:3px 8px;margin:2px}.entry{background:#202938;border:1px solid #2e394b;border-radius:12px;padding:11px;margin-bottom:8px;min-width:0;overflow-wrap:anywhere}.entry p{margin:5px 0 0}.stack{display:grid;gap:10px}.fieldgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{min-width:0}.empty{padding:25px 10px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:12px}.warning{padding:11px;border-radius:12px;background:#392f20;border:1px solid #675538;color:#f1d29a;font-size:12px}.success{padding:11px;border-radius:12px;background:#1d332f;border:1px solid #3e695e;color:#a6e2d1;font-size:12px}.conversationMsg{padding:10px 12px;border-radius:12px;background:#222c3a;margin:7px 0}.conversationMsg.user{background:#322c47}.conversationMsg .speaker{font-size:11px;color:var(--muted);margin-bottom:3px}.modal{position:fixed;inset:0;z-index:20;background:#000a;display:grid;place-items:end center;padding:10px}.modal.hidden{display:none}.modalbox{width:min(720px,100%);max-height:88dvh;overflow:auto;background:#191f2b;border:1px solid var(--line);border-radius:20px;padding:16px}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.modalhead h2{font-size:17px;margin:0}.range{display:grid;grid-template-columns:1fr 35px;gap:8px;align-items:center}.range input{padding:0;accent-color:var(--accent)}.range output{text-align:right;font-size:12px;color:var(--muted)}.toast{position:fixed;left:50%;bottom:85px;transform:translateX(-50%);z-index:30;background:#eee9ff;color:#211b31;padding:10px 15px;border-radius:99px;max-width:90vw;font-size:13px;display:none;box-shadow:0 8px 30px #0008}.bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;justify-content:center;gap:7px;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:#151a24f2;border-top:1px solid var(--line)}.bottomnav button{font-size:12px;padding:8px 11px}.loginWrap{min-height:100dvh;display:grid;place-items:center;padding:18px}.login{width:min(420px,100%);background:#191f2b;border:1px solid var(--line);border-radius:20px;padding:23px}.login h1{font-size:20px;letter-spacing:.12em;margin:0}.hidden{display:none!important}.footer{text-align:center;color:var(--muted);font-size:11px;margin-top:22px}.inlineStatus{font-size:12px;color:var(--teal)}
+@media(max-width:700px){.app{padding:12px 10px calc(115px + env(safe-area-inset-bottom))}.grid{grid-template-columns:1fr}.fieldgrid{grid-template-columns:1fr}.hero{padding:14px}.clock{font-size:28px}.heroGrid{align-items:start}.top{flex-wrap:wrap}.tabs{gap:5px}.tab{padding:8px 10px}.modal{padding:6px}.modalbox{padding:13px}.bottomnav{justify-content:flex-start;overflow-x:auto}.bottomnav button{white-space:nowrap;flex:0 0 auto}}
+@media(max-width:360px){.clock{font-size:24px}.panel{padding:12px}.heroGrid{grid-template-columns:1fr}.barrow{grid-template-columns:70px 1fr 28px}}
+
+.worldbar{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;margin-bottom:13px;padding:12px 14px}.worldbar-label{display:grid;gap:2px}.worldbar-controls{display:flex;gap:7px;align-items:center}.worldbar-controls select{min-width:150px;max-width:240px}.demoMark{color:#f1d29a;border-color:#77623b;background:#392f20}.hero .clock{font-variant-numeric:tabular-nums}
+@media(max-width:700px){.worldbar{grid-template-columns:1fr}.worldbar-controls{display:grid;grid-template-columns:1fr 1fr}.worldbar-controls select{grid-column:1/-1;max-width:none;width:100%}.worldbar-controls button{font-size:12px;padding:9px 8px}}
+</style>
+</head>
+<body>
+<div id="loginScreen" class="loginWrap hidden" aria-hidden="true"><form id="loginForm" class="login"><div class="brand">MY WORLD<small>автономная симуляция персонажей</small></div><h2 style="margin:22px 0 7px">Вход в свой мир</h2><p class="muted small">Сервер защищён паролем, который задаётся при публикации приложения.</p><label for="password">Пароль владельца</label><input id="password" type="password" autocomplete="current-password" required><div class="controls"><button class="primary" type="submit">Войти</button></div><p id="loginError" class="small" style="color:#f1a8b2"></p></form></div>
+<div id="appScreen" class="app hidden">
+  <header class="top"><div class="brand">MY WORLD<small>independent agents · persistent simulation</small></div><div class="pill demoMark" id="connectionState">● ЛОКАЛЬНОЕ ДЕМО</div></header>
+  <section class="worldbar panel" aria-label="Управление мирами">
+    <div class="worldbar-label"><span class="tag">ТВОИ МИРЫ</span><span class="small muted">Каждый мир сохраняется отдельно в этом браузере</span></div>
+    <div class="worldbar-controls"><select id="worldSelect" aria-label="Выбрать мир"></select><button id="newWorldButton" class="primary">＋ Новый мир</button><button id="renameWorldButton">Переименовать</button><button id="deleteWorldButton" class="danger">Удалить</button></div>
+  </section>
+  <section class="hero"><div class="heroGrid"><div><div class="tag">ВРЕМЯ МИРА</div><div class="clock" id="clock">День 1 · 08:00</div><div class="small muted" id="worldSub">Сохранение в браузере · локальный движок</div></div><div style="text-align:right"><div class="tag">ПЕРСОНАЖИ</div><div class="clock" style="font-size:27px" id="charCount">4</div><div class="small muted" id="turnInfo">Ходов пока нет</div></div></div><div class="controls"><button class="primary" id="runButton">▶ Запустить автономность</button><button id="stepButton">⏭ Один цикл психики</button><button class="soft" id="refreshButton">↻ Обновить</button></div><div id="aiNotice" class="small muted" style="margin-top:12px">Проверка ИИ-провайдера…</div></section>
+  <nav class="tabs" id="tabs"><button class="tab active" data-tab="world">Мир</button><button class="tab" data-tab="agents">Агенты</button><button class="tab" data-tab="mind">Психика</button><button class="tab" data-tab="relations">Отношения</button><button class="tab" data-tab="memory">Память</button><button class="tab" data-tab="chat">Диалоги</button><button class="tab" data-tab="history">История</button><button class="tab" data-tab="settings">Настройки</button></nav>
+  <main id="view"></main><div class="footer">MY WORLD · браузерная демонстрация. Сохранения остаются в этом браузере. Это вычислимая симуляция, не доказательство сознания.</div>
+</div>
+<div class="bottomnav hidden" id="bottomNav"><button id="exportBtn">Экспорт мира</button><button id="importBtn">Импорт старого сохранения</button><button id="logoutBtn">Выйти</button></div>
+<input type="file" id="fileInput" accept="application/json,.json" class="hidden">
+<div class="toast" id="toast"></div><div class="modal hidden" id="modal"><div class="modalbox"><div class="modalhead"><h2 id="modalTitle">Окно</h2><button id="modalClose">✕</button></div><div id="modalBody"></div></div></div>
+<script type="module">
+
+'use strict';
+const $=id=>document.getElementById(id);
+let world=null,revision=0,activeTab='world',aiConfigured=false,providerStatus=null,selectedMemory=null,chatCharacter=null,refreshTimer=null,localAutoTimer=null;
+const STORE_KEY='my-world-browser-demo-v1';let savedWorlds=[],activeWorldId=null;
+const LABELS={custom:'Занят собственным делом',sleep:'Спит',rest:'Отдыхает',work:'Работает',study:'Учится',create:'Занимается своим делом',music:'Занимается музыкой',explore:'Исследует',talk:'Разговаривает',wait:'Ничего не предпринимает',travelling:'В пути',arrived:'Прибыл(а)'};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,Number(n)||0));
+const makeId=()=>`world_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+function activeRecord(){return savedWorlds.find(x=>x.id===activeWorldId)||savedWorlds[0]||null;}
+function persistAll(){try{localStorage.setItem(STORE_KEY,JSON.stringify({worlds:savedWorlds,activeWorldId}));}catch(e){toast('Не удалось сохранить данные браузера: '+e.message);}}
+function ensureStore(){try{const raw=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(raw&&Array.isArray(raw.worlds)){savedWorlds=raw.worlds;activeWorldId=raw.activeWorldId;}}catch{}
+ if(!savedWorlds.length){const initial=createInitialWorld();initial.name='Jacob & Penny · демо-мир';savedWorlds=[{id:makeId(),name:initial.name,state:initial}];activeWorldId=savedWorlds[0].id;persistAll();}
+ if(!activeRecord()){activeWorldId=savedWorlds[0].id;persistAll();}}
+function refreshWorldPicker(){const s=$('worldSelect');if(!s)return;s.innerHTML=savedWorlds.map(x=>`<option value="${esc(x.id)}" ${x.id===activeWorldId?'selected':''}>${esc(x.name)}</option>`).join('');$('deleteWorldButton').disabled=savedWorlds.length<2;}
+function storeActive(){const rec=activeRecord();if(!rec||!world)return;rec.name=world.name||rec.name;rec.state=world;persistAll();refreshWorldPicker();}
+function makeBlankCharacter(id,name){return {id,identity:{name,emoji:'✦',age:22,biography:'',speechStyle:'Пока не задана. Заполняется создателем мира.',traits:{sociability:50,curiosity:50,orderliness:50,creativity:50,empathy:50,sensitivity:50},values:[],fears:[],interests:[],dislikes:[],habits:[],possessions:[]},state:{location:'home',activity:'rest',mood:55,energy:75,socialNeed:35,stress:15,actionDuration:0,travel:null,lastReflection:'',recentDecisions:[]},schedule:[],goals:[],memory:{summary:'',episodes:[],facts:[],privateNotes:[]},relationships:{},userRelationship:{familiarity:0,trust:0,affinity:0},cooldowns:{},psyche:createPsyche()};}
+function makeNewWorld(name){const w=createInitialWorld();w.name=name;w.characters=[makeBlankCharacter('person_'+Math.random().toString(36).slice(2,9),'Новый персонаж')];w.events=[];w.history=[];w.conversations=[];w.userChats=[];w.tick=0;w.time={day:1,hour:8};w.running=false;return w;}
+function addNewWorld(){const name=(prompt('Название нового мира:','Новый мир')||'').trim();if(!name)return;const w=makeNewWorld(name.slice(0,60));const rec={id:makeId(),name:w.name,state:w};savedWorlds.push(rec);activeWorldId=rec.id;world=w;persistAll();refreshWorldPicker();render();toast('Создан отдельный мир.');}
+async function switchWorld(id){await save();activeWorldId=id;await load();refreshWorldPicker();render();}
+function renameWorld(){const name=(prompt('Новое название мира:',world.name)||'').trim();if(!name)return;world.name=name.slice(0,60);storeActive();render();toast('Название изменено.');}
+function deleteWorld(){if(savedWorlds.length<2){toast('Нельзя удалить последний мир.');return;}if(!confirm(`Удалить мир «${world.name}» со всеми его персонажами и памятью?`))return;savedWorlds=savedWorlds.filter(x=>x.id!==activeWorldId);activeWorldId=savedWorlds[0].id;load().then(()=>{persistAll();refreshWorldPicker();render();toast('Мир удалён.');});}
+function runLocalCycle(){if(!world)return;advanceWorld(world);const snapshot=deepClone(world);const reserved=new Set();let done=0;for(const actorSnap of snapshot.characters){const actor=world.characters.find(c=>c.id===actorSnap.id);if(!actor)continue;const raw=chooseLocalAction(snapshot,actorSnap);const decision=validateDecision(raw,snapshot,actorSnap,reserved);applyDecision(world,actor,decision,{provider:'MY WORLD · локальный движок',model:'Digital Psyche'});actor.state.seenConversationMessages||=[];done++;}world.meta.localDecisions=(world.meta.localDecisions||0)+done;world.meta.lastBatch={day:world.time.day,hour:world.time.hour,succeeded:done,failed:0};world.meta.provider='MY WORLD · локальный движок';world.meta.model='Digital Psyche';storeActive();}
+function localReply(c,message){const text=message.toLowerCase();const name=c.identity.name;const activity=LABELS[c.state.activity]||c.state.currentAction?.title||c.state.activity;const interests=(c.identity.interests||[]).join(', ');const isJacob=/jacob|джейкоб/i.test(name);const isPenny=/penny|пенни/i.test(name);if(/как дела|как ты|как сам|как сама/.test(text))return isJacob?'Нормально. Устал немного. Ничего особенного.':isPenny?'В целом нормально. Сегодня успела немного позаниматься своими делами.':'Нормально. Сейчас больше всего занят(а) тем, что '+activity+'.';if(/что делаешь|чем занят|чем занимаешься/.test(text))return isJacob?`Сейчас ${activity.toLowerCase()}. Не особо хочется отвлекаться.`:`Сейчас ${activity.toLowerCase()}. А до этого занимал(а)ся кое-чем своим.`;if(/привет|здравствуй|добрый/.test(text))return isJacob?'Привет.':'Привет!';if(/почему|зачем/.test(text))return isJacob?'Не знаю, пока так решил. Не вижу смысла усложнять.':'Пока сама не до конца поняла. Наверное, нужно немного подумать.';if(/музык|гитар|песн/.test(text)&&isJacob)return 'Да, музыка мне интереснее большинства разговоров. Что именно хочешь узнать?';if(/открытк|фантик|поделк|коллекц/.test(text)&&isPenny)return 'Да, мне это нравится. Я обычно сохраняю такие вещи, даже если они кажутся кому-то совершенно бесполезными.';const replies=isJacob?['Не уверен, что мне есть что добавить.','Понял. Я подумаю об этом.','Возможно. Но сейчас не хочется спорить.','Я услышал. Просто не жди, что я сразу на это отвечу.','Хм. Не знаю. Расскажи конкретнее.']:isPenny?['Я поняла. Мне нужно немного это обдумать.','Да, наверное. Я просто не сразу понимаю, что чувствую.','Интересно. Я раньше об этом не думала.','Не знаю, что ответить, но я тебя услышала.','Может быть. Мне хотелось бы сначала разобраться.']:['Понятно.','Я услышал(а).','Нужно подумать.','Расскажи чуть подробнее.'];let hash=0;for(const ch of text)hash=(hash*31+ch.charCodeAt(0))>>>0;return replies[hash%replies.length];}
+async function api(path,body=null){if(path==='/setup-status')return {authConfigured:true,cloudflareAI:false,groqAvailable:false,groqFallback:false,localLLM:false,browserDemo:true};if(path==='/state'){ensureStore();const rec=activeRecord();return {world:rec.state,revision,aiConfigured:false,browserDemo:true};}if(path==='/save'){world=normalizeWorld(body.world);storeActive();revision++;return {world,revision};}if(path==='/run'){world.running=Boolean(body.running);storeActive();return {running:world.running};}if(path==='/step'){runLocalCycle();return {world,skipped:false,batch:world.meta.lastBatch};}if(path==='/chat'){const c=world.characters.find(x=>x.id===body.characterId);if(!c)throw new Error('Персонаж не найден.');let thread=world.userChats.find(t=>t.characterId===c.id);if(!thread){thread={id:makeId(),characterId:c.id,messages:[]};world.userChats.unshift(thread);}thread.messages.push({speaker:'user',text:body.message,day:world.time.day,hour:world.time.hour});const reply=localReply(c,body.message);thread.messages.push({speaker:'character',text:reply,day:world.time.day,hour:world.time.hour});thread.messages=thread.messages.slice(-80);addMemory(c,{text:`Я получил(а) сообщение: «${body.message.slice(0,180)}»`,importance:2,visibility:'private'},world);c.userRelationship.familiarity=clamp(c.userRelationship.familiarity+1);storeActive();return {world,reply,browserDemo:true};}if(path==='/import'){world=normalizeWorld(body);storeActive();return {world};}if(path==='/logout')return {ok:true};throw new Error('Неизвестное действие: '+path);}
+function toast(msg){const el=$('toast');el.textContent=msg;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2800)}
+function setConnected(ok,label){$('connectionState').textContent=(ok?'● ':'○ ')+(label||(ok?'ДЕМО В БРАУЗЕРЕ':'НЕТ СВЯЗИ'));$('connectionState').className='pill '+(ok?'good':'warn')}
+async function load(){ensureStore();const rec=activeRecord();world=normalizeWorld(rec.state);rec.state=world;revision++;render();}
+async function save(){world=normalizeWorld(world);storeActive();revision++;}
+async function init(){ensureStore();await load();showApp();setConnected(true,'ЛОКАЛЬНОЕ ДЕМО');await refreshStatus({browserDemo:true});refreshWorldPicker();}
+function showApp(){$('loginScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('bottomNav').classList.remove('hidden');}
+async function refreshStatus(){aiConfigured=false;$('aiNotice').textContent='Локальная цифровая психика активна. Бытовые решения рассчитываются настоящим движком MY WORLD. Облачная языковая модель не подключена; ответы в переписке демонстрационные.';}
+const clean = (value, max = 160) => String(value ?? '').trim().replace(/[\u0000-\u001f]/g, ' ').slice(0, max);
+const words = value => new Set(clean(value, 1200).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(x => x.length > 2));
+
+function createPsyche() {
+  return {
+    version: 1,
+    needs: {
+      rest: 22, nourishment: 18, hydration: 16, hygiene: 18, connection: 35, autonomy: 42,
+      competence: 38, novelty: 28, safety: 18, expression: 30
+    },
+    affect: { valence: 5, arousal: 20, tension: 15, dominant: 'нейтральное состояние', emotions: { joy: 12, sadness: 8, anger: 5, fear: 8, curiosity: 28, loneliness: 35, affection: 10 } },
+    cognition: {
+      attention: 'текущее занятие', workingMemory: [], beliefs: [], associations: [],
+      skills: {}, habits: {}, currentMotives: [], learningEvents: 0, lastThought: '', lastUpdatedTick: -1, standingRecord: { situation: '', openThreads: [], updatedAtTick: -1 }
+    }
+  };
+}
+
+function ensurePsyche(character) {
+  character.psyche ||= createPsyche();
+  const p = character.psyche;
+  p.version = 1;
+  p.needs ||= createPsyche().needs;
+  p.affect ||= createPsyche().affect;
+  p.cognition ||= createPsyche().cognition;
+  for (const key of Object.keys(createPsyche().needs)) p.needs[key] = clamp(p.needs[key] ?? 35);
+  for (const key of ['valence', 'arousal', 'tension']) p.affect[key] = clamp(p.affect[key] ?? 0, -100, 100);
+  p.affect.dominant = clean(p.affect.dominant || 'нейтральное состояние', 70);
+  p.affect.emotions ||= createPsyche().affect.emotions;
+  for (const key of Object.keys(createPsyche().affect.emotions)) p.affect.emotions[key] = clamp(p.affect.emotions[key] ?? 0);
+  for (const key of ['workingMemory', 'beliefs', 'associations', 'currentMotives']) {
+    p.cognition[key] = Array.isArray(p.cognition[key]) ? p.cognition[key].slice(0, key === 'workingMemory' ? 8 : 24) : [];
+  }
+  p.cognition.skills ||= {};
+  p.cognition.habits ||= {};
+  p.cognition.standingRecord ||= { situation: '', openThreads: [], updatedAtTick: -1 };
+  p.cognition.standingRecord.situation = clean(p.cognition.standingRecord.situation || '', 700);
+  p.cognition.standingRecord.openThreads = Array.isArray(p.cognition.standingRecord.openThreads) ? p.cognition.standingRecord.openThreads.slice(0, 8) : [];
+  p.cognition.learningEvents = Math.max(0, Number(p.cognition.learningEvents) || 0);
+  p.cognition.lastUpdatedTick = Number.isFinite(Number(p.cognition.lastUpdatedTick)) ? Number(p.cognition.lastUpdatedTick) : -1;
+  return p;
+}
+
+function deriveNeeds(actor) {
+  const s = actor.state || {};
+  const t = actor.identity?.traits || {};
+  const p = ensurePsyche(actor);
+  p.needs.rest = clamp(100 - Number(s.energy ?? 65));
+  p.needs.connection = clamp(Number(s.socialNeed ?? 35));
+  p.needs.safety = clamp(Number(s.stress ?? 15) * 0.78 + (100 - Number(s.mood ?? 50)) * 0.22);
+  return p;
+}
+
+function advancePsyche(world, actor) {
+  const p = deriveNeeds(actor);
+  const s = actor.state;
+  const action = s.activity;
+  p.needs.nourishment = clamp(p.needs.nourishment + 1.05);
+  p.needs.hydration = clamp(p.needs.hydration + 1.45);
+  p.needs.hygiene = clamp(p.needs.hygiene + 0.32);
+  p.needs.novelty = clamp(p.needs.novelty + (['work', 'sleep', 'rest', 'wait'].includes(action) ? 0.9 : 0.25));
+  p.needs.autonomy = clamp(p.needs.autonomy + (action === 'custom' ? -1.5 : 0.25));
+  p.needs.competence = clamp(p.needs.competence + (['work', 'study', 'create', 'music', 'custom'].includes(action) ? -1.2 : 0.2));
+  if (action === 'sleep' || action === 'rest') { p.needs.nourishment = clamp(p.needs.nourishment + 0.22); p.needs.hygiene = clamp(p.needs.hygiene + 0.08); }
+  if (action === 'talk') p.needs.connection = clamp(p.needs.connection - 0.4);
+  if (action === 'explore') p.needs.novelty = clamp(p.needs.novelty - 7);
+  if (['create', 'music'].includes(action) || (action === 'custom' && ['creative', 'expression'].includes(s.currentAction?.category))) p.needs.expression = clamp(p.needs.expression - 6);
+  else p.needs.expression = clamp(p.needs.expression + 0.55);
+
+  const mood = Number(s.mood ?? 50);
+  const stress = Number(s.stress ?? 15);
+  p.affect.valence = clamp((mood - 50) * 1.15, -100, 100);
+  p.affect.arousal = clamp(stress * 0.7 + p.needs.rest * 0.25 + p.needs.connection * 0.12);
+  p.affect.tension = clamp(stress * 0.6 + p.needs.safety * 0.4);
+  p.affect.emotions = {
+    joy: clamp((mood - 45) * 1.35), sadness: clamp((48 - mood) * 1.5),
+    anger: clamp((stress - 48) * 0.85 + (100 - Number(actor.identity?.traits?.agreeableness ?? 55)) * 0.08),
+    fear: clamp(stress * 0.42 + p.needs.safety * 0.38),
+    curiosity: clamp(p.needs.novelty * 0.72 + Number(actor.identity?.traits?.curiosity ?? 50) * 0.28),
+    loneliness: clamp(p.needs.connection * (1 - Number(actor.identity?.traits?.sociability ?? 50) / 220)),
+    affection: clamp(Object.values(actor.relationships || {}).reduce((sum, r) => sum + Math.max(0, Number(r.affinity || 0)), 0) / Math.max(1, Object.keys(actor.relationships || {}).length))
+  };
+  const emotionNames = { joy: 'радость', sadness: 'грусть', anger: 'раздражение', fear: 'тревога', curiosity: 'любопытство', loneliness: 'одиночество', affection: 'привязанность' };
+  const strongest = Object.entries(p.affect.emotions).sort((a, b) => b[1] - a[1])[0];
+  p.affect.dominant = strongest && strongest[1] >= 34 ? emotionNames[strongest[0]] : 'относительно нейтральное состояние';
+
+  if (s.currentAction && action === 'custom' && Number(s.actionDuration || 0) >= Number(s.currentAction.durationHours || 2)) {
+    const finishedAction = s.currentAction;
+    const finished = finishedAction.title;
+    p.cognition.habits[finished] = Math.min(100, Number(p.cognition.habits[finished] || 0) + 1);
+    const skillKey = ['creative', 'expression'].includes(finishedAction.category) ? 'creative' : finishedAction.category;
+    p.cognition.skills[skillKey] = clamp(Number(p.cognition.skills[skillKey] || 0) + 0.4);
+    if (finishedAction.category === 'drink') p.needs.hydration = clamp(p.needs.hydration - 42);
+    if (finishedAction.category === 'food') p.needs.nourishment = clamp(p.needs.nourishment - 34);
+    if (finishedAction.category === 'hygiene') p.needs.hygiene = clamp(p.needs.hygiene - 38);
+    if (finishedAction.category === 'social') { s.socialNeed = clamp(Number(s.socialNeed ?? 35) - 22); if (finishedAction.targetId) { const relation = actor.relationships?.[finishedAction.targetId]; if (relation) { relation.affinity = clamp(Number(relation.affinity || 0) + 1, -100, 100); relation.trust = clamp(Number(relation.trust || 0) + 0.5, -100, 100); } } }
+    if (finishedAction.category === 'rest') { s.energy = clamp(Number(s.energy ?? 50) + 12); s.stress = clamp(Number(s.stress ?? 15) - 4); p.needs.safety = clamp(p.needs.safety - 4); }
+    s.lastCompletedAction = { title: finished, category: finishedAction.category, tick: world.tick };
+    s.activity = 'rest';
+    s.currentAction = null;
+    s.actionDuration = 0;
+  }
+  p.cognition.currentMotives = rankMotives(world, actor).slice(0, 6);
+  p.cognition.lastUpdatedTick = world.tick;
+  return p;
+}
+
+function relevance(memory, queryWords, actor, world) {
+  const text = clean(memory.text || memory.description || '', 600);
+  const tokens = words(text);
+  let overlap = 0;
+  for (const token of tokens) if (queryWords.has(token)) overlap += 1;
+  const importance = clamp(memory.importance ?? 1, 1, 5) / 5;
+  const age = Math.max(0, world.tick - Number(memory.tick || 0));
+  const recency = 1 / (1 + age / 36);
+  const emotional = Math.abs(Number(actor.psyche?.affect?.valence || 0)) / 100;
+  return overlap * 2 + importance * 1.8 + recency + emotional * (Number(memory.emotionalSalience || 0) / 100);
+}
+
+const FACT_DECAY_BY_TYPE = { identity: 0.9995, preference: 0.998, relationship: 0.997, world: 0.999, event: 0.975, intention: 0.94 };
+
+function addLongTermFact(actor, rawText, world, options = {}) {
+  const text = clean(rawText, 240);
+  if (text.length < 8) return null;
+  actor.memory ||= { summary: '', episodes: [], facts: [], privateNotes: [] };
+  actor.memory.facts ||= [];
+  const type = ['identity', 'preference', 'relationship', 'world', 'event', 'intention'].includes(options.type) ? options.type : 'event';
+  const topic = clean(options.topic || '', 64).toLowerCase();
+  const normalized = text.toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+  const duplicateIndex = actor.memory.facts.findIndex(f => String(f?.text || f).toLocaleLowerCase().replace(/\s+/g, ' ').trim() === normalized);
+  if (duplicateIndex >= 0) {
+    const prior = actor.memory.facts[duplicateIndex];
+    const duplicate = prior && typeof prior === 'object' ? prior : { text: String(prior) };
+    duplicate.confidence = Math.max(Number(duplicate.confidence || 0.5), clamp(options.confidence ?? 0.82, 0, 1));
+    duplicate.tick = world.tick;
+    duplicate.confirmedTick = world.tick;
+    duplicate.source = options.source || duplicate.source || 'experience';
+    duplicate.type ||= type;
+    actor.memory.facts[duplicateIndex] = duplicate;
+    return duplicate;
+  }
+  if (topic) {
+    for (const old of actor.memory.facts) {
+      if (old && typeof old === 'object' && old.topic === topic && old.type === type && !old.superseded) {
+        old.superseded = true;
+        old.supersededAtTick = world.tick;
+      }
+    }
+  }
+  const fact = {
+    id: `fact_${world.tick}_${actor.memory.facts.length + 1}`,
+    text, type, topic, confidence: clamp(options.confidence ?? 0.78, 0, 1),
+    importance: clamp(options.importance ?? 3, 1, 5),
+    source: clean(options.source || 'experience', 24),
+    keywords: [...words(text)].slice(0, 12),
+    tick: world.tick, createdTick: world.tick, confirmedTick: world.tick,
+    decayRate: FACT_DECAY_BY_TYPE[type], superseded: false
+  };
+  actor.memory.facts.unshift(fact);
+  actor.memory.facts = actor.memory.facts.slice(0, 50);
+  return fact;
+}
+
+function retrieveLongTermFacts(actor, cue, world, limit = 8, charBudget = 1400) {
+  const cueWords = words(cue);
+  const ranked = (actor.memory?.facts || []).map(f => typeof f === 'string' ? { text: f, type: 'event', confidence: 0.65, importance: 2, tick: 0 } : f).filter(f => f && typeof f === 'object' && !f.superseded)
+    .map(f => {
+      const factWords = new Set(Array.isArray(f.keywords) && f.keywords.length ? f.keywords : words(f.text));
+      let overlap = 0;
+      for (const word of factWords) if (cueWords.has(word)) overlap++;
+      const ageDays = Math.max(0, world.tick - Number(f.tick ?? f.createdTick ?? 0)) / 24;
+      const type = f.type || 'event';
+      const decayRate = Number(f.decayRate) || FACT_DECAY_BY_TYPE[type] || 0.985;
+      const decay = Math.pow(decayRate, ageDays);
+      const confidence = clamp(f.confidence ?? 0.7, 0, 1);
+      const importance = clamp(f.importance ?? 2, 1, 5) / 5;
+      const persistent = ['identity', 'preference', 'relationship', 'world'].includes(type);
+      const score = overlap * 1.25 + confidence * 1.1 + importance * 0.55 + decay * 0.45 + (persistent && overlap === 0 ? 0.35 : 0);
+      return { fact: f, score, overlap, decay };
+    })
+    .filter(x => x.fact.confidence === undefined || Number(x.fact.confidence) >= 0.4)
+    .sort((a, b) => b.score - a.score);
+  const result = [];
+  let used = 0;
+  for (const item of ranked) {
+    const text = clean(item.fact.text || item.fact, 220);
+    if (!text) continue;
+    const line = `${item.fact.type || 'fact'}: ${text}`;
+    if (used + line.length > charBudget) continue;
+    result.push({ text, type: item.fact.type || 'fact', confidence: Math.round(Number(item.fact.confidence ?? 0.7) * 100), ageHours: Math.max(0, world.tick - Number(item.fact.tick ?? item.fact.createdTick ?? 0)), score: Math.round(item.score * 100) / 100 });
+    used += line.length;
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+function buildPsycheContext(world, actor, cue = '') {
+  const p = deriveNeeds(actor);
+  const cueWords = words([cue, actor.state.lastReflection, actor.state.activity].join(' '));
+  const episodes = [...(actor.memory?.episodes || []), ...(actor.memory?.privateNotes || [])]
+    .map(memory => ({ ...memory, score: relevance(memory, cueWords, actor, world) }))
+    .sort((a, b) => b.score - a.score).slice(0, 5)
+    .map(m => ({ text: clean(m.text, 180), importance: clamp(m.importance ?? 1, 1, 5), score: Math.round(m.score * 100) / 100 }));
+  const facts = retrieveLongTermFacts(actor, cue, world, 8, 1400);
+  const incoming = world.conversations.flatMap(thread => thread.messages || [])
+    .filter(m => m.speakerId !== actor.id && !actor.state.seenConversationMessages?.includes(m.id))
+    .slice(-3).map(m => clean(m.text, 150));
+  const activeGoals = (actor.goals || []).filter(g => g.status === 'active').sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0)).slice(0, 4);
+  const motives = rankMotives(world, actor);
+  return {
+    needs: { ...p.needs }, affect: { ...p.affect, emotions: { ...p.affect.emotions } },
+    attention: p.cognition.attention,
+    currentMotives: motives.slice(0, 4),
+    retrievedEpisodes: episodes,
+    knownFacts: facts,
+    beliefs: p.cognition.beliefs.slice(-8),
+    learnedHabits: Object.entries(p.cognition.habits).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count })),
+    skills: p.cognition.skills,
+    learningEvents: p.cognition.learningEvents,
+    recentAttention: p.cognition.workingMemory.slice(0, 4),
+    incomingMessages: incoming,
+    activeGoals: activeGoals.map(g => ({ id: g.id, title: clean(g.title, 90), progress: clamp(g.progress), priority: clamp(g.priority) })),
+    standingRecord: { ...p.cognition.standingRecord }
+  };
+}
+
+function rankMotives(world, actor) {
+  const p = deriveNeeds(actor);
+  const s = actor.state;
+  const traits = actor.identity?.traits || {};
+  const nearby = world.characters.filter(c => c.id !== actor.id && c.state.location === s.location && !c.state.travel && c.state.activity !== 'sleep');
+  const goals = (actor.goals || []).filter(g => g.status === 'active');
+  const bestGoal = goals.sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0))[0];
+  const motives = [
+    { id: 'rest', label: 'восстановить силы', score: p.needs.rest * 0.88 + p.needs.safety * 0.08 },
+    { id: 'nourishment', label: 'поесть / найти еду', score: p.needs.nourishment * 0.86 },
+    { id: 'hydration', label: 'утолить жажду', score: p.needs.hydration * 0.9 },
+    { id: 'hygiene', label: 'заняться личной гигиеной', score: p.needs.hygiene * 0.68 },
+    { id: 'connection', label: 'побыть с кем-то или поговорить', score: nearby.length ? p.needs.connection * (0.48 + Number(traits.sociability ?? 50) / 180) : p.needs.connection * 0.28 },
+    { id: 'autonomy', label: 'самостоятельно выбрать занятие', score: p.needs.autonomy * 0.7 },
+    { id: 'competence', label: 'продвинуться в значимом деле', score: p.needs.competence * 0.66 + (bestGoal ? Number(bestGoal.priority || 0) * 0.22 : 0) },
+    { id: 'novelty', label: 'изменить обстановку или исследовать новое', score: p.needs.novelty * (0.38 + Number(traits.curiosity ?? 50) / 170) },
+    { id: 'expression', label: 'заняться творчеством или любимым делом', score: p.needs.expression * (0.42 + Number(traits.creativity ?? 50) / 160) }
+  ];
+  if (bestGoal) motives.push({ id: 'goal', label: `продвинуть цель: ${clean(bestGoal.title, 70)}`, score: clamp(bestGoal.priority) * 0.72 + (100 - clamp(bestGoal.progress)) * 0.18 });
+  return motives.sort((a, b) => b.score - a.score).map(m => ({ ...m, score: Math.round(m.score * 10) / 10 }));
+}
+
+function validateCustomAction(raw, world, actor) {
+  if (!raw || typeof raw !== 'object') return null;
+  const title = clean(raw.title || raw.label, 72);
+  const description = clean(raw.description || raw.intent, 240);
+  const category = ['routine', 'creative', 'social', 'study', 'work', 'rest', 'explore', 'expression', 'food', 'drink', 'hygiene', 'exercise', 'care', 'other'].includes(raw.category) ? raw.category : 'other';
+  const targetId = raw.targetId ? String(raw.targetId) : null;
+  const location = raw.location ? String(raw.location) : actor.state.location;
+  if (title.length < 3 || description.length < 12 || location !== actor.state.location) return null;
+  if (!world.locations.some(l => l.id === location)) return null;
+  if (targetId) {
+    const target = world.characters.find(c => c.id === targetId && c.id !== actor.id && c.state.location === actor.state.location && !c.state.travel && c.state.activity !== 'sleep');
+    if (!target) return null;
+  }
+  return { title, description, category, targetId, location, durationHours: Math.max(1, Math.min(6, Math.floor(Number(raw.durationHours) || 2))) };
+}
+
+function chooseLocalAction(world, actor) {
+  const p = deriveNeeds(actor);
+  const motives = rankMotives(world, actor);
+  const top = motives[0];
+  const s = actor.state;
+  if (s.travel) return { action: 'continue', intent: 'Продолжаю путь до места назначения.' };
+  if (s.activity === 'custom' && s.currentAction) return { action: 'continue', intent: `Продолжаю начатое дело: ${clean(s.currentAction.title, 70)}.` };
+  if (s.energy <= 16 || top?.id === 'rest' && s.energy < 34) return { action: s.energy < 13 ? 'sleep' : 'rest', intent: 'Нужно восстановить силы.' };
+  const nearby = world.characters.filter(c => c.id !== actor.id && c.state.location === s.location && !c.state.travel && c.state.activity !== 'sleep');
+  if (p.needs.connection >= 72 && nearby.length && s.activity !== 'sleep') { const target = nearby.slice().sort((a,b) => Number(b.relationships?.[actor.id]?.affinity || 0) - Number(a.relationships?.[actor.id]?.affinity || 0))[0]; return { action: 'custom', customAction: { title: `Провести время рядом с ${target.identity.name}`, description: `Остаётся рядом с ${target.identity.name}, наблюдает за происходящим и при взаимном желании делит с ним/ней спокойное занятие без обязательного разговора.`, category: 'social', targetId: target.id, location: s.location, durationHours: 2 }, intent: 'Хочется человеческого присутствия, но это не обязательно означает желание разговаривать.', needsInterpretation: true }; }
+  if (p.needs.hydration >= 78) return { action: 'custom', customAction: { title: 'Попить воды', description: 'Прерывается, чтобы выпить доступной воды и утолить жажду.', category: 'drink', location: s.location, durationHours: 1 }, intent: 'Нужно утолить жажду.' };
+  if (p.needs.nourishment >= 78) return { action: 'custom', customAction: { title: 'Перекусить', description: 'Находит доступную еду и делает небольшой перерыв на еду.', category: 'food', location: s.location, durationHours: 1 }, intent: 'Нужно поесть.' };
+  if (p.needs.hygiene >= 84) return { action: 'custom', customAction: { title: 'Привести себя в порядок', description: 'Делает короткий перерыв, чтобы умыться и привести себя в порядок.', category: 'hygiene', location: s.location, durationHours: 1 }, intent: 'Пора заняться личной гигиеной.' };
+  if (p.needs.novelty >= 68 && Number(actor.identity?.traits?.curiosity ?? 50) > 60) return { action: 'explore', intent: 'Хочется исследовать что-то новое; конкретное занятие зависит от деталей вокруг.', needsInterpretation: true };
+  const unusualEvent = world.events.some(e => Number(e.tick) === Number(world.tick) && e.actorId !== actor.id && (e.location === s.location || e.targetId === actor.id));
+  if (unusualEvent) return { action: 'continue', intent: 'Замечаю новое событие и оцениваю, нужно ли на него реагировать.', needsInterpretation: true };
+  if (top?.id === 'connection' && nearby.length) {
+    return { action: 'wait', intent: 'Пока остаюсь рядом, но не навязываю разговор.' };
+  }
+  const goal = (actor.goals || []).filter(g => g.status === 'active').sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0))[0];
+  if (goal) {
+    const typeAction = { work: 'work', creative: 'create', study: 'study', social: 'wait', relationship: 'wait' }[goal.type];
+    if (typeAction && motives[0]?.id === 'goal') return { action: typeAction, goalId: goal.id, goalProgress: 0.5, intent: `Продвигаю собственную цель: ${clean(goal.title, 70)}.` };
+  }
+  const interestText = [...(actor.identity?.interests || []), ...(actor.identity?.habits || [])].join(' ');
+  if (/music|гитар|музык|инструмент/i.test(interestText) && (top?.id === 'expression' || top?.id === 'competence')) return { action: 'music', intent: 'Возвращаюсь к занятию, которое для меня важно.' };
+  if (top?.id === 'novelty' && Number(actor.identity?.traits?.curiosity ?? 50) > 60) return { action: 'explore', intent: 'Хочется сменить обстановку и посмотреть вокруг.' };
+  if (top?.id === 'expression') return { action: 'create', intent: 'Хочу заняться чем-то творческим.' };
+  if (top?.id === 'nourishment') return { action: 'wait', intent: 'Нужно найти возможность поесть; доступных действий с едой пока нет.' };
+  if (['work', 'study', 'create', 'music'].includes(s.activity) && s.actionDuration < 8) return { action: 'continue', intent: 'Продолжаю текущее занятие.' };
+  return { action: 'rest', intent: 'Нет срочной причины менять занятие; немного отдыхаю.' };
+}
+
+function applyPsycheOutcome(world, actor, decision) {
+  const p = ensurePsyche(actor);
+  const c = p.cognition;
+  c.learningEvents += 1;
+  if (decision.intent) c.lastThought = clean(decision.intent, 180);
+  c.attention = decision.customAction?.title || decision.action || 'текущее занятие';
+  c.workingMemory = [
+    { tick: world.tick, text: clean(decision.intent || decision.customAction?.description || decision.action, 180), salience: 40 },
+    ...c.workingMemory
+  ].slice(0, 8);
+  if (decision.learnedFact) {
+    const belief = clean(decision.learnedFact, 180);
+    if (!c.beliefs.some(item => item.text.toLowerCase() === belief.toLowerCase())) c.beliefs.push({ text: belief, confidence: clamp(decision.learnedFactConfidence ?? 0.72, 0.35, 1), source: 'experience', formedAt: world.tick });
+    addLongTermFact(actor, belief, world, { type: decision.learnedFactType || 'event', topic: decision.learnedFactTopic || '', confidence: decision.learnedFactConfidence ?? 0.78, source: 'agent-inference', importance: 3 });
+  }
+  if (decision.customAction) {
+    c.lastCustomAction = { title: decision.customAction.title, category: decision.customAction.category, tick: world.tick };
+    c.attention = decision.customAction.title;
+  }
+  if (decision.action === 'talk' && decision.targetId) {
+    const target = world.characters.find(x => x.id === decision.targetId);
+    if (target) c.associations.unshift({ with: target.id, outcome: decision.socialOutcome || 'neutral', tick: world.tick, cue: clean(decision.speech, 100) });
+  }
+  c.associations = c.associations.slice(0, 24);
+  if (decision.summaryUpdate) c.standingRecord.situation = clean(decision.summaryUpdate, 700);
+  c.standingRecord.openThreads = (actor.goals || []).filter(g => g.status === 'active').sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0)).slice(0, 8).map(g => clean(g.title, 100));
+  c.standingRecord.updatedAtTick = world.tick;
+  p.needs.autonomy = clamp(p.needs.autonomy - (decision.action === 'custom' ? 6 : 1));
+  p.needs.competence = clamp(p.needs.competence - (['work', 'study', 'create', 'music', 'custom'].includes(decision.action) ? 4 : 0));
+  p.affect.valence = clamp(p.affect.valence + (decision.moodShift || 0) * 4, -100, 100);
+  return p;
+}
+const MODEL_ID = '@cf/openai/gpt-oss-20b';
+const GROQ_MODEL_ID = 'qwen/qwen3.8-27b';
+const LOCATIONS = [
+  { id: 'home', name: 'Дом', desc: 'Общее жилое пространство' },
+  { id: 'street', name: 'Улица', desc: 'Городское пространство' },
+  { id: 'cafe', name: 'Кафе', desc: 'Общественное место' },
+  { id: 'work', name: 'Работа', desc: 'Рабочее пространство' },
+  { id: 'park', name: 'Парк', desc: 'Тихое общественное место' },
+  { id: 'workshop', name: 'Мастерская инструментов', desc: 'Место для настройки и ремонта музыкальных инструментов' }
+];
+
+const uid = () => `mw_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+const deepClone = value => JSON.parse(JSON.stringify(value));
+const DEFAULT_SCHEDULE = [
+  { start: 0, end: 7, activity: 'sleep', location: 'home' },
+  { start: 7, end: 9, activity: 'morning', location: 'home' },
+  { start: 9, end: 17, activity: 'work', location: 'work' },
+  { start: 17, end: 20, activity: 'free', location: 'street' },
+  { start: 20, end: 24, activity: 'rest', location: 'home' }
+];
+
+function makeCharacter(id, name, emoji, traits, location = 'home') {
+  return {
+    id,
+    identity: {
+      name, emoji, age: 22,
+      biography: 'Черновой профиль. Его биография и особенности ещё не заданы.',
+      speechStyle: 'Говорит естественно, в соответствии со своим характером. Не обязан поддерживать разговор.',
+      traits: { ...traits },
+      values: [], fears: [], interests: [], dislikes: [], habits: [], possessions: []
+    },
+    state: {
+      location, activity: 'rest', mood: 55, energy: 78, socialNeed: 35, stress: 15,
+      actionDuration: 0, travel: null, lastDecisionAt: null, lastReflection: '', recentDecisions: []
+    },
+    schedule: deepClone(DEFAULT_SCHEDULE),
+    goals: [],
+    memory: { summary: '', episodes: [], facts: [], privateNotes: [] },
+    relationships: {},
+    userRelationship: { familiarity: 0, trust: 0, affinity: 0 },
+    cooldowns: {}, psyche: createPsyche()
+  };
+}
+
+function makeJacob() {
+  const c = makeCharacter('jacob', 'Jacob', '🎸', {
+    sociability: 18, curiosity: 52, orderliness: 48, creativity: 82, empathy: 55, sensitivity: 74
+  });
+  c.identity.age = 22;
+  c.identity.biography = '22 года, 181 см, около 60 кг; очень худощавый. Тёмные волнистые волосы до плеч с синеватым отливом, небрежная чёлка и четыре выбивающиеся пряди на концах. Серые глаза, тяжёлый полуприкрытый взгляд и заметные тёмные круги под глазами. На спине есть скрытый шрам. Музыка и гитара занимают важное место в его жизни. В этой версии он часто бывает в мастерской инструментов; это временная настройка мира, а не жёстко закреплённая профессия.';
+  c.identity.speechStyle = 'Закрытый, тихий, пассивный и упрямый. Говорит мало и прямо; бывает сухим, резким или намеренно неприятным, иногда задевает собеседника. Не любит приказы и давление. С незнакомыми держится холодно; личный интерес возникает постепенно, через повторяющиеся разговоры и совместное время. Ценит сон, одиночество и личное пространство. С близкими способен быть тихим и нежным. Не является манипулятором или хищным персонажем.';
+  c.identity.values = ['личная автономия', 'искренность', 'музыка', 'уважение личных границ'];
+  c.identity.interests = ['гитары', 'музыка', 'гитарное оборудование', 'тихие занятия'];
+  c.identity.dislikes = ['игра мимо нот и фальшивое исполнение', 'показное притворство вокруг музыки', 'навязчивость', 'приказы и попытки распоряжаться им'];
+  c.identity.habits = ['предпочитает одиночество и личное пространство', 'может долго спать', 'не сразу проявляет личный интерес к людям', 'долго присматривается к незнакомым'];
+  c.identity.possessions = ['Розовый кошачий ошейник, который он много лет носит на правом запястье. Это личная вещь.'];
+  c.state = { ...c.state, location: 'home', activity: 'rest', mood: 43, energy: 68, socialNeed: 22, stress: 24 };
+  c.schedule = [
+    { start: 0, end: 8, activity: 'sleep', location: 'home' },
+    { start: 8, end: 10, activity: 'morning', location: 'home' },
+    { start: 10, end: 18, activity: 'work', location: 'workshop' },
+    { start: 18, end: 21, activity: 'free', location: 'home' },
+    { start: 21, end: 24, activity: 'sleep', location: 'home' }
+  ];
+  c.goals.push({ id: 'jacob_guitar', title: 'Закончить работу над гитарой', type: 'creative', reason: 'Личный интерес к музыке и инструментам', priority: 72, progress: 0, status: 'active' });
+  c.memory.privateNotes.push({ id: 'jacob_collar_memory', kind: 'backstory', text: 'Когда-то Джейкоб не удержал поводок котёнка: тот выбежал на дорогу и погиб под машиной. Розовый ошейник котёнка он сохранил и много лет носит на правом запястье. Это болезненное личное воспоминание; он не рассказывает эту историю людям, которым не доверяет.', importance: 5, createdDay: 1, createdHour: 8 });
+  c.memory.facts.push({ id: 'jacob_music_fact', text: 'Музыка и гитара — устойчивый интерес Джейкоба. Он особенно плохо переносит игру мимо нот и показную неискренность в музыке.', importance: 4 });
+  c.memory.episodes.push({ id: 'jacob_seed', text: 'Начало жизни в этом мире. Он находится дома и планирует заняться своими делами.', day: 1, hour: 8, importance: 1, visibility: 'private' });
+  return c;
+}
+
+function makePenny() {
+  const c = makeCharacter('penny', 'Penny', '✦', { sociability: 50, curiosity: 50, orderliness: 50, creativity: 50, empathy: 50, sensitivity: 50 });
+  c.identity.biography = 'Начальный профиль. Подробная биография и характер настраиваются пользователем.';
+  c.identity.speechStyle = 'Индивидуальная манера речи ещё не задана. Формируется из профиля и опыта.';
+  c.identity.interests = ['поделки и рукоделие', 'коллекционирование фантиков', 'необычные милые открытки'];
+  c.identity.habits = ['сохраняет интересные фантики и открытки'];
+  c.state = { ...c.state, location: 'home', activity: 'rest', mood: 55, energy: 76, socialNeed: 34, stress: 14 };
+  c.goals.push({ id: 'penny_collection', title: 'Заниматься собственными коллекциями и поделками', type: 'creative', reason: 'Устойчивый личный интерес', priority: 55, progress: 0, status: 'active' });
+  c.memory.facts.push({ id: 'penny_interest_fact', text: 'Ей интересны поделки, фантики и необычные милые открытки.', importance: 3 });
+  c.memory.episodes.push({ id: 'penny_seed', text: 'Начало жизни в этом мире. Личные занятия и планы ещё формируются.', day: 1, hour: 8, importance: 1, visibility: 'private' });
+  return c;
+}
+
+function createInitialWorld() {
+  const chars = [makeJacob(), makePenny()];
+
+
+
+  chars.forEach(a => chars.filter(b => a.id !== b.id).forEach(b => {
+    a.relationships[b.id] = { affinity: 0, trust: 0, respect: 0, irritation: 0, opinion: '', history: [] };
+  }));
+  return {
+    version: 4, name: 'MY WORLD', running: false,
+    time: { day: 1, hour: 8 }, tick: 0,
+    meta: { actorCursor: 0, lastScheduledAt: 0, lastTurn: null, lastError: null, provider: 'not connected', model: 'GPT-OSS 20B' },
+    locations: deepClone(LOCATIONS), characters: chars,
+    conversations: [], events: [], history: [], userChats: [], socialCooldowns: {},
+    settings: { maxCharacters: 30, maxMemoryEpisodes: 80, maxHistory: 300 }
+  };
+}
+
+function migrateLegacyWorld(old) {
+  if (!old || !Array.isArray(old.characters)) throw new Error('Неизвестный формат сохранения.');
+  const w = createInitialWorld();
+  w.time = old.time || w.time;
+  w.tick = Number(old.tick) || 0;
+  w.characters = old.characters.map(source => {
+    const c = makeCharacter(source.id || uid(), source.identity?.name || 'Персонаж', source.identity?.emoji || '◈', source.identity?.traits || {});
+    c.identity = { ...c.identity, ...(source.identity || {}) };
+    c.state = { ...c.state, ...(source.state || {}) };
+    c.schedule = source.schedule || c.schedule;
+    c.goals = Array.isArray(source.goals) ? source.goals : [];
+    c.memory.episodes = source.memory?.events || source.memory?.episodes || [];
+    c.memory.facts = source.memory?.facts || [];
+    c.memory.privateNotes = source.memory?.privateNotes || [];
+    c.relationships = source.relationships || {};
+    c.userRelationship = source.userRelationship || c.userRelationship;
+    return c;
+  });
+  if (!w.characters.some(c => c.id === 'jacob')) w.characters.push(makeJacob());
+  w.locations = Array.isArray(old.locations) && old.locations.length ? old.locations : w.locations;
+  w.conversations = old.conversations || [];
+  w.events = old.events || [];
+  w.history = old.history || [];
+  w.userChats = old.userChats || [];
+  w.running = false;
+  for (const a of w.characters) for (const b of w.characters) if (a.id !== b.id) a.relationships[b.id] ||= { affinity: 0, trust: 0, respect: 0, irritation: 0, opinion: '', history: [] };
+  return normalizeWorld(w);
+}
+
+function normalizeWorld(world) {
+  if (!world || !Array.isArray(world.characters) || world.characters.length < 1 || world.characters.length > 30) throw new Error('Некорректный мир или число персонажей.');
+  world.version = 4;
+  world.running = Boolean(world.running);
+  world.time ||= { day: 1, hour: 8 };
+  world.time.day = Math.max(1, Math.floor(Number(world.time.day) || 1));
+  world.time.hour = ((Math.floor(Number(world.time.hour) || 0) % 24) + 24) % 24;
+  world.tick = Math.max(0, Math.floor(Number(world.tick) || 0));
+  world.locations = (Array.isArray(world.locations) && world.locations.length ? world.locations : deepClone(LOCATIONS))
+    .slice(0, 40).map((l, i) => ({ id: String(l.id || `location_${i + 1}`).slice(0, 50), name: String(l.name || `Локация ${i + 1}`).slice(0, 70), desc: String(l.desc || '').slice(0, 180) }));
+  if (!world.locations.some(l => l.id === 'home')) world.locations.unshift({ id: 'home', name: 'Дом', desc: 'Общее жилое пространство' });
+  const locationIds = new Set(world.locations.map(l => l.id));
+  const characterIds = new Set();
+  for (const c of world.characters) {
+    c.id = String(c.id || uid()).slice(0, 70);
+    if (characterIds.has(c.id)) throw new Error(`Повторяется ID персонажа: ${c.id}`);
+    characterIds.add(c.id);
+  }
+  world.meta ||= {};
+  world.meta.actorCursor = Math.max(0, Math.floor(Number(world.meta.actorCursor) || 0)) % world.characters.length;
+  world.meta.provider ||= 'не выбран';
+  world.meta.model ||= 'GPT-OSS 20B';
+  world.meta.lastError = world.meta.lastError ? String(world.meta.lastError).slice(0, 500) : null;
+  world.events = Array.isArray(world.events) ? world.events.slice(0, 250) : [];
+  world.history = Array.isArray(world.history) ? world.history.slice(0, 300) : [];
+  world.conversations = Array.isArray(world.conversations) ? world.conversations.slice(0, 150) : [];
+  world.userChats = Array.isArray(world.userChats) ? world.userChats.slice(0, 30) : [];
+  world.socialCooldowns ||= {};
+  world.settings ||= {};
+  world.settings.maxMemoryEpisodes = Math.max(20, Math.min(120, Math.floor(Number(world.settings.maxMemoryEpisodes) || 80)));
+  world.settings.maxHistory = Math.max(100, Math.min(500, Math.floor(Number(world.settings.maxHistory) || 300)));
+  for (const c of world.characters) {
+    c.identity ||= {};
+    c.identity.name = String(c.identity.name || 'Персонаж').slice(0, 60);
+    c.identity.emoji = String(c.identity.emoji || '◈').slice(0, 8);
+    c.identity.age = clamp(c.identity.age ?? 22, 1, 120);
+    c.identity.biography = String(c.identity.biography || '').slice(0, 2000);
+    c.identity.speechStyle = String(c.identity.speechStyle || '').slice(0, 1200);
+    c.identity.traits ||= {};
+    for (const k of ['sociability', 'curiosity', 'orderliness', 'creativity', 'empathy', 'sensitivity']) c.identity.traits[k] = clamp(c.identity.traits[k] ?? 50);
+    for (const k of ['values', 'fears', 'interests', 'dislikes', 'habits', 'possessions']) c.identity[k] = Array.isArray(c.identity[k]) ? c.identity[k].slice(0, 30) : [];
+    c.state ||= {};
+    c.state.location = locationIds.has(c.state.location) ? c.state.location : 'home';
+    c.state.activity = String(c.state.activity || 'rest').slice(0, 40);
+    c.state.lastReflection = String(c.state.lastReflection || '').slice(0, 180);
+    c.state.seenConversationMessages = Array.isArray(c.state.seenConversationMessages) ? c.state.seenConversationMessages.slice(-40) : [];
+    c.state.recentDecisions = Array.isArray(c.state.recentDecisions) ? c.state.recentDecisions.slice(-6).map(d => ({ day: Math.max(1, Number(d.day) || 1), hour: ((Math.floor(Number(d.hour) || 0) % 24) + 24) % 24, action: String(d.action || 'continue').slice(0, 30), why: String(d.why || '').slice(0, 100), targetId: d.targetId ? String(d.targetId).slice(0, 70) : null, speech: String(d.speech || '').slice(0, 180) })) : [];
+    for (const k of ['mood', 'energy', 'socialNeed', 'stress']) c.state[k] = clamp(c.state[k] ?? 50);
+    c.state.actionDuration = Math.max(0, Math.floor(Number(c.state.actionDuration) || 0));
+    c.state.travel ||= null;
+    c.schedule = Array.isArray(c.schedule) && c.schedule.length ? c.schedule : deepClone(DEFAULT_SCHEDULE);
+    c.goals = Array.isArray(c.goals) ? c.goals.slice(0, 8) : [];
+    c.goals.forEach(g => { g.priority = clamp(g.priority ?? 50); g.progress = clamp(g.progress ?? 0); g.status ||= 'active'; });
+    c.memory ||= {}; c.memory.summary = String(c.memory.summary || '').slice(0, 1000);
+    c.memory.episodes = Array.isArray(c.memory.episodes) ? c.memory.episodes.slice(0, 80) : [];
+    c.memory.facts = Array.isArray(c.memory.facts) ? c.memory.facts.slice(0, 30) : [];
+    c.memory.privateNotes = Array.isArray(c.memory.privateNotes) ? c.memory.privateNotes.slice(0, 40) : [];
+    c.relationships ||= {};
+    for (const other of world.characters) if (other.id !== c.id) {
+      const r = c.relationships[other.id] ||= { affinity: 0, trust: 0, respect: 0, irritation: 0, opinion: '', history: [] };
+      for (const k of ['affinity', 'trust', 'respect']) r[k] = clamp(r[k] ?? 0, -100, 100);
+      r.irritation = clamp(r.irritation ?? 0);
+      r.opinion = String(r.opinion || '').slice(0, 300);
+      r.history = Array.isArray(r.history) ? r.history.slice(0, 20) : [];
+    }
+    c.userRelationship ||= { familiarity: 0, trust: 0, affinity: 0 };
+    for (const k of ['familiarity', 'trust', 'affinity']) c.userRelationship[k] = clamp(c.userRelationship[k] ?? 0);
+    c.cooldowns ||= {};
+    ensurePsyche(c);
+    c.state.currentAction = c.state.currentAction && typeof c.state.currentAction === 'object' ? c.state.currentAction : null;
+    c.state.travel = c.state.travel && locationIds.has(c.state.travel.destination) ? { destination: c.state.travel.destination, remainingHours: Math.max(1, Math.min(24, Math.floor(Number(c.state.travel.remainingHours) || 1))) } : null;
+  }
+  return world;
+}
+
+function worldTimestamp(world) { return `День ${world.time.day}, ${String(world.time.hour).padStart(2, '0')}:00`; }
+
+function advanceWorld(world) {
+  world.tick += 1;
+  world.time.hour += 1;
+  if (world.time.hour >= 24) { world.time.hour = 0; world.time.day += 1; }
+  for (const c of world.characters) {
+    const s = c.state;
+    if (s.travel) {
+      s.travel.remainingHours = Math.max(0, Number(s.travel.remainingHours || 1) - 1);
+      if (s.travel.remainingHours <= 0) {
+        const destination = s.travel.destination;
+        const from = s.location;
+        s.location = destination;
+        s.travel = null;
+        s.activity = 'arrived';
+        s.actionDuration = 0;
+        pushEvent(world, { type: 'arrival', actorId: c.id, location: destination, text: `${c.identity.name} прибыл(а): ${locationName(world, from)} → ${locationName(world, destination)}.` });
+      }
+    }
+    const act = s.activity;
+    if (act === 'sleep') { s.energy = clamp(s.energy + 14); s.stress = clamp(s.stress - 4); }
+    else if (act === 'rest') { s.energy = clamp(s.energy + 7); s.stress = clamp(s.stress - 3); }
+    else if (act === 'work') { s.energy = clamp(s.energy - 6); s.stress = clamp(s.stress + 2); }
+    else if (act === 'study' || act === 'create' || act === 'music') { s.energy = clamp(s.energy - 3); s.stress = clamp(s.stress - (act === 'music' ? 1 : 0)); }
+    else if (act === 'explore' || act === 'travelling') { s.energy = clamp(s.energy - 2); }
+    else if (act === 'custom') { const category = s.currentAction?.category; s.energy = clamp(s.energy + (category === 'rest' ? 4 : ['work','study','creative','expression','exercise'].includes(category) ? -2 : -0.5)); if (category === 'rest' || category === 'hygiene') s.stress = clamp(s.stress - 2); if (category === 'social') s.socialNeed = clamp(s.socialNeed - 5); if (category === 'exercise') s.stress = clamp(s.stress - 1); }
+    s.socialNeed = clamp(s.socialNeed + (act === 'talk' ? 0.5 : 1.1));
+    if (s.energy < 18) s.stress = clamp(s.stress + 1.5);
+    if (s.stress > 75) s.mood = clamp(s.mood - 1);
+    if (s.energy > 75 && s.stress < 30) s.mood = clamp(s.mood + 0.3);
+    s.actionDuration = Math.min(240, (s.actionDuration || 0) + 1);
+    for (const g of c.goals) {
+      if (g.status !== 'active') continue;
+      const matches = (g.type === 'work' && act === 'work') || (g.type === 'creative' && ['create', 'music'].includes(act)) || (g.type === 'social' && act === 'talk') || (g.type === 'study' && act === 'study');
+      if (matches) g.progress = clamp(g.progress + 0.5);
+      if (g.progress >= 100) g.status = 'completed';
+    }
+    advancePsyche(world, c);
+  }
+}
+
+function locationName(world, id) { return world.locations.find(l => l.id === id)?.name || id || 'неизвестно'; }
+
+function pushEvent(world, event) {
+  const type = event.type || 'event';
+  const actorId = event.actorId || null;
+  const targetId = event.targetId || null;
+  const text = String(event.text || '').slice(0, 500);
+  const duplicate = world.events.find(e => e.type === type && e.actorId === actorId && e.targetId === targetId && e.text === text && (world.tick - Number(e.tick ?? world.tick)) < 6);
+  if (duplicate) return duplicate;
+  const item = { id: uid(), day: world.time.day, hour: world.time.hour, tick: world.tick, type, actorId, targetId, location: event.location || null, text };
+  world.events.unshift(item);
+  world.events = world.events.slice(0, 250);
+  world.history.unshift({ ...item });
+  world.history = world.history.slice(0, 300);
+  return item;
+}
+
+function buildAgentContext(world, actor) {
+  const visible = world.characters.filter(c => c.id !== actor.id && c.state.location === actor.state.location && !c.state.travel).map(c => {
+    const r = actor.relationships[c.id] || {};
+    return { id: c.id, name: c.identity.name, activity: c.state.activity, mood: c.state.mood,
+      interests: (c.identity.interests || []).slice(0, 2),
+      relation: { affinity: r.affinity, trust: r.trust, irritation: r.irritation, opinion: String(r.opinion || '').slice(0, 90) } };
+  });
+  const publicEvents = world.events.filter(e => e.location === actor.state.location || e.actorId === actor.id || e.targetId === actor.id)
+    .slice(0, 3).map(e => String(e.text).slice(0, 125));
+  const threads = world.conversations.filter(t => t.participants.includes(actor.id)).sort((a, b) => (b.lastTick || 0) - (a.lastTick || 0)).slice(0, 2);
+  const talks = threads.map(t => t.messages.slice(-2).map(m => ({
+    by: world.characters.find(c => c.id === m.speakerId)?.identity.name || m.speakerId,
+    id: m.speakerId, say: String(m.text).slice(0, 130)
+  })));
+  const seen = new Set(actor.state.seenConversationMessages || []);
+  const incoming = threads.flatMap(t => {
+    const last = t.messages[t.messages.length - 1];
+    if (!last || last.speakerId === actor.id || seen.has(last.id)) return [];
+    return [{ threadId: t.id, messageId: last.id, id: last.speakerId, say: String(last.text).slice(0, 160) }];
+  }).slice(0, 2);
+  const recentActions = (actor.state.recentDecisions || []).slice(-6).map(h => ({ a: h.action, why: String(h.why || '').slice(0, 80), speech: String(h.speech || '').slice(0, 100), at: `${h.day}/${h.hour}` }));
+  const identity = actor.identity;
+  return {
+    time: `${world.time.day}/${world.time.hour}:00`, place: locationName(world, actor.state.location),
+    me: {
+      id: actor.id, name: identity.name, age: identity.age,
+      bio: String(identity.biography || '').slice(0, 420), voice: String(identity.speechStyle || '').slice(0, 300),
+      traits: identity.traits, values: (identity.values || []).slice(0, 4), fears: (identity.fears || []).slice(0, 3),
+      likes: (identity.interests || []).slice(0, 4), dislikes: (identity.dislikes || []).slice(0, 4),
+      habits: (identity.habits || []).slice(0, 4), items: (identity.possessions || []).slice(0, 3),
+      state: { mood: actor.state.mood, energy: actor.state.energy, social: actor.state.socialNeed, stress: actor.state.stress,
+        doing: actor.state.activity, duration: actor.state.actionDuration, travel: actor.state.travel, lastReflection: actor.state.lastReflection },
+      routine: actor.schedule.find(x => world.time.hour >= x.start && world.time.hour < x.end) || null,
+      goals: actor.goals.filter(g => g.status === 'active').sort((a,b) => b.priority-a.priority).slice(0, 3)
+        .map(g => ({ id: g.id, title: g.title, type: g.type, progress: g.progress, priority: g.priority })),
+      summary: String(actor.memory.summary || '').slice(0, 220),
+      memories: actor.memory.episodes.slice(0, 4).map(m => String(m.text).slice(0, 110)),
+      facts: actor.memory.facts.slice(0, 4).map(m => String(m.text).slice(0, 110)),
+      private: actor.memory.privateNotes.slice(0, 2).map(m => String(m.text).slice(0, 150)),
+      knownPeople: world.characters.filter(c => c.id !== actor.id).map(c => { const r = actor.relationships[c.id] || {}; return { id:c.id, name:c.identity.name, affinity:r.affinity||0, trust:r.trust||0, irritation:r.irritation||0, opinion:String(r.opinion||'').slice(0,70) }; }),
+      recentActions
+    },
+    psyche: buildPsycheContext(world, actor, [...incoming.map(message => message.say), ...publicEvents].join(' ')),
+    nearby: visible, events: publicEvents, talks, incoming,
+    places: world.locations.map(l => ({ id: l.id, name: l.name }))
+  };
+}
+
+const AGENT_SYSTEM_PROMPT = `Ты — отдельный житель MY WORLD, не рассказчик и не актёр для зрителя. Принимай собственные бытовые решения на основе личности, состояния, привычек, долговременных целей, памяти и конкретных обстоятельств. У тебя есть обычное течение жизни: можно работать, отдыхать, заниматься личным делом, откладывать планы, менять мнение, игнорировать сообщение или не иметь желания разговаривать. Не выдумывай события ради драматургии и не превращай каждый ход в новый сюжетный поворот.
+
+Речь должна звучать как обычная речь конкретного человека: конкретно, сдержанно и без постановочной драматичности. Не используй метафоры, загадочные намёки, клише, ролевые ремарки, описание мимики/жестов и фальшивую глубину, если ситуация этого не требует. Не превращай каждую реплику в вопрос. Не повторяй приветствия и готовые формулы. Не описывай собственную биографию и числовые параметры. Если нет содержательного повода, не начинай разговор. Пустая реплика лучше искусственной. Поле talks — история, а не требование продолжать разговор; отвечать нужно только на новое сообщение из incoming.
+
+Поле recentActions — твоя собственная недавняя последовательность решений: учитывай её, не повторяй одинаковые объяснения и реплики без причины. Продолжать одно и то же занятие допустимо, если оно ещё нужно; не придумывай перемены только ради новизны.
+
+Не знаешь чужих мыслей и приватной памяти. Знаешь только наблюдаемое, услышанное или запомненное. Не сближайся автоматически; отношения могут быть нейтральными, холодными или ухудшаться. Потребности и расписание влияют на выбор, но не диктуют его. Не бросай длительное занятие без причины.
+
+Выбери одно действие. Верни только JSON со всеми полями: action, destination, targetId, speech, event, remember, goalId, goalProgress, newGoal, moodShift, socialOutcome, relationshipNote, learnedFact, summaryUpdate, intent. action: continue|sleep|rest|work|study|create|music|explore|move|talk|wait|custom. Если готовое действие не подходит, придумай конкретное действие и верни customAction с title, description, category, targetId, location и durationHours. Если получил устойчивый новый факт, укажи learnedFact, learnedFactType, learnedFactTopic и learnedFactConfidence 0.35–1. Не превращай догадки в факты и не записывай одноразовые детали как устойчивые знания. Для неприменимых значений используй null или пустую строку.
+
+move — только в существующую другую локацию и только при реальной причине. talk — только с видимым человеком рядом, если есть конкретный повод; не инициируй разговор ради заполнения хода. Если incoming содержит новое сообщение, оцени, отвечать ли на него, но можешь промолчать или отложить ответ. Не обращайся к спящим людям и не прерывай сосредоточенную работу без действительно веской причины. goalProgress 0–5 только за выполненную часть активной цели; moodShift -3…3 только по конкретной причине. Не создавай дублирующие цели или факты. event — редкое наблюдаемое последствие, remember — событие, которое действительно повлияет на будущие решения; summaryUpdate — только устойчивое изменение знаний или отношений. intent — короткое фактическое объяснение выбора, без прозы. Формат: {\"action\":\"continue\",\"destination\":null,\"targetId\":null,\"speech\":\"\",\"event\":\"\",\"remember\":\"\",\"goalId\":null,\"goalProgress\":0,\"newGoal\":null,\"moodShift\":0,\"socialOutcome\":\"neutral\",\"relationshipNote\":\"\",\"learnedFact\":\"\",\"summaryUpdate\":\"\",\"intent\":\"Продолжаю текущее дело.\"}. Если не знаешь, что добавить, оставляй пустые строки и null. Строгий JSON без Markdown и текста вокруг.`;
+
+function validateDecision(raw, world, actor, reservedParticipants = new Set()) {
+  const allowed = new Set(['continue', 'sleep', 'rest', 'work', 'study', 'create', 'music', 'explore', 'move', 'talk', 'wait', 'custom']);
+  const decision = raw && typeof raw === 'object' ? raw : {};
+  let action = allowed.has(decision.action) ? decision.action : 'continue';
+  const result = {
+    action, destination: null, targetId: null, customAction: null, learnedFactType: 'event', learnedFactTopic: '', learnedFactConfidence: 0.72,
+    speech: String(decision.speech || '').trim().slice(0, 300),
+    event: String(decision.event || '').trim().slice(0, 300),
+    remember: String(decision.remember || '').trim().slice(0, 300),
+    goalId: null, goalProgress: clamp(decision.goalProgress, 0, 5),
+    newGoal: null, moodShift: clamp(decision.moodShift, -3, 3),
+    socialOutcome: ['positive', 'negative', 'tense', 'neutral'].includes(decision.socialOutcome) ? decision.socialOutcome : 'neutral',
+    intent: String(decision.intent || '').trim().slice(0, 120),
+    learnedFact: String(decision.learnedFact || '').trim().slice(0, 180),
+    relationshipNote: String(decision.relationshipNote || '').trim().slice(0, 180),
+    summaryUpdate: String(decision.summaryUpdate || '').trim().slice(0, 320)
+  };
+  if (actor.state.travel && !['continue', 'wait'].includes(action)) action = 'continue';
+  if (action === 'move') {
+    const validLocation = world.locations.some(l => l.id === decision.destination);
+    if (validLocation && decision.destination !== actor.state.location && !actor.state.travel) result.destination = decision.destination;
+    else action = 'continue';
+  }
+  if (action === 'custom') {
+    const proposedCustomAction = validateCustomAction(decision.customAction, world, actor);
+    if (proposedCustomAction) result.customAction = proposedCustomAction;
+    else action = 'continue';
+  }
+  if (action === 'talk') {
+    const target = world.characters.find(c => c.id === decision.targetId && c.id !== actor.id && c.state.location === actor.state.location && !c.state.travel && c.state.activity !== 'sleep');
+    const pair = [actor.id, decision.targetId].sort().join('|');
+    const cooling = Number(world.socialCooldowns[pair] || 0) > world.tick;
+    const repeated = world.conversations.flatMap(t => t.messages).filter(m => m.speakerId === actor.id).sort((a, b) => (b.tick || 0) - (a.tick || 0)).slice(0, 12).some(m => String(m.text || '').trim().toLowerCase() === result.speech.toLowerCase());
+    if (target && !actor.state.travel && actor.state.activity !== 'sleep' && result.speech.length >= 2 && !cooling && !repeated && !reservedParticipants.has(actor.id) && !reservedParticipants.has(target.id)) { result.targetId = target.id; reservedParticipants.add(actor.id); reservedParticipants.add(target.id); }
+    else action = 'continue';
+  }
+  if (decision.goalId && actor.goals.some(g => g.id === decision.goalId && g.status === 'active')) result.goalId = decision.goalId;
+  if (decision.newGoal && typeof decision.newGoal === 'object' && actor.goals.filter(g => g.status === 'active').length < 5) {
+    const title = String(decision.newGoal.title || '').trim().slice(0, 90);
+    const type = ['personal', 'work', 'creative', 'social', 'study', 'relationship'].includes(decision.newGoal.type) ? decision.newGoal.type : 'personal';
+    const duplicate = actor.goals.some(g => g.title.toLowerCase() === title.toLowerCase());
+    if (title.length >= 5 && !duplicate) result.newGoal = { title, type, reason: String(decision.newGoal.reason || '').slice(0, 160), priority: clamp(decision.newGoal.priority ?? 45) };
+  }
+  result.action = action;
+  return result;
+}
+
+function applyDecision(world, actor, decision, providerInfo = {}) {
+  const before = actor.state.activity;
+  actor.state.mood = clamp(actor.state.mood + decision.moodShift);
+  if (decision.newGoal) actor.goals.push({ id: uid(), ...decision.newGoal, progress: 0, status: 'active', createdDay: world.time.day });
+  if (decision.goalId && decision.goalProgress > 0) {
+    const goal = actor.goals.find(g => g.id === decision.goalId);
+    if (goal) { goal.progress = clamp(goal.progress + decision.goalProgress); if (goal.progress >= 100) goal.status = 'completed'; }
+  }
+  if (decision.action === 'move' && decision.destination) {
+    actor.state.travel = { destination: decision.destination, remainingHours: 1 };
+    actor.state.activity = 'travelling';
+    actor.state.actionDuration = 0;
+    pushEvent(world, { type: 'movement_intent', actorId: actor.id, location: actor.state.location, text: `${actor.identity.name} решил(а) отправиться в ${locationName(world, decision.destination)}.` });
+  } else if (decision.action === 'custom' && decision.customAction) {
+    actor.state.activity = 'custom';
+    actor.state.currentAction = { ...decision.customAction, startedAt: { day: world.time.day, hour: world.time.hour, tick: world.tick } };
+    actor.state.actionDuration = 0;
+    pushEvent(world, { type: 'custom_activity', actorId: actor.id, location: actor.state.location, text: `${actor.identity.name} решил(а): ${decision.customAction.title}.` });
+    if (decision.customAction.targetId) {
+      const target = world.characters.find(c => c.id === decision.customAction.targetId);
+      if (target) addMemory(target, { text: `${actor.identity.name} начал(а) занятие: ${decision.customAction.title}.`, importance: 1, visibility: 'private' }, world);
+    }
+  } else if (decision.action === 'talk' && decision.targetId) {
+    const target = world.characters.find(c => c.id === decision.targetId);
+    const pair = [actor.id, target.id].sort().join('|');
+    world.socialCooldowns[pair] = world.tick + 4;
+    let thread = world.conversations.find(t => t.participants.includes(actor.id) && t.participants.includes(target.id) && (world.tick - (t.lastTick || 0)) <= 12);
+    if (!thread) {
+      thread = { id: uid(), participants: [actor.id, target.id], location: actor.state.location, day: world.time.day, hour: world.time.hour, lastTick: world.tick, messages: [] };
+      world.conversations.unshift(thread);
+    }
+    thread.messages.push({ id: uid(), speakerId: actor.id, text: decision.speech, day: world.time.day, hour: world.time.hour, tick: world.tick });
+    thread.lastTick = world.tick;
+    thread.messages = thread.messages.slice(-16);
+    actor.state.activity = 'talk';
+    actor.state.socialNeed = clamp(actor.state.socialNeed - 14);
+    target.state.socialNeed = clamp(target.state.socialNeed - 3);
+    const relation = actor.relationships[target.id] ||= { affinity: 0, trust: 0, respect: 0, irritation: 0, opinion: '', history: [] };
+    const shift = decision.socialOutcome === 'positive' ? 2 : decision.socialOutcome === 'negative' ? -2 : decision.socialOutcome === 'tense' ? -1 : 0;
+    relation.affinity = clamp(relation.affinity + shift, -100, 100);
+    relation.trust = clamp(relation.trust + (decision.socialOutcome === 'positive' ? 1 : decision.socialOutcome === 'tense' ? -1 : decision.socialOutcome === 'negative' ? -2 : 0), -100, 100);
+    relation.irritation = clamp(relation.irritation + (decision.socialOutcome === 'tense' ? 2 : decision.socialOutcome === 'negative' ? 3 : 0));
+    relation.history.unshift({ day: world.time.day, hour: world.time.hour, text: `Разговор: ${decision.speech.slice(0, 90)}` });
+    if (decision.relationshipNote) relation.opinion = decision.relationshipNote;
+    relation.history = relation.history.slice(0, 20);
+    addMemory(actor, { text: `Я сказал(а) ${target.identity.name}: «${decision.speech}»`, importance: 2, visibility: 'private' }, world);
+    if (decision.learnedFact && !actor.memory.facts.some(f => String(f.text || f).toLowerCase() === decision.learnedFact.toLowerCase())) actor.memory.facts.unshift({ id: uid(), text: decision.learnedFact, importance: 3, createdDay: world.time.day });
+    actor.memory.facts = actor.memory.facts.slice(0, 30);
+    addMemory(target, { text: `${actor.identity.name} сказал(а) мне: «${decision.speech}»`, importance: 2, visibility: 'private' }, world);
+    for (const observer of world.characters.filter(c => c.id !== actor.id && c.id !== target.id && c.state.location === actor.state.location)) {
+      addMemory(observer, { text: `Я услышал(а), как ${actor.identity.name} обратился(ась) к ${target.identity.name}: «${decision.speech}»`, importance: 1, visibility: 'private' }, world);
+    }
+    pushEvent(world, { type: 'conversation', actorId: actor.id, targetId: target.id, location: actor.state.location, text: `${actor.identity.name} обратился(ась) к ${target.identity.name}: «${decision.speech}»` });
+  } else if (['sleep', 'rest', 'work', 'study', 'create', 'music', 'explore', 'wait', 'continue'].includes(decision.action)) {
+    if (decision.action !== 'continue' && actor.state.activity !== decision.action) {
+      actor.state.activity = decision.action;
+      actor.state.actionDuration = 0;
+    }
+  }
+  if (decision.remember) addMemory(actor, { text: decision.remember, importance: 3, visibility: 'private' }, world);
+  if (decision.summaryUpdate && decision.summaryUpdate !== actor.memory.summary) actor.memory.summary = decision.summaryUpdate.slice(0, 320);
+  if (decision.event) pushEvent(world, { type: 'agent_event', actorId: actor.id, location: actor.state.location, text: `${actor.identity.name}: ${decision.event}` });
+  actor.state.lastDecisionAt = { day: world.time.day, hour: world.time.hour, tick: world.tick };
+  actor.state.lastReflection = decision.intent || decision.action;
+  actor.state.recentDecisions ||= [];
+  actor.state.recentDecisions.push({ day: world.time.day, hour: world.time.hour, action: decision.action,
+    why: decision.intent || decision.action, targetId: decision.targetId || null,
+    speech: decision.action === 'talk' ? decision.speech : '' });
+  actor.state.recentDecisions = actor.state.recentDecisions.slice(-6);
+  applyPsycheOutcome(world, actor, decision);
+  const activityChanged = before !== actor.state.activity;
+  if (activityChanged && !['talk', 'travelling', 'arrived'].includes(actor.state.activity)) {
+    pushEvent(world, { type: 'activity_change', actorId: actor.id, location: actor.state.location, text: `${actor.identity.name} сменил(а) занятие на «${actor.state.activity}».${decision.intent ? ` Причина: ${decision.intent}` : ''}` });
+    actor.state.actionDuration = 0;
+  }
+  world.meta.lastTurn = { day: world.time.day, hour: world.time.hour, tick: world.tick, actorId: actor.id, action: decision.action, intent: decision.intent || decision.action, provider: providerInfo.provider || 'unknown', model: providerInfo.model || 'unknown', text: `${actor.identity.name}: ${decision.intent || decision.action}` };
+  world.meta.provider = providerInfo.provider || world.meta.provider;
+  world.meta.model = providerInfo.model || world.meta.model;
+  world.meta.lastError = null;
+}
+
+function addMemory(character, item, world) {
+  const text = String(item.text || '').trim().slice(0, 300);
+  if (!text) return false;
+  const exists = character.memory.episodes.some(e => String(e.text).toLowerCase() === text.toLowerCase() && world.tick - Number(e.tick || 0) < 24);
+  if (exists) return false;
+  character.memory.episodes.unshift({ id: uid(), text, day: world.time.day, hour: world.time.hour, tick: world.tick, importance: clamp(item.importance ?? 1, 1, 5), visibility: item.visibility || 'private' });
+  character.memory.episodes = character.memory.episodes.slice(0, world.settings.maxMemoryEpisodes || 80);
+  return true;
+}
+
+function parseDecisionText(text) {
+  const raw = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
+  try { return JSON.parse(raw); } catch { /* try extracting the first JSON object */ }
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start >= 0 && end > start) return JSON.parse(raw.slice(start, end + 1));
+  throw new Error('Модель вернула не JSON. Ход пропущен, состояние персонажа не подменялось шаблоном.');
+}
+
+function selectNextActor(world) {
+  if (!world.characters.length) return null;
+  const index = world.meta.actorCursor % world.characters.length;
+  const actor = world.characters[index];
+  world.meta.actorCursor = (index + 1) % world.characters.length;
+  return actor;
+}
+
+
+function updateHero(){if(!world)return;$('clock').textContent=worldTimestamp(world);$('charCount').textContent=String(world.characters.length);$('worldSub').textContent=`${world.name} · сохранение в браузере`;$('turnInfo').textContent=`Циклов: ${world.tick} · решений: ${world.meta.localDecisions||0}`;$('runButton').textContent=world.running?'Ⅱ Остановить автономность':'▶ Запустить автономность';$('stepButton').textContent='⏭ Один цикл психики';$('aiNotice').textContent='Локальная цифровая психика активна. Облачная ИИ-модель не подключена; ответы в чате демонстрационные.';}
+function meter(label,value){const n=clamp(value);return `<div class="barrow"><span class="barlabel">${label}</span><div class="bar"><div class="fill" style="width:${n}%"></div></div><span class="barval">${Math.round(n)}%</span></div>`;}
+function goalText(c){return (c.goals||[]).filter(g=>g.status==='active').slice(0,3).map(g=>`<span class="badge">${esc(g.title)} · ${Math.round(g.progress)}%</span>`).join('')||'<span class="small muted">Активных целей нет</span>';}
+function personCard(c){const loc=world.locations.find(l=>l.id===c.state.location)?.name||c.state.location;const activity=c.state.travel?`Путь в ${world.locations.find(l=>l.id===c.state.travel.destination)?.name||c.state.travel.destination}`:(LABELS[c.state.activity]||c.state.activity);return `<article class="card"><div class="personhead"><div class="avatar">${esc(c.identity.emoji||'◈')}</div><div style="min-width:0;flex:1"><div class="personname">${esc(c.identity.name)}</div><div class="small muted">${esc(activity)} · ${esc(loc)}</div></div><button data-edit="${esc(c.id)}">Профиль</button></div>${meter('Энергия',c.state.energy)}${meter('Настроение',c.state.mood)}${meter('Соц. потребность',c.state.socialNeed)}${meter('Стресс',c.state.stress)}${c.state.lastReflection?`<p class="small muted">Последнее объяснение: ${esc(c.state.lastReflection)}</p>`:''}<div class="pillset">${goalText(c)}</div><div class="controls"><button data-message="${esc(c.id)}">Написать</button><button class="soft" data-memory="${esc(c.id)}">Память</button></div></article>`;}
+function worldView(){return `<section class="panel"><div class="sectionhead"><h2>Живой мир</h2><span class="pill">${world.running?'локальный цикл включён':'пауза'}</span></div><p class="small muted">Каждый цикл продвигает виртуальное время на один игровой час. Все персонажи получают независимые решения на основе одного снимка мира; затем решения применяются вместе. Потребности и последствия обновляются для всех.</p><div class="grid">${world.characters.map(personCard).join('')}</div></section><section class="panel"><div class="sectionhead"><h2>Последние значимые события</h2><span class="small muted">Без искусственных фоновых фраз</span></div>${world.events.length?world.events.slice(0,8).map(e=>`<div class="entry"><div class="between"><strong>${esc(e.text)}</strong><span class="tag">${esc(e.type)}</span></div><p class="small muted">День ${e.day} · ${String(e.hour).padStart(2,'0')}:00</p></div>`).join(''):'<div class="empty">Пока ничего значимого не произошло. Персонажи не обязаны непрерывно генерировать события.</div>'}</section>`;}
+function agentView(){return `<section class="panel"><div class="sectionhead"><h2>Персонажи и их автономность</h2><button class="primary" id="addCharacter">＋ Добавить</button></div><p class="small muted">У каждого агента отдельная личность, набор целей, личная память и своя оценка отношений. ИИ предлагает действие; движок проверяет его и меняет состояние, а не позволяет модели напрямую переписывать мир.</p><div class="grid">${world.characters.map(personCard).join('')}</div></section>`;}
+function mindView(){const labels={rest:'Отдых',nourishment:'Еда',hydration:'Вода',hygiene:'Гигиена',connection:'Общение',autonomy:'Автономия',competence:'Компетентность',novelty:'Новизна',safety:'Безопасность',expression:'Самовыражение'};return world.characters.map(c=>{const p=c.psyche||{},n=p.needs||{},a=p.affect||{},k=p.cognition||{};const needs=Object.entries(labels).map(([key,label])=>meter(label,n[key]||0)).join('');const motives=(k.currentMotives||[]).slice(0,4).map(m=>'<div class="entry"><div class="between"><strong>'+esc(m.label||m.id)+'</strong><span class="small muted">'+Math.round(m.score||0)+'</span></div></div>').join('')||'<div class="small muted">Мотивы появятся после первого цикла.</div>';const habits=Object.entries(k.habits||{}).sort((x,y)=>y[1]-x[1]).slice(0,6).map(([name,count])=>'<span class="badge">'+esc(name)+' · '+count+'</span>').join('')||'<span class="small muted">Пока нет закрепившихся привычек.</span>';const beliefs=(k.beliefs||[]).slice(-6).map(b=>'<div class="entry">'+esc(b.text||'')+' <span class="small muted">'+Math.round((b.confidence||0)*100)+'%</span></div>').join('')||'<div class="small muted">Устойчивые убеждения ещё не сформировались.</div>';const emotionLabels={joy:'Радость',sadness:'Грусть',anger:'Раздражение',fear:'Тревога',curiosity:'Любопытство',loneliness:'Одиночество',affection:'Привязанность'};const emotions=Object.entries(a.emotions||{}).map(([name,value])=>'<span class="badge">'+esc(emotionLabels[name]||name)+' · '+Math.round(value)+'</span>').join('');const thoughts=(k.workingMemory||[]).slice(0,4).map(m=>'<div class="entry"><span class="small muted">Ход '+(m.tick??'?')+'</span><p>'+esc(m.text||'')+'</p></div>').join('')||'<div class="small muted">Рабочая память пока пуста.</div>';return '<section class="panel"><div class="sectionhead"><h2>'+esc(c.identity.name)+'</h2><span class="pill">'+esc(a.dominant||'нейтральное состояние')+'</span></div><p class="small muted">Физиологические потребности, внутренние мотивы, память и приобретённые поведенческие паттерны. Это вычислимая модель, а не скрытая нейросеть и не доказательство сознания.</p>'+needs+'<h3 class="small muted">Эмоциональные сигналы</h3><div class="pillset">'+emotions+'</div><h3 class="small muted">Текущие мотивы</h3>'+motives+'<h3 class="small muted">Рабочая память / внимание</h3>'+thoughts+'<h3 class="small muted">Усвоенные привычки</h3><div class="pillset">'+habits+'</div><h3 class="small muted">Сформированные убеждения</h3>'+beliefs+'</section>';}).join('');}
+function relationsView(){return `<section class="panel"><h2>Отношения — отдельная точка зрения каждого персонажа</h2><p class="small muted">Стрелка A → B означает, что это мнение A о B. Оно не обязано совпадать с обратным.</p>${world.characters.map(a=>`<div class="entry"><strong>${esc(a.identity.name)}</strong>${world.characters.filter(b=>b.id!==a.id).map(b=>{const r=a.relationships[b.id]||{};return `<div style="margin-top:10px"><div class="between"><span>${esc(b.identity.name)}</span><span class="small muted">симпатия ${Math.round(r.affinity||0)} · доверие ${Math.round(r.trust||0)}</span></div>${meter('Уважение',clamp(((r.respect||0)+100)/2))}${meter('Раздражение',r.irritation||0)}${r.opinion?`<p class="small muted">${esc(r.opinion)}</p>`:''}</div>`}).join('')}</div>`).join('')}</section>`;}
+function memoryView(){const c=world.characters.find(x=>x.id===selectedMemory)||world.characters[0];if(!c)return '<div class="empty">Нет персонажей.</div>';const episodes=c.memory.episodes||[],privateNotes=c.memory.privateNotes||[],facts=c.memory.facts||[];return `<section class="panel"><div class="sectionhead"><h2>Личная память</h2><select id="memoryCharacter" style="max-width:220px">${world.characters.map(x=>`<option value="${esc(x.id)}" ${x.id===c.id?'selected':''}>${esc(x.identity.name)}</option>`).join('')}</select></div><div class="entry"><strong>Сводка</strong><p class="small">${esc(c.memory.summary||'Сводки пока нет. Воспоминания накапливаются из реальных событий.')}</p></div><h3 class="small muted">Личные заметки / биография (${privateNotes.length})</h3>${privateNotes.map(m=>`<div class="entry"><span class="tag">личное · важность ${m.importance||1}</span><p>${esc(m.text)}</p></div>`).join('')||'<div class="empty">Пусто</div>'}<h3 class="small muted">Факты (${facts.length})</h3>${facts.map(m=>`<div class="entry">${esc(m.text||m)}</div>`).join('')||'<div class="empty">Пока нет закреплённых фактов.</div>'}<h3 class="small muted">Эпизодическая память (${episodes.length})</h3>${episodes.slice(0,50).map(m=>`<div class="entry"><div class="between"><span class="tag">важность ${m.importance||1}</span><span class="small muted">День ${m.day||'?'} · ${String(m.hour??'').padStart(2,'0')}:00</span></div>${esc(m.text||m.description||'')}</div>`).join('')||'<div class="empty">Пока нет эпизодов.</div>'}</section>`;}
+function chatView(){const c=world.characters.find(x=>x.id===chatCharacter)||world.characters[0];if(!c)return '<div class="empty">Нет персонажей.</div>';const thread=world.userChats.find(t=>t.characterId===c.id);return `<section class="panel"><div class="sectionhead"><h2>Личная переписка</h2><select id="chatCharacter" style="max-width:220px">${world.characters.map(x=>`<option value="${esc(x.id)}" ${x.id===c.id?'selected':''}>${esc(x.identity.name)}</option>`).join('')}</select></div><div id="chatMessages">${thread?.messages?.length?thread.messages.slice(-30).map(m=>`<div class="conversationMsg ${m.speaker==='user'?'user':''}"><div class="speaker">${m.speaker==='user'?'Ты':esc(c.identity.name)}</div>${esc(m.text)}</div>`).join(''):'<div class="empty">Напиши персонажу. Это локальный демонстрационный диалог. Облачная языковая модель пока не подключена.</div>'}</div><form id="chatForm"><label for="chatInput">Сообщение</label><textarea id="chatInput" maxlength="900" required placeholder="Без заранее заданных вариантов ответа..."></textarea><div class="controls"><button class="primary" type="submit">Отправить</button></div></form><p class="small muted">Переписка с тобой не означает, что персонаж знает, где ты находишься внутри мира. Личная память персонажа не показывается другим агентам.</p></section><section class="panel"><h2>Диалоги персонажей</h2>${world.conversations.length?world.conversations.slice(0,25).map(t=>`<div class="entry"><div class="between"><strong>${t.participants.map(id=>esc(world.characters.find(x=>x.id===id)?.identity.name||id)).join(' ↔ ')}</strong><span class="small muted">День ${t.day} · ${String(t.hour).padStart(2,'0')}:00</span></div>${t.messages.slice(-8).map(m=>`<div class="conversationMsg"><div class="speaker">${esc(world.characters.find(x=>x.id===m.speakerId)?.identity.name||'Персонаж')}</div>${esc(m.text)}</div>`).join('')}</div>`).join(''):'<div class="empty">Разговоры возникнут, когда один из агентов сам решит обратиться к другому.</div>'}</section>`;}
+function historyView(){return `<section class="panel"><div class="sectionhead"><h2>Журнал действий</h2><span class="pill">${world.history.length} записей</span></div>${world.history.length?world.history.slice(0,100).map(h=>{const who=world.characters.find(c=>c.id===h.actorId)?.identity.name;return `<div class="entry"><div class="between"><strong>${esc(who||h.text||'Событие')}</strong><span class="tag">${esc(h.action||h.type||'event')}</span></div><p class="small muted">День ${h.day} · ${String(h.hour).padStart(2,'0')}:00 · ${esc(h.intent||h.text||'')}</p></div>`}).join(''):'<div class="empty">История пока пуста.</div>'}</section>`;}
+function settingsView(){return `<section class="panel"><h2>Режим работы этой версии</h2><div class="warning" style="margin-top:10px">Это браузерная демонстрация. Миры и сохранения хранятся в localStorage только на этом устройстве и в этом браузере. Сервер и облачная языковая модель не подключены.</div><ul class="small muted"><li>Потребности, эмоциональные состояния, мотивы, привычки и память рассчитываются настоящим локальным движком из проекта.</li><li>Кнопка «Один цикл» продвигает игровое время на час и рассчитывает решение каждого персонажа.</li><li>Автономный режим работает, пока открыта вкладка: один игровой час каждые 30 секунд.</li><li>Свободные ответы в чате пока демонстрационные и не генерируются большой языковой моделью.</li><li>Для переноса мира на другое устройство используй экспорт JSON, а затем импорт.</li></ul><div class="controls"><button id="export2">Экспорт JSON</button><button id="import2">Импорт JSON</button></div></section><section class="panel"><h2>Что уже можно проверить</h2><p class="small muted">Создание отдельных миров, профили персонажей, симуляцию бытовых решений, потребности, эмоции, мотивы, отношения, личную память, историю событий и переписку.</p></section>`;}
+function render(){if(!world)return;updateHero();const views={world:worldView,agents:agentView,mind:mindView,relations:relationsView,memory:memoryView,chat:chatView,history:historyView,settings:settingsView};$('view').innerHTML=views[activeTab]();document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===activeTab));}
+function openModal(title,html){$('modalTitle').textContent=title;$('modalBody').innerHTML=html;$('modal').classList.remove('hidden');}function closeModal(){$('modal').classList.add('hidden');}
+function editCharacter(id){const c=world.characters.find(x=>x.id===id);if(!c)return;const t=c.identity.traits||{};openModal('Профиль персонажа',`<form id="editForm"><div class="fieldgrid"><div class="field"><label>Имя</label><input name="name" required maxlength="45" value="${esc(c.identity.name)}"></div><div class="field"><label>Эмодзи / символ</label><input name="emoji" maxlength="4" value="${esc(c.identity.emoji)}"></div><div class="field"><label>Возраст</label><input name="age" type="number" min="1" max="120" value="${Number(c.identity.age)||22}"></div><div class="field"><label>Локация</label><select name="location">${world.locations.map(l=>`<option value="${esc(l.id)}" ${l.id===c.state.location?'selected':''}>${esc(l.name)}</option>`).join('')}</select></div></div><div class="field" style="margin-top:10px"><label>Биография</label><textarea name="biography" maxlength="2000">${esc(c.identity.biography)}</textarea></div><div class="field" style="margin-top:10px"><label>Манера речи и поведения</label><textarea name="speechStyle" maxlength="1200">${esc(c.identity.speechStyle)}</textarea></div><div class="fieldgrid" style="margin-top:10px">${['values','fears','interests','dislikes','habits','possessions'].map(k=>`<div class="field"><label>${({values:'Ценности',fears:'Страхи',interests:'Интересы',dislikes:'Не любит',habits:'Привычки',possessions:'Личные вещи'})[k]}</label><textarea name="${k}">${esc((c.identity[k]||[]).join('\n'))}</textarea></div>`).join('')}</div><h3 class="small muted">Черты характера</h3>${Object.entries({sociability:'Общительность',curiosity:'Любознательность',orderliness:'Организованность',creativity:'Творчество',empathy:'Эмпатия',sensitivity:'Чувствительность'}).map(([k,label])=>`<div class="field"><label>${label}</label><div class="range"><input type="range" min="0" max="100" name="trait_${k}" value="${t[k]??50}" oninput="this.nextElementSibling.value=this.value"><output>${t[k]??50}</output></div></div>`).join('')}<div class="controls"><button class="primary" type="submit">Сохранить профиль</button><button type="button" id="deleteCharacter" class="danger">Удалить персонажа</button></div></form>`);$('editForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);c.identity.name=String(f.get('name')).trim();c.identity.emoji=String(f.get('emoji')||'◈');c.identity.age=clamp(f.get('age'),1,120);c.state.location=String(f.get('location'));c.state.travel=null;c.identity.biography=String(f.get('biography'));c.identity.speechStyle=String(f.get('speechStyle'));for(const k of ['values','fears','interests','dislikes','habits','possessions'])c.identity[k]=String(f.get(k)||'').split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean);for(const k of Object.keys(t))c.identity.traits[k]=Number(f.get('trait_'+k));await save();closeModal();render();toast('Профиль сохранён.');};$('deleteCharacter').onclick=async()=>{if(world.characters.length<2){toast('Нельзя удалить последнего персонажа.');return;}if(!confirm(`Удалить ${c.identity.name} из мира?`))return;world.characters=world.characters.filter(x=>x.id!==id);world.characters.forEach(x=>delete x.relationships[id]);world.conversations=world.conversations.filter(t=>!t.participants.includes(id));world.userChats=world.userChats.filter(t=>t.characterId!==id);world.meta.actorCursor%=world.characters.length;await save();closeModal();render();};}
+function addCharacter(){if(world.characters.length>=30){toast('Достигнут лимит 30 персонажей.');return;}const id='person_'+Math.random().toString(36).slice(2,9);const c={id,identity:{name:'Новый персонаж',emoji:'✦',age:22,biography:'',speechStyle:'',traits:{sociability:50,curiosity:50,orderliness:50,creativity:50,empathy:50,sensitivity:50},values:[],fears:[],interests:[],dislikes:[],habits:[],possessions:[]},state:{location:'home',activity:'rest',mood:55,energy:75,socialNeed:35,stress:15,actionDuration:0,travel:null},schedule:[],goals:[],memory:{summary:'',episodes:[],facts:[],privateNotes:[]},relationships:{},userRelationship:{familiarity:0,trust:0,affinity:0},cooldowns:{}};for(const other of world.characters){c.relationships[other.id]={affinity:0,trust:0,respect:0,irritation:0,opinion:'',history:[]};other.relationships[id]={affinity:0,trust:0,respect:0,irritation:0,opinion:'',history:[]};}world.characters.push(c);save().then(()=>{render();editCharacter(id);});}
+async function doRun(){try{const data=await api('/run',{running:!world.running});world.running=data.running;if(localAutoTimer){clearInterval(localAutoTimer);localAutoTimer=null;}if(world.running){localAutoTimer=setInterval(()=>{if(!world?.running)return;runLocalCycle();if(activeTab)render();},30000);}render();toast(world.running?'Автономный цикл включён: 1 игровой час каждые 30 секунд, пока открыта вкладка.':'Мир остановлен.');}catch(e){toast(e.message);}}
+async function doStep(){try{$('stepButton').disabled=true;toast('Локальный движок рассчитывает действия…');const data=await api('/step',{});world=data.world;render();toast(`Цикл завершён: ${data.batch?.succeeded||0}/${world.characters.length} персонажей.`);}catch(e){toast(e.message);}finally{$('stepButton').disabled=false;}}
+function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+function exportWorld(){download(`my-world-day-${world.time.day}.json`,JSON.stringify(world,null,2),'application/json');toast('Экспорт подготовлен.');}
+function importWorld(){ $('fileInput').click(); }
+$('fileInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!confirm('Заменить текущий мир сохранением из файла? Текущую версию сначала экспортируй, если хочешь резервную копию.'))return;const result=await api('/import',data);world=result.world;render();toast('Мир импортирован.');}catch(err){toast('Импорт не удался: '+err.message);}e.target.value='';});
+async function sendChat(e){e.preventDefault();const message=$('chatInput').value.trim();if(!message)return;const c=world.characters.find(x=>x.id===$('chatCharacter').value);if(!c)return;const send=$('chatForm').querySelector('button');send.disabled=true;send.textContent='Ответ…';try{const data=await api('/chat',{characterId:c.id,message});world=data.world;render();toast('Демонстрационная реплика сохранена.');}catch(err){toast(err.message);}finally{send.disabled=false;send.textContent='Отправить';}}
+$('worldSelect').addEventListener('change',e=>switchWorld(e.target.value));$('newWorldButton').onclick=addNewWorld;$('renameWorldButton').onclick=renameWorld;$('deleteWorldButton').onclick=deleteWorld;
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){activeTab=b.dataset.tab;render();}});
+$('view').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]');if(edit)editCharacter(edit.dataset.edit);const msg=e.target.closest('[data-message]');if(msg){chatCharacter=msg.dataset.message;activeTab='chat';render();}const mem=e.target.closest('[data-memory]');if(mem){selectedMemory=mem.dataset.memory;activeTab='memory';render();}if(e.target.id==='addCharacter')addCharacter();if(e.target.id==='export2')exportWorld();if(e.target.id==='import2')importWorld();if(e.target.id==='testTurn')doStep();if(e.target.id==='refreshSettings')refreshStatus(providerStatus||{});});
+$('view').addEventListener('change',e=>{if(e.target.id==='memoryCharacter'){selectedMemory=e.target.value;render();}if(e.target.id==='chatCharacter'){chatCharacter=e.target.value;render();}});
+$('view').addEventListener('submit',e=>{if(e.target.id==='chatForm')sendChat(e);});
+$('runButton').onclick=doRun;$('stepButton').onclick=doStep;$('refreshButton').onclick=async()=>{try{await load();toast('Мир обновлён.');}catch(e){toast(e.message);}};$('modalClose').onclick=closeModal;$('exportBtn').onclick=exportWorld;$('importBtn').onclick=importWorld;$('logoutBtn').onclick=async()=>{await api('/logout',{});location.reload();};$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+$('loginForm').onsubmit=e=>e.preventDefault();
+window.clamp=clamp;
+init();
+
+</script>
+</body>
+</html>
