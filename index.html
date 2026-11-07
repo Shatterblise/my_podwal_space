@@ -1202,7 +1202,7 @@ function importWorld(){ $('fileInput').click(); }
 $('fileInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!confirm('Импортировать этот мир? Текущий мир не будет восстановлен поверх файла.'))return;world=normalizeWorld(data);world.name=world.name||'Импортированный мир';savedWorlds.push({id:makeId(),name:world.name,state:world});activeWorldId=savedWorlds[savedWorlds.length-1].id;chatCharacter=world.characters[0]?.id||null;persistAll();render();toast('Мир импортирован как отдельная вселенная.');}catch(err){toast('Импорт не удался: '+err.message);}e.target.value='';});
 $('worldSelect').addEventListener('change',e=>switchWorld(e.target.value));
 $('newWorldButton').onclick=addNewWorld;$('renameWorldButton').onclick=renameWorld;$('deleteWorldButton').onclick=deleteWorld;
-$('newChatButton').onclick=()=>{if(world.characters[0])selectCharacter(world.characters[0].id);};
+$('newChatButton').onclick=newChatForSelected;
 $('addCharacterButton').onclick=addCharacter;
 $('worldChatList').addEventListener('click',e=>{const edit=e.target.closest('[data-chat-edit]');if(edit){e.preventDefault();e.stopPropagation();editCharacter(edit.dataset.chatEdit);return;}const b=e.target.closest('[data-chat]');if(b&&!e.target.closest('[data-thread]'))selectCharacter(b.dataset.chat);});
 $('chatSearch').addEventListener('input',()=>renderCharacterList());
@@ -1291,7 +1291,7 @@ function renderCharacterList(){
     host.innerHTML=(threads.length?'':'<div class="empty small" style="margin:8px">Пока нет переписок. Нажми «Новый чат» или выбери персонажа.</div>')+suggestions.map(c=>`<div class="thread-line"><button class="thread-item" data-chat="${esc(c.id)}"><span class="thread-avatar">${esc(c.identity.emoji||'◈')}</span><span class="thread-copy"><strong>${esc(c.identity.name)}</strong><small>Открыть переписку</small></span></button><button class="thread-more" data-chat-edit="${esc(c.id)}" title="Редактировать персонажа">✎</button></div>`).join('');
     return;
   }
-  host.innerHTML=filtered.map(t=>{const c=world.characters.find(x=>x.id===t.characterId);const last=(t.messages||[]).filter(m=>m.speaker!=='system').slice(-1)[0];return `<div class="thread-line ${t.id===activeThreadId?'active':''}">${historySelectionMode?`<input class="thread-select-check" type="checkbox" data-thread-check="${esc(t.id)}" ${selectedThreadIds.has(t.id)?'checked':''} aria-label="Выбрать чат">`:''}<button class="thread-item ${t.id===activeThreadId?'active':''}" data-chat="${esc(t.characterId)}" data-thread="${esc(t.id)}"><span class="thread-dot"></span><span class="thread-avatar">${esc(c?.identity?.emoji||'◈')}</span><span class="thread-copy"><strong>${esc(threadLabel(t))}</strong><small>${esc(c?.identity?.name||'Персонаж')} · ${last?new Date(last.createdAt||t.updatedAt||Date.now()).toLocaleDateString('ru-RU'):'без сообщений'}</small></span></button><button class="thread-more" data-thread-menu="${esc(t.id)}" title="Действия чата">⋮</button></div>`;}).join('');
+  host.innerHTML=filtered.map(t=>{const c=world.characters.find(x=>x.id===t.characterId);const last=(t.messages||[]).filter(m=>m.speaker!=='system').slice(-1)[0];return `<div class="thread-line ${t.id===activeThreadId?'active':''}">${historySelectionMode?`<input class="thread-select-check" type="checkbox" data-thread-check="${esc(t.id)}" ${selectedThreadIds.has(t.id)?'checked':''} aria-label="Выбрать чат">`:''}<button class="thread-item ${t.id===activeThreadId?'active':''}" data-chat="${esc(t.characterId)}" data-thread="${esc(t.id)}"><span class="thread-dot"></span><span class="thread-avatar">${esc(c?.identity?.emoji||'◈')}</span><span class="thread-copy"><strong>${esc(threadLabel(t))}</strong><small>${esc(c?.identity?.name||'Персонаж')} · ${last?new Date(last.createdAt||t.updatedAt||Date.now()).toLocaleDateString('ru-RU'):'без сообщений'}</small></span></button><button class="thread-more" data-chat-edit="${esc(t.characterId)}" title="Редактировать персонажа">✎</button><button class="thread-more" data-thread-menu="${esc(t.id)}" title="Действия чата">⋮</button></div>`;}).join('');
 }
 function formatRoleplayText(value){
   let safe=esc(value||'');
@@ -1379,10 +1379,20 @@ function updateSelectedModelLabel(){
   else selectedModelName=freeModels.find(x=>x.id===selectedModelId)?.name||selectedModelId;
   const el=$('currentModelLabel');if(el)el.textContent=selectedModelId==='auto'?'Автовыбор · DG AI → Horde':selectedModelName;
 }
+async function fetchWithTimeout(url,options={},timeoutMs=12000){
+  const controller=new AbortController();
+  const externalSignal=options.signal;
+  const relayAbort=()=>controller.abort(externalSignal?.reason||new Error('Запрос отменён.'));
+  if(externalSignal){if(externalSignal.aborted)relayAbort();else externalSignal.addEventListener('abort',relayAbort,{once:true});}
+  const timer=setTimeout(()=>controller.abort(new Error(`Истекло время ожидания (${Math.round(timeoutMs/1000)} с).`)),timeoutMs);
+  try{return await fetch(url,{...options,signal:controller.signal});}
+  finally{clearTimeout(timer);if(externalSignal)externalSignal.removeEventListener('abort',relayAbort);}
+}
+
 async function fetchDGModels(force=false){
   if(!force&&Date.now()-dgAiModelsLoadedAt<60000&&dgAiModels.length)return dgAiModels;
   try{
-    const response=await fetch(DG_AI_BASE+'/v1/models',{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});
+    const response=await fetchWithTimeout(DG_AI_BASE+'/v1/models',{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'},12000);
     if(!response.ok)throw new Error(`DG AI HTTP ${response.status}`);
     const data=await response.json();
     const rows=Array.isArray(data)?data:(Array.isArray(data.data)?data.data:(Array.isArray(data.models)?data.models:[]));
@@ -1421,7 +1431,7 @@ async function dgAiChat(messages,{model,temperature=.82,max_tokens=360,onChunk=n
 async function hordeFetch(path,options={}){
   const headers={...(options.headers||{}),'Client-Agent':HORDE_AGENT};
   if(options.body){headers['Content-Type']='application/json';headers.apikey=HORDE_ANON_KEY;}
-  const response=await fetch(HORDE_BASE+path,{...options,headers,mode:'cors',credentials:'omit',cache:'no-store'});
+  const response=await fetchWithTimeout(HORDE_BASE+path,{...options,headers,mode:'cors',credentials:'omit',cache:'no-store'},path.includes('/generate/text/async')?30000:15000);
   const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{data={message:raw};}
   if(!response.ok){const detail=data.message||data.detail||data.error||`HTTP ${response.status}`;throw new Error(`AI Horde: ${String(detail).slice(0,260)}`);}
   return data;
@@ -1462,28 +1472,41 @@ function selectModel(id){
   world.settings ||= {};world.settings.selectedModelId=selectedModelId;updateSelectedModelLabel();closePopovers();storeActive();updateModelStatus();
 }
 async function openAISettings(){
-  let perf=hordeStatus;
-  await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);perf=hordeStatus;
-  const count=freeModels.length;
   openModal('Бесплатные ИИ-модели',`<div class="book-form">
-    <div class="model-card"><div><strong>DG AI → AI Horde · автоматическое переключение</strong><div class="small muted">Два анонимных облачных канала. Без регистрации, личного ключа и скачивания модели на телефон.</div></div><span class="pill ${dgAiStatus.online||perf.online?'good':'warn'}">${dgAiStatus.online||perf.online?'СЕТЬ ДОСТУПНА':'НЕТ СВЯЗИ'}</span></div>
+    <div class="model-card"><div><strong>DG AI → AI Horde · автоматическое переключение</strong><div class="small muted">Два анонимных облачных канала. Без регистрации, личного ключа и скачивания модели на телефон.</div></div><span id="aiProviderStatus" class="pill warn">ПРОВЕРЯЮ СЕТЬ…</span></div>
     <p>Сначала пробуется DG AI — публичный шлюз с несколькими моделями, затем при ошибке — AI Horde, распределённая сеть добровольцев. Оба канала принимают анонимные запросы; тебе не нужно вводить ID или ключи.</p><p class="small muted">DG AI заявляет лимит анонимного режима 8 запросов за 10 секунд; суточная квота на его странице не указана. AI Horde ставит анонимные запросы в самый низкий приоритет и может ограничивать их при высокой нагрузке.</p>
-    <div class="model-card"><div><strong>${dgAiModels.length+count} моделей в двух каталогах</strong><div class="small muted">DG AI: ${dgAiModels.length} · AI Horde: ${count} · Horde: ${perf.textWorkers||0} узлов · очередь ${perf.queued||0}</div></div><button type="button" id="refreshHordeModels">↻ Обновить оба каталога</button></div>
-    <div class="small muted" id="hordeTestStatus">${esc(modelError||'Готов к проверке соединения.')}</div>
+    <div class="model-card"><div id="aiCatalogSummary"><strong>Получаю каталог моделей…</strong><div class="small muted">Окно настроек уже доступно; список обновится отдельно.</div></div><button type="button" id="refreshHordeModels">↻ Обновить оба каталога</button></div>
+    <div class="small muted" id="hordeTestStatus">Проверяю доступность бесплатных каналов…</div>
     <div class="controls"><button type="button" class="primary" id="testHordeNow">Отправить тестовый запрос</button><button type="button" id="refreshHordeStatus">Проверить сеть</button></div>
     <div id="hordeTestResult" class="entry hidden"></div>
     <div class="divider"></div><h3>Резервная локальная модель</h3>
-    <p class="small muted">Qwen2.5 0.5B можно запустить прямо в браузере без сервера, но она скачивает около 786 МБ. По умолчанию не загружается, чтобы сайт открывался быстро. Кэш браузера сохраняется между посещениями, но может быть очищен самим браузером.</p>
+    <p class="small muted">Qwen2.5 0.5B можно запустить прямо в браузере без сервера, но она скачивает около 786 МБ. По умолчанию не загружается, чтобы сайт открывался быстро. Библиотека включает кэш моделей в браузере, поэтому при повторном визите файлы обычно берутся из кэша; браузер всё равно может удалить его.</p>
     <div class="controls"><button type="button" id="loadLocalModelNow">Загрузить резервную Qwen · ~786 МБ</button></div>
     <div class="small muted" id="localModelProgressText">${esc(modelProgress||'Не загружена')}</div>
     <div class="divider"></div><h3>Что важно знать</h3>
     <p class="book-help">Это бесплатные публичные сервисы, а не твой личный безлимитный сервер. DG AI заявляет до 8 анонимных запросов за 10 секунд; AI Horde имеет очередь и может ограничивать анонимный режим при высокой нагрузке. Внешние узлы технически могут обрабатывать и видеть переданный им промпт — не отправляй пароли или личные секреты.</p>
     <p class="small muted">NSFW: сама сеть не фильтрует обычный взрослый текст на уровне сервиса, но отдельные узлы могут иметь собственные правила. Доступная модель и её поведение зависят от узла.</p>
   </div>`);
-  $('refreshHordeModels')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Обновляю оба каталога…';const results=await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);if(el)el.textContent=`DG AI: ${dgAiModels.length} моделей · AI Horde: ${freeModels.length} моделей · ${results.every(x=>x.status==='rejected')?'оба каталога недоступны':'обновление завершено'}.`;});
-  $('refreshHordeStatus')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Проверяю два бесплатных канала…';const results=await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);if(el)el.textContent=`DG AI ${dgAiStatus.online?'доступен':'недоступен'} · AI Horde ${hordeStatus.online?'доступен':'недоступен'}.`;});
-  $('testHordeNow')?.addEventListener('click',async()=>{const btn=$('testHordeNow'),out=$('hordeTestResult'),status=$('hordeTestStatus');if(btn)btn.disabled=true;if(out){out.classList.remove('hidden');out.textContent='Отправляю тестовый запрос…';}try{const answer=await openRouterChat([{role:'system',content:'Ты тестовый русскоязычный собеседник. Ответь коротко.'},{role:'user',content:'Напиши: «Связь с MY WORLD работает».'}],{max_tokens:40,temperature:.4,onChunk:t=>{if(out)out.textContent=t;}});if(out)out.textContent='✅ '+answer;if(status)status.textContent='Тестовая генерация успешно завершена.';}catch(e){if(out)out.textContent='❌ '+e.message;if(status)status.textContent='Проверь соединение с AI Horde.';}finally{if(btn)btn.disabled=false;}});
+
+  const refreshCatalogs=async()=>{
+    const status=$('hordeTestStatus'),summary=$('aiCatalogSummary'),pill=$('aiProviderStatus');
+    const buttons=[$('refreshHordeModels'),$('refreshHordeStatus')].filter(Boolean);
+    buttons.forEach(b=>b.disabled=true);
+    if(status)status.textContent='Проверяю DG AI и AI Horde…';
+    const results=await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);
+    const online=Boolean(dgAiStatus.online||hordeStatus.online);
+    if(pill){pill.textContent=online?'СЕТЬ ДОСТУПНА':'НЕТ СВЯЗИ';pill.className='pill '+(online?'good':'warn');}
+    if(summary)summary.innerHTML=`<strong>${dgAiModels.length+freeModels.length} моделей в двух каталогах</strong><div class="small muted">DG AI: ${dgAiModels.length} · AI Horde: ${freeModels.length} · Horde: ${hordeStatus.textWorkers||0} узлов · очередь ${hordeStatus.queued||0}</div>`;
+    if(status)status.textContent=`DG AI: ${dgAiStatus.online?'доступен':'недоступен'} · AI Horde: ${hordeStatus.online?'доступен':'недоступен'}${results.every(x=>x.status==='rejected')?' · оба каталога не ответили':''}.`;
+    buttons.forEach(b=>b.disabled=false);
+    return results;
+  };
+  $('refreshHordeModels')?.addEventListener('click',refreshCatalogs);
+  $('refreshHordeStatus')?.addEventListener('click',refreshCatalogs);
+  $('testHordeNow')?.addEventListener('click',async()=>{const btn=$('testHordeNow'),out=$('hordeTestResult'),status=$('hordeTestStatus');if(btn)btn.disabled=true;if(out){out.classList.remove('hidden');out.textContent='Отправляю тестовый запрос…';}try{const answer=await openRouterChat([{role:'system',content:'Ты тестовый русскоязычный собеседник. Ответь коротко.'},{role:'user',content:'Напиши: «Связь с MY WORLD работает».'}],{max_tokens:40,temperature:.4,onChunk:t=>{if(out)out.textContent=t;}});if(out)out.textContent='✅ '+answer;if(status)status.textContent='Тестовая генерация успешно завершена.';}catch(e){if(out)out.textContent='❌ '+e.message;if(status)status.textContent='Не удалось выполнить запрос. Проверь оба бесплатных канала.';}finally{if(btn)btn.disabled=false;}});
   $('loadLocalModelNow')?.addEventListener('click',async()=>{const btn=$('loadLocalModelNow'),status=$('localModelProgressText');if(btn){btn.disabled=true;btn.textContent='Загрузка резервной модели…';}try{await requestPersistentStorage();await ensureLocalModel();if(status)status.textContent='Резервная Qwen запущена и может использоваться без сети.';if(btn){btn.textContent='Локальная Qwen готова';btn.disabled=false;}}catch(e){if(status)status.textContent='Ошибка: '+e.message;if(btn){btn.textContent='Повторить загрузку';btn.disabled=false;}}});
+  // Do not wait for remote catalogs before showing the settings window.
+  refreshCatalogs();
 }
 async function ensureLocalModel(){
   if(localEngine)return localEngine;
