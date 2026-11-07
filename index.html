@@ -215,8 +215,9 @@ let localEngine=null,localEngineLoading=null,modelProgress='AI Horde: подкл
 const LOCAL_MODEL_ID='onnx-community/Qwen2.5-0.5B-Instruct';
 const HORDE_BASE='https://aihorde.net/api/v2';
 const HORDE_ANON_KEY='0000000000'; // public anonymous mode; no user key or registration
-const HORDE_AGENT='MY_WORLD:5.1:https://github.com/Shatterblise/my_podwal_space';
-let freeModels=[],freeModelsLoadedAt=0,selectedModelName='Автовыбор · AI Horde',hordeStatus={online:false,textWorkers:0,queued:0,queuedTokens:0};
+const HORDE_AGENT='MY_WORLD:6.0:https://github.com/Shatterblise/my_podwal_space';
+const DG_AI_BASE='https://dg-ai.scriptsnsenses.workers.dev';
+let freeModels=[],freeModelsLoadedAt=0,dgAiModels=[],dgAiModelsLoadedAt=0,selectedModelName='Автовыбор · DG AI → AI Horde',hordeStatus={online:false,textWorkers:0,queued:0,queuedTokens:0},dgAiStatus={online:false,modelCount:0,error:''};
 const OPENROUTER_BASE='';
 const OPENROUTER_KEY_STORAGE=''; // legacy compatibility only; never read or requested
 const STORE_KEY='my-world-browser-v2';let savedWorlds=[],activeWorldId=null;
@@ -268,9 +269,9 @@ function toast(msg){const el=$('toast');el.textContent=msg;el.style.display='blo
 function setConnected(ok,label){const el=$('connectionState');if(!el)return;el.textContent=(ok?'● ':'○ ')+(label||(ok?'ЛОКАЛЬНО':'НЕТ СВЯЗИ'));el.className='pill '+(ok?'good':'warn');}
 async function load(){ensureStore();const rec=activeRecord();world=normalizeWorld(rec.state);ensureWorldSystems();rec.state=world;revision++;render();}
 async function save(){world=normalizeWorld(world);storeActive();revision++;if(persistQueue)await persistQueue;}
-async function init(){ensureStore();await restoreWorldDB();ensureStore();await load();showApp();setConnected(true,'ВЕБ-ПРИЛОЖЕНИЕ');world.settings ||= {};selectedModelId=world.settings.selectedModelId||'auto';if(selectedModelId===LOCAL_MODEL_ID)selectedModelId='auto';world.settings.selectedModelId=selectedModelId;updateSelectedModelLabel();updateModelStatus();refreshWorldPicker();requestPersistentStorage().catch(()=>{});fetchFreeModels().catch(()=>{});}
+async function init(){await restoreWorldDB();ensureStore();await load();showApp();setConnected(true,'ВЕБ-ПРИЛОЖЕНИЕ');world.settings ||= {};selectedModelId=world.settings.selectedModelId||'auto';if(selectedModelId===LOCAL_MODEL_ID)selectedModelId='auto';world.settings.selectedModelId=selectedModelId;updateSelectedModelLabel();updateModelStatus();refreshWorldPicker();requestPersistentStorage().catch(()=>{});fetchFreeModels().catch(()=>{});fetchDGModels().catch(()=>{});}
 function showApp(){$('loginScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('bottomNav').classList.remove('hidden');}
-async function refreshStatus(){aiConfigured=Boolean(hordeStatus.online||localEngine);updateModelStatus();}
+async function refreshStatus(){aiConfigured=Boolean(hordeStatus.online||dgAiStatus.online||localEngine);updateModelStatus();}
 const clean = (value, max = 160) => String(value ?? '').trim().replace(/[\u0000-\u001f]/g, ' ').slice(0, max);
 const words = value => new Set(clean(value, 1200).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(x => x.length > 2));
 
@@ -1203,7 +1204,7 @@ $('worldSelect').addEventListener('change',e=>switchWorld(e.target.value));
 $('newWorldButton').onclick=addNewWorld;$('renameWorldButton').onclick=renameWorld;$('deleteWorldButton').onclick=deleteWorld;
 $('newChatButton').onclick=()=>{if(world.characters[0])selectCharacter(world.characters[0].id);};
 $('addCharacterButton').onclick=addCharacter;
-$('worldChatList').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b)selectCharacter(b.dataset.chat);});
+$('worldChatList').addEventListener('click',e=>{const edit=e.target.closest('[data-chat-edit]');if(edit){e.preventDefault();e.stopPropagation();editCharacter(edit.dataset.chatEdit);return;}const b=e.target.closest('[data-chat]');if(b&&!e.target.closest('[data-thread]'))selectCharacter(b.dataset.chat);});
 $('chatSearch').addEventListener('input',()=>renderCharacterList());
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){activeTab=b.dataset.tab;render();}});
 $('view').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]');if(edit)editCharacter(edit.dataset.edit);const msg=e.target.closest('[data-message]');if(msg){selectCharacter(msg.dataset.message);}const mem=e.target.closest('[data-memory]');if(mem){selectedMemory=mem.dataset.memory;activeTab='memory';render();}if(e.target.id==='addCharacter')addCharacter();if(e.target.id==='export2')exportWorld();if(e.target.id==='import2')importWorld();if(e.target.id==='testTurn')doStep();if(e.target.id==='modelStartSettings')openAISettings();});
@@ -1287,7 +1288,7 @@ function renderCharacterList(){
   const selectButton=$('historySelectButton');if(selectButton){selectButton.classList.toggle('active',historySelectionMode);selectButton.setAttribute('aria-pressed',String(historySelectionMode));}
   if(!filtered.length){
     const suggestions=world.characters.filter(c=>!q||c.identity.name.toLowerCase().includes(q));
-    host.innerHTML=(threads.length?'':'<div class="empty small" style="margin:8px">Пока нет переписок. Нажми «Новый чат» или выбери персонажа.</div>')+suggestions.map(c=>`<button class="thread-item" data-chat="${esc(c.id)}"><span class="thread-avatar">${esc(c.identity.emoji||'◈')}</span><span class="thread-copy"><strong>${esc(c.identity.name)}</strong><small>Открыть персонажа</small></span></button>`).join('');
+    host.innerHTML=(threads.length?'':'<div class="empty small" style="margin:8px">Пока нет переписок. Нажми «Новый чат» или выбери персонажа.</div>')+suggestions.map(c=>`<div class="thread-line"><button class="thread-item" data-chat="${esc(c.id)}"><span class="thread-avatar">${esc(c.identity.emoji||'◈')}</span><span class="thread-copy"><strong>${esc(c.identity.name)}</strong><small>Открыть переписку</small></span></button><button class="thread-more" data-chat-edit="${esc(c.id)}" title="Редактировать персонажа">✎</button></div>`).join('');
     return;
   }
   host.innerHTML=filtered.map(t=>{const c=world.characters.find(x=>x.id===t.characterId);const last=(t.messages||[]).filter(m=>m.speaker!=='system').slice(-1)[0];return `<div class="thread-line ${t.id===activeThreadId?'active':''}">${historySelectionMode?`<input class="thread-select-check" type="checkbox" data-thread-check="${esc(t.id)}" ${selectedThreadIds.has(t.id)?'checked':''} aria-label="Выбрать чат">`:''}<button class="thread-item ${t.id===activeThreadId?'active':''}" data-chat="${esc(t.characterId)}" data-thread="${esc(t.id)}"><span class="thread-dot"></span><span class="thread-avatar">${esc(c?.identity?.emoji||'◈')}</span><span class="thread-copy"><strong>${esc(threadLabel(t))}</strong><small>${esc(c?.identity?.name||'Персонаж')} · ${last?new Date(last.createdAt||t.updatedAt||Date.now()).toLocaleDateString('ru-RU'):'без сообщений'}</small></span></button><button class="thread-more" data-thread-menu="${esc(t.id)}" title="Действия чата">⋮</button></div>`;}).join('');
@@ -1361,22 +1362,62 @@ function setReasoningDepth(key){if(!DEPTH_CONFIG[key])return;reasoningDepth=key;
 function updateLocalAIStatus(){updateModelStatus();}
 function updateModelStatus(message){
   const localReady=Boolean(localEngine),loading=Boolean(localEngineLoading);
-  const online=Boolean(hordeStatus.online);
-  const label=localReady?'ИИ · ЛОКАЛЬНО':online?'ИИ · AI HORDE':'ИИ · НЕТ СВЯЗИ';
+  const dgOnline=Boolean(dgAiStatus.online),hordeOnline=Boolean(hordeStatus.online),online=dgOnline||hordeOnline;
+  const label=localReady?'ИИ · ЛОКАЛЬНО':dgOnline?'ИИ · DG AI':hordeOnline?'ИИ · AI HORDE':'ИИ · ПРОБУЮ ПОДКЛЮЧИТЬСЯ';
   const pill=$('modelPill');if(pill){pill.textContent=label;pill.className='model-pill '+(localReady||online?'good':'warn');}
-  const text=$('modelStatusText');if(text)text.textContent=message||(localReady?'Резервная Qwen загружена на устройство.':online?`AI Horde доступен · ${hordeStatus.textWorkers} текстовых рабочих потоков · очередь ${hordeStatus.queued}. Анонимный режим.`:loading?(modelProgress||'Загрузка резервной модели…'):'AI Horde подключается при отправке сообщения. Модель не скачивается на устройство.');
-  const keyStatus=$('modelKeyStatus');if(keyStatus)keyStatus.textContent='Без регистрации и личного API-ключа';
+  const text=$('modelStatusText');if(text)text.textContent=message||(localReady?'Резервная Qwen загружена на устройство.':dgOnline?`DG AI доступен · ${dgAiStatus.modelCount} моделей · анонимный режим без ключа. Запасной канал — AI Horde.`:hordeOnline?`AI Horde доступен · ${hordeStatus.textWorkers} текстовых рабочих потоков · очередь ${hordeStatus.queued}.`:loading?(modelProgress||'Загрузка резервной модели…'):'Пробую бесплатные облачные узлы DG AI и AI Horde. Модели не скачиваются на устройство.');
+  const keyStatus=$('modelKeyStatus');if(keyStatus)keyStatus.textContent='Без регистрации, личного API-ключа и ID';
   const dot=$('modelDot');if(dot)dot.classList.toggle('active',Boolean(localReady||online));
-  const notice=$('aiNotice');if(notice)notice.textContent=localReady?'Локальная Qwen активна · без серверной квоты':online?`AI Horde · анонимный доступ · очередь ${hordeStatus.queued}`:'AI Horde · бесплатная общественная сеть';
-  const current=$('currentModelLabel');if(current)current.textContent=selectedModelId==='auto'?'Автовыбор · Horde':(freeModels.find(x=>x.id===selectedModelId)?.name||selectedModelName||'AI Horde');
-  const btn=$('modelButton');if(btn){btn.textContent=localReady?'Локальный ИИ готов':online?'AI Horde · онлайн':'ИИ · настройки';btn.disabled=false;}
+  const notice=$('aiNotice');if(notice)notice.textContent=localReady?'Локальная Qwen активна · без серверной квоты':dgOnline?`DG AI · ${dgAiStatus.modelCount} моделей · AI Horde запасным каналом`:hordeOnline?`AI Horde · анонимный доступ · очередь ${hordeStatus.queued}`:'Два бесплатных облачных канала · авто-переключение при сбое';
+  const current=$('currentModelLabel');if(current)current.textContent=selectedModelId==='auto'?'Автовыбор · DG AI → Horde':selectedModelId.startsWith('dg:')?(dgAiModels.find(x=>x.id===selectedModelId.slice(3))?.name||selectedModelId.slice(3)):(freeModels.find(x=>x.id===selectedModelId)?.name||selectedModelName||'AI Horde');
+  const btn=$('modelButton');if(btn){btn.textContent=localReady?'Локальный ИИ готов':online?'Бесплатный ИИ · онлайн':'ИИ · подключение';btn.disabled=false;}
 }
 function updateSelectedModelLabel(){
   if(selectedModelId===LOCAL_MODEL_ID)selectedModelName='Qwen2.5 0.5B · локально';
-  else if(selectedModelId==='auto')selectedModelName='Автовыбор · AI Horde';
+  else if(selectedModelId==='auto')selectedModelName='Автовыбор · DG AI → AI Horde';
+  else if(selectedModelId.startsWith('dg:'))selectedModelName=dgAiModels.find(x=>x.id===selectedModelId.slice(3))?.name||selectedModelId.slice(3);
   else selectedModelName=freeModels.find(x=>x.id===selectedModelId)?.name||selectedModelId;
-  const el=$('currentModelLabel');if(el)el.textContent=selectedModelId==='auto'?'Автовыбор · Horde':selectedModelName;
+  const el=$('currentModelLabel');if(el)el.textContent=selectedModelId==='auto'?'Автовыбор · DG AI → Horde':selectedModelName;
 }
+async function fetchDGModels(force=false){
+  if(!force&&Date.now()-dgAiModelsLoadedAt<60000&&dgAiModels.length)return dgAiModels;
+  try{
+    const response=await fetch(DG_AI_BASE+'/v1/models',{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});
+    if(!response.ok)throw new Error(`DG AI HTTP ${response.status}`);
+    const data=await response.json();
+    const rows=Array.isArray(data)?data:(Array.isArray(data.data)?data.data:(Array.isArray(data.models)?data.models:[]));
+    dgAiModels=rows.map(x=>({id:String(x.id||x.name||''),name:String(x.name||x.id||'')})).filter(x=>x.id).slice(0,80);
+    if(!dgAiModels.length)throw new Error('DG AI не вернул список моделей');
+    dgAiStatus={online:true,modelCount:dgAiModels.length,error:''};dgAiModelsLoadedAt=Date.now();
+    if(selectedModelId.startsWith('dg:')&&!dgAiModels.some(x=>x.id===selectedModelId.slice(3))){selectedModelId='auto';if(world?.settings){world.settings.selectedModelId='auto';storeActive();}}
+    createModelOptionList();updateSelectedModelLabel();updateModelStatus();return dgAiModels;
+  }catch(error){dgAiStatus={online:false,modelCount:0,error:String(error?.message||error)};updateModelStatus();throw error;}
+}
+function chooseDGDefaultModel(){
+  const match=dgAiModels.find(x=>/jolly|role.?play|rp/i.test(x.id+' '+x.name))||dgAiModels.find(x=>/glm.*flash|gpt.?oss/i.test(x.id+' '+x.name))||dgAiModels[0];
+  return match?.id||'gpt-oss';
+}
+async function dgAiChat(messages,{model,temperature=.82,max_tokens=360,onChunk=null,signal=null}={}){
+  const chosen=model||chooseDGDefaultModel();
+  if(onChunk)onChunk(`Подключаюсь к бесплатной модели ${chosen}…`);
+  const controller= new AbortController();
+  const timeout=setTimeout(()=>controller.abort(new Error('DG AI не ответил за 75 секунд.')),75000);
+  const abort=()=>controller.abort(new Error('Запрос отменён.'));
+  if(signal){if(signal.aborted)abort();else signal.addEventListener('abort',abort,{once:true});}
+  try{
+    const response=await fetch(DG_AI_BASE+'/v1/chat',{method:'POST',mode:'cors',credentials:'omit',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({model:chosen,messages:(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'')})),temperature:Math.max(.15,Math.min(1.5,Number(temperature)||.82)),max_tokens:Math.max(48,Math.min(1200,Number(max_tokens)||360))})});
+    const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{data={message:raw};}
+    if(!response.ok)throw new Error(`DG AI HTTP ${response.status}: ${String(data.error?.message||data.message||data.error||raw).slice(0,240)}`);
+    let text=data.reply??data.choices?.[0]?.message?.content??data.output??'';
+    if(Array.isArray(text))text=text.map(x=>x.text||'').join('');text=String(text||'').trim();
+    if(!text)throw new Error('DG AI вернул пустой ответ.');
+    dgAiStatus={online:true,modelCount:Math.max(dgAiModels.length,1),error:''};if(onChunk)onChunk(text);return text.slice(0,16000);
+  }catch(error){
+    if(controller.signal.aborted&&signal?.aborted)throw new Error('Запрос отменён.');
+    throw new Error(`DG AI: ${error?.message||error}`);
+  }finally{clearTimeout(timeout);if(signal)signal.removeEventListener('abort',abort);}
+}
+
 async function hordeFetch(path,options={}){
   const headers={...(options.headers||{}),'Client-Agent':HORDE_AGENT};
   if(options.body){headers['Content-Type']='application/json';headers.apikey=HORDE_ANON_KEY;}
@@ -1396,7 +1437,7 @@ async function fetchFreeModels(force=false){
     const rows=Array.isArray(models)?models:(models.models||[]);
     freeModels=rows.filter(x=>x&&x.name&&Number(x.count||0)>0).map(x=>({id:x.name,name:x.name,count:Number(x.count||0),performance:Number(x.performance||0),queued:Number(x.queued||0),eta:Number(x.eta||0),context_length:Number(x.max_context_length||2048)})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
     hordeStatus={online:true,textWorkers:Number(performance.text_worker_count||0),queued:Number(performance.queued_text_requests||0),queuedTokens:Number(performance.queued_tokens||0),threads:Number(performance.text_thread_count||0)};
-    if(selectedModelId!=='auto'&&selectedModelId!==LOCAL_MODEL_ID&&!freeModels.some(x=>x.id===selectedModelId)){selectedModelId='auto';if(world?.settings){world.settings.selectedModelId='auto';storeActive();}updateSelectedModelLabel();}
+    if(selectedModelId!=='auto'&&selectedModelId!==LOCAL_MODEL_ID&&!selectedModelId.startsWith('dg:')&&!freeModels.some(x=>x.id===selectedModelId)){selectedModelId='auto';if(world?.settings){world.settings.selectedModelId='auto';storeActive();}updateSelectedModelLabel();}
     freeModelsLoadedAt=Date.now();modelError='';createModelOptionList();updateModelStatus();return freeModels;
   }catch(error){
     hordeStatus={...hordeStatus,online:false};modelError=error.message||String(error);updateModelStatus('Не удалось получить каталог AI Horde: '+modelError);createModelOptionList();throw error;
@@ -1404,25 +1445,30 @@ async function fetchFreeModels(force=false){
 }
 function createModelOptionList(){
   const host=$('modelOptions');if(!host)return;
-  const auto=`<button type="button" data-model="auto" class="${selectedModelId==='auto'?'selected':''}">Автовыбор модели${selectedModelId==='auto'?' ✓':''}<small>Любая доступная текстовая модель · выше совместимость</small></button>`;
+  const auto=`<button type="button" data-model="auto" class="${selectedModelId==='auto'?'selected':''}">Автовыбор модели${selectedModelId==='auto'?' ✓':''}<small>Сначала быстрый DG AI, при сбое — AI Horde</small></button>`;
+  const dgHeader='<div class="menu-separator"></div><div class="small muted" style="padding:7px 10px">DG AI · анонимные облачные модели</div>';
+  const dg=dgAiModels.slice(0,60).map(m=>`<button type="button" data-model="dg:${esc(m.id)}" class="${selectedModelId==='dg:'+m.id?'selected':''}">${esc(m.name)}${selectedModelId==='dg:'+m.id?' ✓':''}<small>Без аккаунта и ключа · быстрый канал</small></button>`).join('');
+  const hordeHeader='<div class="menu-separator"></div><div class="small muted" style="padding:7px 10px">AI Horde · распределённые узлы</div>';
   const options=freeModels.slice(0,80).map(m=>`<button type="button" data-model="${esc(m.id)}" class="${selectedModelId===m.id?'selected':''}">${esc(m.name)}${selectedModelId===m.id?' ✓':''}<small>${m.count} рабочих · очередь модели ${m.queued} · ETA ${Math.max(0,Math.round(m.eta))} с</small></button>`).join('');
   const local=`<div class="menu-separator"></div><button type="button" data-model="${LOCAL_MODEL_ID}" class="${selectedModelId===LOCAL_MODEL_ID?'selected':''}">Qwen2.5 0.5B · локально${selectedModelId===LOCAL_MODEL_ID?' ✓':''}<small>Резерв · скачивание ~786 МБ · только по желанию</small></button>`;
-  host.innerHTML=auto+(options||'<div class="small muted" style="padding:10px">Список моделей пока недоступен. Автовыбор продолжает работать.</div>')+local;
+  host.innerHTML=auto+dgHeader+(dg||'<div class="small muted" style="padding:10px">Каталог DG AI пока недоступен.</div>')+hordeHeader+(options||'<div class="small muted" style="padding:10px">Каталог AI Horde пока недоступен.</div>')+local;
 }
 function selectModel(id){
   if(id===LOCAL_MODEL_ID){selectedModelId=id;selectedModelName='Qwen2.5 0.5B · локально';toast('Выбрана локальная резервная модель. Её можно загрузить в настройках ИИ.');}
-  else if(id==='auto'||freeModels.some(x=>x.id===id)){selectedModelId=id;selectedModelName=id==='auto'?'Автовыбор · AI Horde':freeModels.find(x=>x.id===id)?.name||id;}
+  else if(id==='auto'){selectedModelId=id;selectedModelName='Автовыбор · DG AI → AI Horde';}
+  else if(id.startsWith('dg:')&&dgAiModels.some(x=>x.id===id.slice(3))){selectedModelId=id;selectedModelName=dgAiModels.find(x=>x.id===id.slice(3))?.name||id.slice(3);}
+  else if(freeModels.some(x=>x.id===id)){selectedModelId=id;selectedModelName=freeModels.find(x=>x.id===id)?.name||id;}
   else {toast('Этой модели сейчас нет в каталоге.');return;}
   world.settings ||= {};world.settings.selectedModelId=selectedModelId;updateSelectedModelLabel();closePopovers();storeActive();updateModelStatus();
 }
 async function openAISettings(){
   let perf=hordeStatus;
-  try{await fetchFreeModels(true);perf=hordeStatus;}catch{}
+  await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);perf=hordeStatus;
   const count=freeModels.length;
-  openModal('Бесплатный ИИ · AI Horde',`<div class="book-form">
-    <div class="model-card"><div><strong>AI Horde · анонимный режим</strong><div class="small muted">Без регистрации, без личного ключа и без скачивания модели на телефон</div></div><span class="pill ${perf.online?'good':'warn'}">${perf.online?'СЕТЬ ДОСТУПНА':'НЕТ СВЯЗИ'}</span></div>
-    <p>Используется общая сеть добровольцев, предоставляющих вычислительную мощность. MY WORLD отправляет запрос анонимно — тебе не нужно вводить никакие ID или ключи.</p>
-    <div class="model-card"><div><strong>${count} моделей в каталоге</strong><div class="small muted">${perf.textWorkers||0} рабочих узлов · ${perf.threads||0} потоков · ${perf.queued||0} запросов в очереди</div></div><button type="button" id="refreshHordeModels">↻ Обновить</button></div>
+  openModal('Бесплатные ИИ-модели',`<div class="book-form">
+    <div class="model-card"><div><strong>DG AI → AI Horde · автоматическое переключение</strong><div class="small muted">Два анонимных облачных канала. Без регистрации, личного ключа и скачивания модели на телефон.</div></div><span class="pill ${dgAiStatus.online||perf.online?'good':'warn'}">${dgAiStatus.online||perf.online?'СЕТЬ ДОСТУПНА':'НЕТ СВЯЗИ'}</span></div>
+    <p>Сначала пробуется DG AI — публичный шлюз с несколькими моделями, затем при ошибке — AI Horde, распределённая сеть добровольцев. Оба канала принимают анонимные запросы; тебе не нужно вводить ID или ключи.</p><p class="small muted">DG AI заявляет лимит анонимного режима 8 запросов за 10 секунд; суточная квота на его странице не указана. AI Horde ставит анонимные запросы в самый низкий приоритет и может ограничивать их при высокой нагрузке.</p>
+    <div class="model-card"><div><strong>${dgAiModels.length+count} моделей в двух каталогах</strong><div class="small muted">DG AI: ${dgAiModels.length} · AI Horde: ${count} · Horde: ${perf.textWorkers||0} узлов · очередь ${perf.queued||0}</div></div><button type="button" id="refreshHordeModels">↻ Обновить оба каталога</button></div>
     <div class="small muted" id="hordeTestStatus">${esc(modelError||'Готов к проверке соединения.')}</div>
     <div class="controls"><button type="button" class="primary" id="testHordeNow">Отправить тестовый запрос</button><button type="button" id="refreshHordeStatus">Проверить сеть</button></div>
     <div id="hordeTestResult" class="entry hidden"></div>
@@ -1431,11 +1477,11 @@ async function openAISettings(){
     <div class="controls"><button type="button" id="loadLocalModelNow">Загрузить резервную Qwen · ~786 МБ</button></div>
     <div class="small muted" id="localModelProgressText">${esc(modelProgress||'Не загружена')}</div>
     <div class="divider"></div><h3>Что важно знать</h3>
-    <p class="book-help">AI Horde — бесплатная общественная сеть, не платный безлимитный сервер. Анонимные запросы имеют самый низкий приоритет и могут ждать свободного компьютера. В часы высокой нагрузки запросы могут быть ограничены или задержаны. Владелец добровольного узла технически может видеть переданный ему промпт — не отправляй сюда пароли или личные секреты.</p>
+    <p class="book-help">Это бесплатные публичные сервисы, а не твой личный безлимитный сервер. DG AI заявляет до 8 анонимных запросов за 10 секунд; AI Horde имеет очередь и может ограничивать анонимный режим при высокой нагрузке. Внешние узлы технически могут обрабатывать и видеть переданный им промпт — не отправляй пароли или личные секреты.</p>
     <p class="small muted">NSFW: сама сеть не фильтрует обычный взрослый текст на уровне сервиса, но отдельные узлы могут иметь собственные правила. Доступная модель и её поведение зависят от узла.</p>
   </div>`);
-  $('refreshHordeModels')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Обновляю каталог…';try{await fetchFreeModels(true);if(el)el.textContent=`Готово: ${freeModels.length} моделей, ${hordeStatus.textWorkers} рабочих узлов.`;}catch(e){if(el)el.textContent=e.message;}});
-  $('refreshHordeStatus')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Проверяю соединение…';try{await fetchFreeModels(true);if(el)el.textContent=`Сеть доступна · ${hordeStatus.textWorkers} текстовых рабочих узлов · ${hordeStatus.queued} в очереди.`;}catch(e){if(el)el.textContent=e.message;}});
+  $('refreshHordeModels')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Обновляю оба каталога…';const results=await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);if(el)el.textContent=`DG AI: ${dgAiModels.length} моделей · AI Horde: ${freeModels.length} моделей · ${results.every(x=>x.status==='rejected')?'оба каталога недоступны':'обновление завершено'}.`;});
+  $('refreshHordeStatus')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Проверяю два бесплатных канала…';const results=await Promise.allSettled([fetchDGModels(true),fetchFreeModels(true)]);if(el)el.textContent=`DG AI ${dgAiStatus.online?'доступен':'недоступен'} · AI Horde ${hordeStatus.online?'доступен':'недоступен'}.`;});
   $('testHordeNow')?.addEventListener('click',async()=>{const btn=$('testHordeNow'),out=$('hordeTestResult'),status=$('hordeTestStatus');if(btn)btn.disabled=true;if(out){out.classList.remove('hidden');out.textContent='Отправляю тестовый запрос…';}try{const answer=await openRouterChat([{role:'system',content:'Ты тестовый русскоязычный собеседник. Ответь коротко.'},{role:'user',content:'Напиши: «Связь с MY WORLD работает».'}],{max_tokens:40,temperature:.4,onChunk:t=>{if(out)out.textContent=t;}});if(out)out.textContent='✅ '+answer;if(status)status.textContent='Тестовая генерация успешно завершена.';}catch(e){if(out)out.textContent='❌ '+e.message;if(status)status.textContent='Проверь соединение с AI Horde.';}finally{if(btn)btn.disabled=false;}});
   $('loadLocalModelNow')?.addEventListener('click',async()=>{const btn=$('loadLocalModelNow'),status=$('localModelProgressText');if(btn){btn.disabled=true;btn.textContent='Загрузка резервной модели…';}try{await requestPersistentStorage();await ensureLocalModel();if(status)status.textContent='Резервная Qwen запущена и может использоваться без сети.';if(btn){btn.textContent='Локальная Qwen готова';btn.disabled=false;}}catch(e){if(status)status.textContent='Ошибка: '+e.message;if(btn){btn.textContent='Повторить загрузку';btn.disabled=false;}}});
 }
@@ -1487,7 +1533,7 @@ async function runLocalModelSmokeTest(){
 }
 async function openModelMenu(){
   createModelOptionList();openPopover('modelMenu');
-  try{await fetchFreeModels();}catch{}
+  await Promise.allSettled([fetchDGModels(),fetchFreeModels()]);
 }
 function selectedLore(c,cue,thread){
   ensureCharacterExtras(c);
@@ -1615,11 +1661,22 @@ async function openRouterChat(messages,{model=selectedModelId,temperature=.82,ma
   const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'').trim()})).filter(m=>m.content);
   const system=normalized.find(m=>m.role==='system');const tail=normalized.filter(m=>m!==system);
   const cap=Math.max(1600,Math.min(3600,Number(currentThread()?.settings?.promptLimit)||3600));
-  let room=Math.max(400,cap-(system?.content.length||0));const kept=[];
-  for(let i=tail.length-1;i>=0&&room>0;i--){const item=tail[i],content=item.content.slice(-Math.min(room,1000));if(content){kept.unshift(`${item.role==='user'?'Пользователь':'Персонаж'}: ${content}`);room-=content.length;}}
+  let room=Math.max(400,cap-Math.min(system?.content.length||0,Math.min(2300,cap)));const kept=[],keptMessages=[];
+  for(let i=tail.length-1;i>=0&&room>0;i--){const item=tail[i],content=item.content.slice(-Math.min(room,1000));if(content){kept.unshift(`${item.role==='user'?'Пользователь':'Персонаж'}: ${content}`);keptMessages.unshift({role:item.role,content});room-=content.length;}}
   const prefix=system?.content?.slice(0,Math.min(2300,cap))||'Ты — персонаж в ролевом диалоге. Пиши естественно и последовательно.';
   const prompt=[prefix,kept.join('\n\n'),'Продолжи сцену от лица персонажа. Не управляй пользователем. Пиши только продолжение, без пояснений.'].filter(Boolean).join('\n\n');
-  const chosen=(model&&model!=='auto'&&freeModels.some(x=>x.id===model))?[model]:undefined;
+  const boundedMessages=[{role:'system',content:prefix},...keptMessages];
+  const dgRequested=String(model||selectedModelId||'auto').startsWith('dg:')?String(model||selectedModelId).slice(3):null;
+  const useDG=String(model||selectedModelId||'auto')==='auto'||Boolean(dgRequested);
+  if(useDG){
+    try{if(!dgAiModels.length)await fetchDGModels();return await dgAiChat(boundedMessages,{model:dgRequested||chooseDGDefaultModel(),temperature,max_tokens,onChunk,signal});}
+    catch(dgError){
+      if(signal?.aborted)throw dgError;
+      if(onChunk)onChunk(`Быстрый DG AI недоступен (${String(dgError.message||dgError).slice(0,120)}). Переключаюсь на резервную сеть AI Horde…`);
+      try{await fetchFreeModels();}catch{}
+    }
+  }
+  const chosen=(model&&model!=='auto'&&!String(model).startsWith('dg:')&&freeModels.some(x=>x.id===model))?[model]:undefined;
   const maxLength=Math.max(32,Math.min(640,Number(max_tokens)||360));
   const payload={prompt,params:{max_context_length:2048,max_length:maxLength,temperature:Math.max(.15,Math.min(1.5,Number(temperature)||.82)),top_p:.92,rep_pen:1.08,rep_pen_range:512,frmttriminc:false},trusted_workers:false,validated_backends:true,slow_workers:true,extra_slow_workers:true};
   if(chosen)payload.models=chosen;
@@ -1925,7 +1982,7 @@ function enhanceURVLayout(){
   const body=document.body;
   // Store all popovers under one dismissal rule.
   $('newChatButton').onclick=createNewThread;$('headerNewChat').onclick=createNewThread;$('headerBookButton').onclick=()=>openCharacterBook('character');$('sidebarClose').onclick=()=>body.classList.remove('sidebar-open');$('addCharacterButton').onclick=addCharacter;
-  $('profileBar').onclick=()=>$('profileMenu').classList.toggle('open');$('profileMenu').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$('profileMenu').classList.remove('open');if(b.id==='openUserProfile')openCharacterBook('user');if(b.id==='newWorldMenuButton')addNewWorld();});$('worldOverviewButton').onclick=openWorldOverview;$('historyHelpButton').onclick=()=>openModal('Как пользоваться MY WORLD','<div class=\"book-form\"><p>Создавай отдельные чаты, редактируй персонажей в Книге персонажа, добавляй NPC и лорбук. Нижняя панель содержит режимы отыгрыша, вызов персонажей, глубину контекста и выбор локальной модели.</p></div>');$('historySelectButton').onclick=()=>{historySelectionMode=!historySelectionMode;if(!historySelectionMode)selectedThreadIds.clear();renderCharacterList();};
+  $('profileBar').onclick=()=>$('profileMenu').classList.toggle('open');$('profileMenu').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$('profileMenu').classList.remove('open');if(b.id==='openUserProfile')openCharacterBook('user');if(b.id==='newWorldMenuButton')addNewWorld();});$('worldOverviewButton').onclick=openWorldOverview;$('historyHelpButton').onclick=()=>openModal('Как пользоваться MY WORLD','<div class=\"book-form\"><p>Создавай новый чат кнопкой «＋». Персонажа редактируй через книгу персонажа или меню «⋮» рядом с перепиской. В этом меню также можно создать отдельный чат с тем же героем, дублировать и экспортировать ветку. Нижняя панель содержит режимы отыгрыша, вызов NPC, глубину контекста и выбор бесплатной модели.</p></div>');$('historySelectButton').onclick=()=>{historySelectionMode=!historySelectionMode;if(!historySelectionMode)selectedThreadIds.clear();renderCharacterList();};
   $('selectAllThreads').onclick=()=>{for(const t of world.userChats)selectedThreadIds.add(t.id);renderCharacterList();};
   $('exportSelectedThreads').onclick=()=>{const data=world.userChats.filter(t=>selectedThreadIds.has(t.id));download('my-world-selected-chats.json',JSON.stringify(data,null,2),'application/json');};
   $('deleteSelectedThreads').onclick=()=>{const ids=new Set(selectedThreadIds);if(!ids.size){toast('Сначала отметь переписки.');return;}if(!confirm(`Удалить выбранные переписки (${ids.size})?`))return;world.userChats=world.userChats.filter(t=>!ids.has(t.id));selectedThreadIds.clear();if(ids.has(activeThreadId)){const next=world.userChats[0];activeThreadId=next?.id||null;chatCharacter=next?.characterId||world.characters[0]?.id||null;if(!activeThreadId&&chatCharacter)makeThread(chatCharacter);}save().then(()=>render());};
@@ -1934,7 +1991,7 @@ function enhanceURVLayout(){
   $('inspectorToggle').onclick=()=>body.classList.toggle('inspector-open');
   $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){activeTab=b.dataset.tab;render();}});
   $('view').addEventListener('click',e=>{const b=e.target.closest('[data-inspector-book]');if(b)openCharacterBook(b.dataset.inspectorBook);if(e.target.id==='emptyCharacterBook')openCharacterBook('character');if(e.target.id==='emptyLoadModel')openAISettings();if(e.target.id==='providerSettingsButton'||e.target.id==='openHordeSettings')openAISettings();if(e.target.id==='localModelLoadButton')ensureLocalModel().then(()=>toast('Локальная Qwen готова.')).catch(x=>toast(x.message));if(e.target.id==='refreshProviderModels')fetchFreeModels(true).then(()=>toast('Каталог AI Horde обновлён.')).catch(x=>toast(x.message));if(e.target.id==='extraFiltersToggle'){world.settings.ai.extraFilters=e.target.checked;storeActive();}if(e.target.id==='autoRefresh15Toggle'){world.settings.ai.autoRefreshEvery15=e.target.checked;storeActive();}if(e.target.closest('[data-refresh-state]'))refreshCharacterState();if(e.target.closest('[data-add-custom-state]'))addCustomState();if(e.target.closest('[data-add-plot]'))addOpenPlot();if(e.target.closest('[data-edit-scene]'))editSceneStatus();const rel=e.target.closest('[data-edit-relation]');if(rel)editRelationship(rel.dataset.editRelation);const close=e.target.closest('[data-close-plot]');if(close){const c=currentCharacter(),p=c.openPlots.find(x=>x.id===close.dataset.closePlot);if(p){p.status='closed';p.closedAt=Date.now();p.closeReason='Закрыто вручную пользователем.';storeActive();render();}}});
-  $('worldChatList').addEventListener('click',e=>{const more=e.target.closest('[data-thread-menu]');if(more){e.preventDefault();e.stopPropagation();const id=more.dataset.threadMenu;const t=world.userChats.find(x=>x.id===id);if(!t)return;openModal('Действия с чатом',`<div class="book-form"><p class="small muted">${esc(threadLabel(t))}</p><div class="controls"><button class="primary" id="renameThreadButton">Переименовать</button><button id="deleteThreadButton">Удалить чат</button></div></div>`);$('renameThreadButton').onclick=()=>{const name=prompt('Новое название ветки:',threadLabel(t));if(name){t.title=name.trim().slice(0,100);t.updatedAt=Date.now();save();closeModal();render();}};$('deleteThreadButton').onclick=()=>{if(!confirm('Удалить эту ветку со всей её перепиской?'))return;world.userChats=world.userChats.filter(x=>x.id!==id);if(activeThreadId===id){activeThreadId=null;const next=world.userChats[0];if(next){activeThreadId=next.id;chatCharacter=next.characterId;}else makeThread(world.characters[0].id);}save();closeModal();render();};return;}const check=e.target.closest('[data-thread-check]');if(check){if(check.checked)selectedThreadIds.add(check.dataset.threadCheck);else selectedThreadIds.delete(check.dataset.threadCheck);return;}const thread=e.target.closest('[data-thread]');if(thread){if(historySelectionMode){const id=thread.dataset.thread;if(selectedThreadIds.has(id))selectedThreadIds.delete(id);else selectedThreadIds.add(id);renderCharacterList();}else selectThread(thread.dataset.thread);return;}const character=e.target.closest('[data-chat]');if(character)selectCharacter(character.dataset.chat);});
+  $('worldChatList').addEventListener('click',e=>{const more=e.target.closest('[data-thread-menu]');if(more){e.preventDefault();e.stopPropagation();const id=more.dataset.threadMenu;const t=world.userChats.find(x=>x.id===id);if(!t)return;openModal('Действия с чатом',`<div class="book-form"><p class="small muted">${esc(threadLabel(t))}</p><div class="controls"><button class="primary" id="openThreadCharacter">Редактировать персонажа</button><button id="newThreadForCharacter">Новый чат с этим персонажем</button><button id="renameThreadButton">Переименовать чат</button><button id="duplicateThreadButton">Дублировать ветку</button><button id="exportThreadButton">Экспортировать переписку</button><button class="danger" id="deleteThreadButton">Удалить чат</button></div></div>`);$('openThreadCharacter').onclick=()=>{closeModal();openCharacterBook('character',t.characterId);};$('newThreadForCharacter').onclick=()=>{makeThread(t.characterId);summonedIds=[];closeModal();render();};$('renameThreadButton').onclick=()=>{const name=prompt('Новое название ветки:',threadLabel(t));if(name){t.title=name.trim().slice(0,100);t.updatedAt=Date.now();save();closeModal();render();}};$('duplicateThreadButton').onclick=()=>{const copy=deepClone(t);copy.id=uid();copy.parentThreadId=t.id;copy.familyId=getThreadFamily(t);copy.branchLabel=`Копия ${world.userChats.filter(x=>getThreadFamily(x)===getThreadFamily(t)).length}`;copy.title=`${threadLabel(t)} · ${copy.branchLabel}`;copy.createdAt=Date.now();copy.updatedAt=Date.now();copy.messages=(copy.messages||[]).map(m=>({...m,id:uid()}));world.userChats.unshift(copy);activeThreadId=copy.id;chatCharacter=copy.characterId;save();closeModal();render();};$('exportThreadButton').onclick=()=>download(`${threadLabel(t).replace(/[^\p{L}\p{N}_-]+/gu,'_').slice(0,40)||'chat'}.json`,JSON.stringify(t,null,2),'application/json');$('deleteThreadButton').onclick=()=>{if(!confirm('Удалить эту ветку со всей её перепиской?'))return;world.userChats=world.userChats.filter(x=>x.id!==id);if(activeThreadId===id){activeThreadId=null;const next=world.userChats[0];if(next){activeThreadId=next.id;chatCharacter=next.characterId;}else makeThread(world.characters[0].id);}save();closeModal();render();};return;}const check=e.target.closest('[data-thread-check]');if(check){if(check.checked)selectedThreadIds.add(check.dataset.threadCheck);else selectedThreadIds.delete(check.dataset.threadCheck);return;}const thread=e.target.closest('[data-thread]');if(thread){if(historySelectionMode){const id=thread.dataset.thread;if(selectedThreadIds.has(id))selectedThreadIds.delete(id);else selectedThreadIds.add(id);renderCharacterList();}else selectThread(thread.dataset.thread);return;}const character=e.target.closest('[data-chat]');if(character)selectCharacter(character.dataset.chat);});
   $('plusButton').onclick=()=>openPopover('plusMenu');$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>fetchFreeModels(true).then(()=>toast('Каталог бесплатных моделей обновлён.')).catch(e=>toast(e.message));$('refreshButton').onclick=()=>refreshCharacterState();$('openSettingsLink').onclick=openAISettings;$('summonButton').onclick=()=>{populateSummonMenu();openPopover('summonMenu');};$('depthButton').onclick=()=>openPopover('depthMenu');$('modelSelectButton').onclick=openModelMenu;
   $('plusMenu').addEventListener('click',e=>{const b=e.target.closest('[data-plus]');if(!b)return;const action=b.dataset.plus;closePopovers();if(action==='search'){const q=prompt('Что найти в интернете?','');if(q)window.open('https://duckduckgo.com/?q='+encodeURIComponent(q),'_blank','noopener');}if(action==='attach')$('attachTextInput').click();if(action==='dice'){generateRandomEvent();return;}if(action==='scene'){activeTab='scene';render();document.body.classList.add('inspector-open');return;}if(action==='time'){$('chatInput').value+=($('chatInput').value?'\n':'')+worldTimestamp(world);}if(action==='ai'){openAISettings();return;}$('chatInput').dispatchEvent(new Event('input',{bubbles:true}));$('chatInput').focus();});
   $('summonMenu').addEventListener('click',e=>{const b=e.target.closest('[data-summon]');if(!b)return;const id=b.dataset.summon;if(summonedIds.includes(id))summonedIds=summonedIds.filter(x=>x!==id);else summonedIds.push(id);const c=world.characters.find(x=>x.id===id);if(c){const ta=$('chatInput');ta.value+=(ta.value?' ':'')+'@'+c.identity.name;ta.dispatchEvent(new Event('input',{bubbles:true}));}const t=currentThread();if(t)t.summonedCharacterIds=[...summonedIds];populateSummonMenu();storeActive();});
