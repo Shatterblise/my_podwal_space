@@ -43,16 +43,16 @@ jobs:
           npm install --no-audit --no-fund
           npm test
 
-      - name: Package verified build
+      - name: Package verified local build
         if: success()
         run: |
           cd "$PROJECT_DIR"
           zip -qr "$RUNNER_TEMP/MY_WORLD-local-build.zip" . -x "node_modules/*" ".git/*" ".my-world-data/*"
 
-      - name: Upload verified build
+      - name: Upload verified local build
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: MY_WORLD-local-build
-          path: ${{ runner.temp }}/MY_WORLD-cognitive-build.zip
+          path: ${{ runner.temp }}/MY_WORLD-local-build.zip
           retention-days: 7
