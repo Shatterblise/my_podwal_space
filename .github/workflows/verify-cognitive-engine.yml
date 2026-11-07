@@ -1,4 +1,4 @@
-name: Verify MY WORLD cognitive engine
+name: Verify MY WORLD local build
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
           test -f "$RUNNER_TEMP/my-world-release/MY_WORLD_0_5/src/core.js"
           echo "PROJECT_DIR=$RUNNER_TEMP/my-world-release/MY_WORLD_0_5" >> "$GITHUB_ENV"
 
-      - name: Apply cognitive engine overlay
+      - name: Apply cognitive and self-hosted overlay
         run: node .deploy/overlays/apply.mjs "$PROJECT_DIR"
 
       - name: Install dependencies and run complete test suite
@@ -47,12 +47,12 @@ jobs:
         if: success()
         run: |
           cd "$PROJECT_DIR"
-          zip -qr "$RUNNER_TEMP/MY_WORLD-cognitive-build.zip" .
+          zip -qr "$RUNNER_TEMP/MY_WORLD-local-build.zip" . -x "node_modules/*" ".git/*" ".my-world-data/*"
 
       - name: Upload verified build
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: MY_WORLD-cognitive-build
+          name: MY_WORLD-local-build
           path: ${{ runner.temp }}/MY_WORLD-cognitive-build.zip
           retention-days: 7
