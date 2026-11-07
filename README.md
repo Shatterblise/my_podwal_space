@@ -1,17 +1,20 @@
-# my podwal space
+# MY WORLD
 
-Автономный ролевой мир с двумя стартовыми ИИ-персонажами — Джейкобом и Пенни. В основе — реальные запросы к языковой модели через защищённый серверный Worker, раздельная память персонажей и Cloudflare D1 для сохранений.
+Autonomous character-world prototype. The first sample world contains Jacob and Penny; the platform is being developed toward user-created worlds, stories and character rosters.
 
-## Публикация без Codex и компьютера
+## Run locally — no Cloudflare account required
 
-1. В Cloudflare создай API token с правами **Workers Scripts: Edit**, **D1: Edit**, **Account Settings: Read**.
-2. В GitHub открой **Settings → Secrets and variables → Actions** и добавь:
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
-   - `APP_PASSWORD` — пароль входа в сайт
-   - `GROQ_API_KEY` — необязательно, можно оставить пустым; тогда будет использоваться Cloudflare Workers AI.
-3. Открой **Actions → Deploy my podwal space → Run workflow**.
+Requirements: Node.js 22 or newer.
 
-Рабочий процесс сам соберёт исходники, проверит тесты, создаст D1-базу, применит миграцию и опубликует Worker. После завершения адрес сайта появится в журнале GitHub Actions.
+1. Extract the project archive.
+2. Open a terminal in `MY_WORLD_0_5`.
+3. Run `npm run start:local`.
+4. Open `http://127.0.0.1:8787`. The first-run password is printed in the terminal and stored in `.my-world-data/app-password.txt`.
 
-Подробная инструкция — в `DEPLOY_FROM_ANDROID.md` внутри исходного архива.
+The local server uses only Node's built-in modules; npm package installation is not required for this local mode. The cognitive engine, world persistence and routine simulation work without a cloud account or an external AI API. To enable free-form dialogue and model-invented activities, optionally point it at a local OpenAI-compatible server (for example Ollama) using `LOCAL_LLM_BASE_URL` and `LOCAL_LLM_MODEL`.
+
+By default the server listens only on the same device. Exposing it to a home network or the public internet requires deliberate network and HTTPS security configuration. Keep `.my-world-data` private and back it up.
+
+## Hosted Cloudflare deployment (optional)
+
+The GitHub Actions deploy workflow remains available for people who explicitly choose Cloudflare hosting. It requires Cloudflare credentials and an optional Groq key. It is not required for local operation.
