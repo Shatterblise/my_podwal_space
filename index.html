@@ -1336,7 +1336,7 @@ function render(){
 }
 function updateHero(){if(!world)return;const c=currentCharacter();$('clock').textContent=worldTimestamp(world);$('charCount').textContent=String(world.characters.length);$('worldSub').textContent=`${world.name} · локальное сохранение`;if($('turnInfo'))$('turnInfo').textContent=`Циклов: ${world.tick} · решений: ${world.meta.localDecisions||0}`;$('runButton').textContent=world.running?'Ⅱ Пауза':'▶ Автономность';$('stepButton').textContent='Один цикл';$('worldTitle').textContent=world.name;if($('profileNameLabel'))$('profileNameLabel').textContent=world.settings?.userProfile?.name||'Личный профиль';updateModelStatus();}
 function updateDepthLabel(){const el=$('depthLabel');if(el)el.textContent=DEPTH_CONFIG[reasoningDepth]?.label||'Стандарт';}
-function ensureCharacterExtras(c){c.npcs ||= [];c.lorebook ||= {};c.userProfile ||= {};c.identity ||= {};c.identity.appearance ||= '';c.identity.description ||= '';for(const k of ['values','fears','interests','dislikes','habits','possessions'])if(!Array.isArray(c.identity[k]))c.identity[k]=[];for(const n of c.npcs){n.id ||= 'npc_'+uid();n.memory ||= {summary:'',episodes:[],facts:[],privateNotes:[]};n.memory.episodes ||= [];n.memory.facts ||= [];n.memory.privateNotes ||= [];n.relationships ||= {};n.knowledge ||= [];n.lorebook ||= {};}}
+function ensureCharacterExtras(c){c.npcs ||= [];c.lorebook ||= {};c.userProfile ||= {};c.identity ||= {};c.identity.roleplay ||= {viewpoint:'first',mode:'balanced',customPrompt:'',exampleUser:'',exampleReply:'',useFormatting:true,replyLength:'medium'};c.identity.appearance ||= '';c.identity.description ||= '';for(const k of ['values','fears','interests','dislikes','habits','possessions'])if(!Array.isArray(c.identity[k]))c.identity[k]=[];for(const n of c.npcs){n.id ||= 'npc_'+uid();n.memory ||= {summary:'',episodes:[],facts:[],privateNotes:[]};n.memory.episodes ||= [];n.memory.facts ||= [];n.memory.privateNotes ||= [];n.relationships ||= {};n.knowledge ||= [];n.lorebook ||= {};}}
 function openModal(title,html){$('modalTitle').textContent=title;$('modalBody').innerHTML=html;$('modal').classList.remove('book-mode');$('modal').querySelector('.modalbox')?.classList.remove('book-modal');$('modal').classList.remove('hidden');}
 function closeModal(){$('modal').classList.add('hidden');$('modal').classList.remove('book-mode');$('modal').querySelector('.modalbox')?.classList.remove('book-modal');}
 function editCharacter(id){openCharacterBook('character',id);}
@@ -1577,6 +1577,11 @@ function selectedLore(c,cue,thread){
   const chained=chainText?entries.filter(e=>!directIds.has(e.id)&&!e.constant&&(e.keys||[]).some(key=>String(key||'').trim()&&chainText.includes(String(key).trim().toLocaleLowerCase('ru')))):[];
   return [...new Map([...direct,...chained].map(e=>[e.id,e])).values()].sort((a,b)=>(Number(b.priority)||10)-(Number(a.priority)||10)).slice(0,16);
 }
+const RP_CORE_PROMPT = "Ты участвуешь в непрерывной интерактивной ролевой сцене. Это не справка, не ассистентский ответ и не пересказ уже произошедшего.\nПродолжай ровно с текущего момента. Отвечай на последнее действие или реплику пользователя и сохраняй причинно-следственную связь, место, время, предметы, знания и незавершённые действия.\nУправляй только своим персонажем и теми NPC, которых тебе явно поручили. Никогда не пиши за пользователя: не придумывай его слова, движения, решения, эмоции, мысли или реакцию. Оставляй ему пространство для следующего хода.\nНе форсируй сближение, конфликт, признание, драму или развязку. Персонаж может отказаться, сомневаться, молчать, сменить тему, заняться своим делом или уйти, если это соответствует его характеру и ситуации.\nНе превращай каждую реплику в вопрос. Избегай универсальных нейросетевых клише, пустых вступлений, пересказа сообщения пользователя, морализаторских выводов и расплывчатых фраз без конкретного основания.\nИспользуй память и показатели как причины поведения, а не как текст для пересказа. Не называй числа, шкалы, внутренние таблицы или служебные поля вслух. Не раскрывай персонажу факты, которых он не мог узнать.\nПиши естественно, конкретно и с разной длиной реплик. Обычный ход — от одного до четырёх содержательных абзацев; длиннее только когда сцена действительно требует этого. Не раздувай короткий ответ ради объёма.\nОформляй сцену аккуратно: действия можно выделять *курсивом*, важные акценты — **жирным** умеренно, реплики начинай с тире или оформляй естественным диалогом. Используй абзацы. Не добавляй заголовки и списки без сюжетной необходимости.\nНе смешивай авторское описание, речь, мысли и OOC. Если сцена уже использует определённый формат, придерживайся его.\nНе добавляй после каждой реплики пояснение от себя, варианты продолжения или вопрос «что ты сделаешь дальше?». Просто оставь сцену открытой.\nДля интерфейса допускается необязательная метка [[INNER_THOUGHT: ...]] перед ответом: только одна короткая внутренняя эмоциональная реакция персонажа, максимум одно предложение, если она действительно уместна. Это художественная реплика для читателя, а не пошаговое рассуждение или скрытая цепочка мыслей модели. Не показывай ход решения и не объясняй логику; если мысли не нужны, метку опусти.";
+function roleplayPresetInstruction(profile){const modes={balanced:'Обычный ролевой режим: естественный баланс диалога, действий и небольших описаний; не переигрывай.',author:'Авторский режим: выразительная, литературно выверенная проза; точные сенсорные детали, ритм, подтекст и индивидуальный голос. Не превращай каждый ответ в длинный роман.',unsoftened:'Без смягчения: не приглаживай характер, неловкость, противоречия, грубость, напряжение и последствия. Это художественный тон, а не отключение правил безопасности.',emotionless:'Безэмоциональный режим: сдержанный, наблюдательный, почти сухой стиль. Минимум прямых обозначений чувств; передавай состояние через поступки, паузы, выбор слов и детали поведения.',cinematic:'Кинематографичный режим: ясная география сцены, движения, жесты, звук и свет; выразительные фрагменты без скачков между точками зрения.'};return modes[profile?.mode]||modes.balanced;}
+function roleplayViewpointInstruction(viewpoint){if(viewpoint==='third')return 'Повествование от третьего лица с ограниченной точкой зрения персонажа. Не переходи в головы других участников без основания.';if(viewpoint==='first')return 'Повествование от первого лица: персонаж говорит и воспринимает происходящее как «я».';return 'Естественная точка зрения персонажа без смены лица внутри ответа.';}
+function extractInCharacterThought(value){let text=String(value||''),thought='';const patterns=[/\[\[INNER_THOUGHT:\s*([\s\S]*?)\]\]/i,/<inner_thought>([\s\S]*?)<\/inner_thought>/i];for(const pattern of patterns){const match=text.match(pattern);if(match){thought=String(match[1]||'').replace(/\s+/g,' ').trim().slice(0,320);text=text.replace(match[0],' ').trim();break;}}text=text.replace(/^\s*(?:Ответ персонажа|Персонаж)\s*:\s*/i,'').trim();return {text:text||'…',thought};}
+function compactChatMessages(messages,totalLimit=9000,systemLimit=6200){const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'').trim()})).filter(m=>m.content);const system=normalized.find(m=>m.role==='system');const tail=normalized.filter(m=>m!==system);let sys=system?.content||'Ты — персонаж в ролевой сцене. Пиши естественно и последовательно.';if(sys.length>systemLimit){const tailKeep=Math.min(1100,Math.floor(systemLimit*.2));sys=sys.slice(0,systemLimit-tailKeep-80)+'\n\nВАЖНЫЕ КОНЕЧНЫЕ ИНСТРУКЦИИ\n'+sys.slice(-tailKeep);}let room=Math.max(0,totalLimit-sys.length);const kept=[];for(let i=tail.length-1;i>=0&&room>0;i--){const item=tail[i],content=item.content.slice(-Math.min(room,1500));if(!content)continue;kept.unshift({role:item.role,content});room-=content.length;}return [{role:'system',content:sys},...kept];}
 function characterSystemPrompt(c,cue,thread=null){
   const context=buildAgentContext(world,c);
   const depth=Number(thread?.settings?.contextDepth)||DEPTH_CONFIG[reasoningDepth].messages;
@@ -1601,13 +1606,19 @@ function characterSystemPrompt(c,cue,thread=null){
   const facts=JSON.stringify(relevant.slice(0,7));
   const beliefs=JSON.stringify((p.cognition?.beliefs||[]).slice(-4).map(b=>String(b.text||b).slice(0,130)));
   const summary=String(c.memory.summary||'Пока нет общей сводки.').slice(0,650);
-  return `Ты — ${c.identity.name}, самостоятельный вымышленный человек внутри MY WORLD. Ты говоришь от первого лица, не являешься ассистентом или рассказчиком.
+  const rp=c.identity.roleplay||{};
+  const viewpoint=roleplayViewpointInstruction(rp.viewpoint);
+  const modeInstruction=roleplayPresetInstruction(rp);
+  const psycheSnapshot=buildPsycheContext(world,c,cue);
+  const fullState={...state,energy:c.state.energy,mood:c.state.mood,stress:c.state.stress,socialNeed:c.state.socialNeed,activityDuration:c.state.actionDuration,travel:c.state.travel||null,currentAction:c.state.currentAction||null,lastReflection:c.state.lastReflection||'',needs:psycheSnapshot.needs,affect:psycheSnapshot.affect,cognition:{attention:psycheSnapshot.attention,motives:psycheSnapshot.currentMotives,beliefs:psycheSnapshot.beliefs,habits:psycheSnapshot.learnedHabits,skills:psycheSnapshot.skills,learningEvents:psycheSnapshot.learningEvents,recentAttention:psycheSnapshot.recentAttention,standingRecord:psycheSnapshot.standingRecord},activeGoals:psycheSnapshot.activeGoals,relationships:c.relationships||{},userRelationship:c.userRelationship||{},reputation:c.reputation||{},customNeeds:c.customNeeds||[],currentSchedule:(c.schedule||[]).find(x=>world.time.hour>=x.start&&world.time.hour<x.end)||null};
+  const rpExamples=[rp.exampleUser?'Пример пользователя: '+String(rp.exampleUser).slice(0,1000):'',rp.exampleReply?'Пример ответа персонажа: '+String(rp.exampleReply).slice(0,1500):''].filter(Boolean).join('\\n');
+  return `Ты — ${c.identity.name}, самостоятельный вымышленный участник MY WORLD. ${viewpoint} Ты не являешься ассистентом и не обращаешься к пользователю как к клиенту.
 
 ЛИЧНОСТЬ
 ${identity}
 
 ТЕКУЩЕЕ СОСТОЯНИЕ
-${JSON.stringify(state)}
+${JSON.stringify(fullState)}\nПолный снимок потребностей, эмоций, внимания, мотивов, привычек, навыков и рабочей памяти: ${JSON.stringify(psycheSnapshot).slice(0,3600)}
 Активные цели: ${JSON.stringify(goals)}
 Знакомые люди и отношения: ${knownPeople}
 
@@ -1645,6 +1656,9 @@ ${JSON.stringify(c.perceptions||{}).slice(0,1300)}
 АКТИВНЫЕ ЗАПИСИ ЛОРБУКА
 ${loreText}
 
+ОСНОВНОЙ СТАНДАРТ РОЛЕВОГО ОТЫГРЫША
+${RP_CORE_PROMPT}
+
 ПРАВИЛА ОТЫГРЫША
 1. Соблюдай характер, биографию, отношения, цели и текущее состояние. Не меняй отношение внезапно без причины.
 2. Не выдумывай воспоминания и знания. Если персонаж не мог узнать факт, он его не знает.
@@ -1653,7 +1667,15 @@ ${loreText}
 5. Сохраняй формат, который используется в сообщениях: прямая речь, действия, мысли и OOC.
 6. Не объясняй числовые параметры или устройство психики. Пиши естественно и конкретно.
 7. Не используй случайные заготовки действий, шаблонные реакции или списки вариантов. Выводи поведение из целей, характера, текущей сцены, памяти, знаний и отношений. Если нет основания действовать — персонаж может бездействовать или не отвечать.
-8. Дополнительные правила этой ветки: ${String(thread?.settings?.systemNote||'нет').slice(0,700)}.`;
+8. Дополнительные правила этой ветки: ${String(thread?.settings?.systemNote||'нет').slice(0,1000)}.
+
+ПЕРСОНАЛЬНЫЙ СТИЛЬ ОТЫГРЫША
+Точка зрения: ${viewpoint}
+Режим: ${modeInstruction}
+Длина ответа: ${rp.replyLength||'medium'}; не растягивай простую сцену.
+Форматирование: ${rp.useFormatting===false?'минимальное, только абзацы и диалог':'используй курсив для действий и умеренный жирный акцент, когда это помогает чтению'}.
+Персональные инструкции: ${String(rp.customPrompt||'нет').slice(0,4200)}
+${rpExamples?('Примеры стиля, не копировать дословно:\n'+rpExamples):''}.`;
 }
 async function generateCharacterReply(c,thread,message,onChunk=null){
   const cfg=DEPTH_CONFIG[reasoningDepth]||DEPTH_CONFIG.standard;
@@ -1910,7 +1932,7 @@ function openCharacterBook(tab='character',id=null){
 }
 function renderCharacterBook(){
   const c=world.characters.find(x=>x.id===bookCharacterId);if(!c)return;ensureCharacterExtras(c);
-  const names=[['character','ПЕРСОНАЖ'],['npc','NPC'],['user','ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ'],['background','ФОН'],['lore','ЛОРБУК']];
+  const names=[['character','ПЕРСОНАЖ'],['roleplay','ОТЫГРЫШ'],['npc','NPC'],['user','ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ'],['background','ФОН'],['lore','ЛОРБУК']];
   const tabs=names.map(([k,n])=>`<button data-book-tab="${k}" class="${bookTab===k?'active':''}">${n}</button>`).join('');
   openModal('Книга персонажа',`<div class="book-header"><div class="book-header-title"><span>▣</span><div><strong>Книга персонажа</strong><div class="small muted">${esc(c.identity.name)} · ID ${esc(c.id)}</div></div></div><div class="book-actions"><button class="save-book" id="saveBook">▣ Сохранить</button><button id="closeBook">×</button></div></div><nav class="book-tabs">${tabs}</nav><div class="book-body" id="bookBody">${bookTabContent(c)}</div>`);
   $('modal').classList.add('book-mode');$('modal').querySelector('.modalbox')?.classList.add('book-modal');
@@ -1924,6 +1946,19 @@ function bookField(label,id,value='',type='textarea',help=''){
 }
 function bookTabContent(c){
   if(bookTab==='character')return `<div class="book-form"><h3>Идентичность и описание</h3><div class="book-grid">${bookField('Имя','bookName',c.identity.name,'input')}${bookField('Возраст','bookAge',c.identity.age,'input')}${bookField('Аватар / символ','bookEmoji',c.identity.emoji,'input')}<div class="book-field"><label>Быстрый выбор символа</label><div class="emoji-quick-grid">${['✦','◇','◆','☾','☼','♟','猫','🖤','🦇','🐈','🕯️','⚙️','🎸','🌙','🪐','🩶','🦋','🗝️'].map(e=>`<button type="button" data-emoji-pick="${e}">${e}</button>`).join('')}</div></div>${bookField('Краткое структурированное описание','bookDescription',c.identity.description||'','textarea','Короткая выжимка, которая отображается в профиле и используется моделью.')}</div>${bookField('Биография','bookBiography',c.identity.biography||'','large')}${bookField('Внешность','bookAppearance',c.identity.appearance||'')}${bookField('Характер и манера речи','bookSpeech',c.identity.speechStyle||'','large') }<h3>Психологический профиль</h3><div class="book-grid">${bookField('Ценности','bookValues',(c.identity.values||[]).join('\n'))}${bookField('Страхи и уязвимости','bookFears',(c.identity.fears||[]).join('\n'))}${bookField('Интересы','bookInterests',(c.identity.interests||[]).join('\n'))}${bookField('Не любит / избегает','bookDislikes',(c.identity.dislikes||[]).join('\n'))}${bookField('Привычки','bookHabits',(c.identity.habits||[]).join('\n'))}${bookField('Личные вещи','bookPossessions',(c.identity.possessions||[]).join('\n'))}</div><div class="book-save-row"><button id="generateBookCharacter">✧ Создать / дополнить личность ИИ</button></div><div class="book-help">Ползунки психических черт и текущее состояние находятся во вкладке «Психика» справа.</div></div>`;
+  if(bookTab==='roleplay'){
+    const rp=c.identity.roleplay||{};
+    const option=(value,label,current)=>'<option value="'+value+'" '+(current===value?'selected':'')+'>'+label+'</option>';
+    return '<div class="book-form"><h3>Системные инструкции отыгрыша</h3><p class="book-help">Эти настройки прикрепляются к профилю персонажа и применяются во всех его переписках.</p>'+
+      '<div class="book-grid"><div class="book-field"><label>Точка зрения</label><select id="bookRpViewpoint">'+option('first','От первого лица · «я»',rp.viewpoint)+option('third','От третьего лица · имя персонажа',rp.viewpoint)+'</select></div>'+
+      '<div class="book-field"><label>Стиль отыгрыша</label><select id="bookRpMode">'+option('balanced','Обычный RP · естественный',rp.mode)+option('author','Авторский · литературный',rp.mode)+option('unsoftened','Без смягчения · реалистичный',rp.mode)+option('emotionless','Безэмоциональный · сдержанный',rp.mode)+option('cinematic','Кинематографичный',rp.mode)+'</select></div>'+
+      '<div class="book-field"><label>Длина ответа</label><select id="bookRpLength">'+option('short','Короткий · 1–2 абзаца',rp.replyLength)+option('medium','Средний · 2–4 абзаца',rp.replyLength)+option('detailed','Подробный · по ситуации',rp.replyLength)+'</select></div></div>'+
+      bookField('Дополнительный системный промпт персонажа','bookRpPrompt',rp.customPrompt||'','large','Опиши устойчивую манеру отыгрыша, ограничения характера, темп речи и поведение. Биография уже передаётся модели из профиля.')+
+      '<h3>Примеры реплик</h3><p class="book-help">Пример реплики пользователя и желаемого ответа задаёт стиль и ритм, но не копируется дословно.</p>'+
+      bookField('Пример реплики пользователя','bookRpExampleUser',rp.exampleUser||'','large')+bookField('Пример ответа персонажа','bookRpExampleReply',rp.exampleReply||'','large')+
+      '<label class="book-field"><input type="checkbox" id="bookRpFormatting" '+(rp.useFormatting!==false?'checked':'')+'> Использовать курсив для действий, умеренный жирный акцент, абзацы и диалог</label>'+
+      '<div class="warning">«Без смягчения» меняет художественную подачу, но не отключает ограничения модели или правила безопасности.</div><div class="book-help">Нажми «Сохранить» в шапке книги персонажа.</div></div>';
+  }
   if(bookTab==='npc')return `<div class="book-form"><div class="sectionhead"><div><h3>NPC, связанные с ${esc(c.identity.name)}</h3><p class="small muted">Они принадлежат профилю этого персонажа. Их можно вызвать через @ в конкретный чат.</p></div><button id="addNpcButton">＋ Новый NPC</button></div><div class="npc-grid">${(c.npcs||[]).map((n,i)=>`<div class="npc-card" data-npc-index="${i}"><div class="npc-card-head"><strong>${esc(n.name||'Новый NPC')}</strong><button class="danger" data-remove-npc="${i}">Удалить</button></div><div class="book-field"><label>Имя</label><input data-npc-field="name" value="${esc(n.name)}"></div><div class="book-field"><label>Псевдонимы / ключи вызова (через запятую)</label><input data-npc-field="aliases" value="${esc((n.aliases||[]).join(', '))}"></div><div class="book-grid"><div class="book-field"><label>Возраст</label><input data-npc-field="age" value="${esc(n.age||'')}"></div><div class="book-field"><label>Пол / гендер (по желанию)</label><input data-npc-field="gender" value="${esc(n.gender||'')}"></div></div><div class="book-field"><label>Внешность</label><textarea data-npc-field="appearance">${esc(n.appearance||'')}</textarea></div><div class="book-field"><label>Характер и манера речи</label><textarea data-npc-field="persona">${esc(n.persona||'')}</textarea></div><div class="book-field"><label>Описание / биография</label><textarea data-npc-field="description">${esc(n.description||'')}</textarea></div><div class="book-field"><label>Личная сводка памяти NPC</label><textarea data-npc-field="memorySummary" placeholder="Что этот NPC лично пережил и запомнил…">${esc(n.memory?.summary||'')}</textarea><div class="book-help">Память этого NPC хранится отдельно от памяти главного персонажа.</div></div><div class="book-grid"><label class="small"><input data-npc-field="enabled" type="checkbox" ${n.enabled!==false?'checked':''}> Активен</label><label class="small"><input data-npc-field="constant" type="checkbox" ${n.constant?'checked':''}> Всегда учитывать</label></div><div class="book-field"><label>Приоритет</label><input data-npc-field="priority" type="number" min="1" max="100" value="${Number(n.priority)||10}"></div></div>`).join('')||'<div class="book-empty">NPC ещё не добавлены. Создай первого участника мира.</div>'}</div><div class="book-save-row"><button class="primary" id="saveNpcTab">Сохранить NPC</button></div></div>`;
   if(bookTab==='user'){const u={...(world.settings.userProfile||{}),...(c.userProfile||{})};return `<div class="book-form"><h3>Краткий структурированный профиль пользователя</h3><p class="small muted">Эти сведения передаются ИИ как контекст о собеседнике. Можно оставить поля пустыми или переопределить их только для этого персонажа.</p><div class="book-grid">${bookField('Имя / как обращаться','userName',u.name||'','input')}${bookField('Возраст','userAge',u.age||'','input')}${bookField('Обращение / местоимения','userPronouns',u.pronouns||'','input')}${bookField('Внешность / аватар словами','userAppearance',u.appearance||'')}</div>${bookField('Краткая личность','userPersonality',u.personality||'')}${bookField('Биография / важный контекст','userBackground',u.background||'','large')}${bookField('Интересы и предпочтения','userPreferences',u.preferences||'')}${bookField('Дополнительные инструкции для ИИ','userInstructions',u.customInstructions||'','large')}<div class="book-save-row"><button id="useGlobalUserProfile">Сохранить как общий профиль для всех персонажей</button><button class="primary" id="saveUserTab">Сохранить только для этого персонажа</button></div></div>`;}
   if(bookTab==='background')return `<div class="book-form"><h3>Мир и текущий фон сцены</h3><p class="small muted">Общий контекст вселенной, который видят все персонажи этого мира. Сюда можно поместить правила сеттинга, место, эпоху, ограничения и события, не привязанные к одному герою.</p>${bookField('Описание мира / сеттинг','worldBackground',world.background||'','large')}${bookField('Текущая сцена / место действия','worldScene',world.scene||'','large')}${bookField('Правила и важные ограничения','worldRules',world.rules||'','large')}<div class="book-save-row"><button class="primary" id="saveBackgroundTab">Сохранить фон</button></div></div>`;
@@ -1961,6 +1996,16 @@ function saveBookTab(closeAfter=false,globalUser=false){
   if(bookTab==='character'){
     c.identity.name=String(val('bookName')||c.identity.name).trim().slice(0,60);c.identity.age=clamp(val('bookAge')||c.identity.age,1,120);c.identity.emoji=String(val('bookEmoji')||'✦').slice(0,8);c.identity.description=val('bookDescription').slice(0,800);c.identity.biography=val('bookBiography').slice(0,5000);c.identity.appearance=val('bookAppearance').slice(0,3000);c.identity.speechStyle=val('bookSpeech').slice(0,3000);
     for(const [id,key] of [['bookValues','values'],['bookFears','fears'],['bookInterests','interests'],['bookDislikes','dislikes'],['bookHabits','habits'],['bookPossessions','possessions']])c.identity[key]=val(id).split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,100);
+  }
+  if(bookTab==='roleplay'){
+    c.identity.roleplay ||= {};
+    c.identity.roleplay.viewpoint=val('bookRpViewpoint')||'first';
+    c.identity.roleplay.mode=val('bookRpMode')||'balanced';
+    c.identity.roleplay.replyLength=val('bookRpLength')||'medium';
+    c.identity.roleplay.customPrompt=val('bookRpPrompt').slice(0,5000);
+    c.identity.roleplay.exampleUser=val('bookRpExampleUser').slice(0,1800);
+    c.identity.roleplay.exampleReply=val('bookRpExampleReply').slice(0,2600);
+    c.identity.roleplay.useFormatting=checked('bookRpFormatting');
   }
   if(bookTab==='npc'){
     document.querySelectorAll('.npc-card').forEach(card=>{const i=Number(card.dataset.npcIndex);const n=c.npcs[i];if(!n)return;const v=k=>card.querySelector(`[data-npc-field="${k}"]`);n.name=v('name')?.value.trim()||'NPC';n.aliases=(v('aliases')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);for(const k of ['age','gender','appearance','persona','description'])n[k]=v(k)?.value||'';n.memory ||= {summary:'',episodes:[],facts:[],privateNotes:[]};n.memory.summary=v('memorySummary')?.value||n.memory.summary||'';n.enabled=!!v('enabled')?.checked;n.constant=!!v('constant')?.checked;n.priority=clamp(v('priority')?.value||10,1,100);});
@@ -2081,7 +2126,9 @@ async function generateNpcReply(owner,npc,thread,message,onChunk=null){
 Инструкции ветки: ${String(thread.settings?.systemNote||'').slice(0,500)}
 Напоминание: ${String(thread.settings?.reminder||'').slice(0,500)}
 `;
-  return openRouterChat([{role:'system',content:system},...history],{temperature:Number(thread.settings?.temperature)||.82,max_tokens:(DEPTH_CONFIG[reasoningDepth]||DEPTH_CONFIG.standard).tokens,onChunk});
+  const ownerRp=owner.identity?.roleplay||{};
+  const npcSystem=system+'\n\n'+RP_CORE_PROMPT+'\n\nТочка зрения: '+roleplayViewpointInstruction(ownerRp.viewpoint)+'\nСтиль: '+roleplayPresetInstruction(ownerRp)+'\nДополнительные инструкции: '+String(ownerRp.customPrompt||'').slice(0,2000);
+  return openRouterChat([{role:'system',content:npcSystem},...history],{temperature:Number(thread.settings?.temperature)||.82,max_tokens:(DEPTH_CONFIG[reasoningDepth]||DEPTH_CONFIG.standard).tokens,onChunk});
 }
 function getThreadFamily(thread){return thread.familyId||thread.id;}
 function forkThreadAt(index){
