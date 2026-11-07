@@ -125,6 +125,64 @@ body{background:#11100f}
 .composer-area{position:relative;flex:none;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
 @media(max-width:780px){.composer-area{padding:8px 10px calc(18px + env(safe-area-inset-bottom));}.message-action-toolbar{opacity:1}.message-action-toolbar button{padding:6px 8px}.inspector-content{padding-bottom:22px}}
 
+
+/* MY WORLD RP: composer anchored at bottom, larger touch targets, clearer replies */
+.chat-column{height:100%;min-height:0;overflow:hidden}
+.chat-messages{padding-bottom:6px;scroll-padding-bottom:8px}
+.composer-area{position:sticky;bottom:0;z-index:8;margin-top:auto;flex:none;padding:2px 9px calc(2px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg-main) 94%,rgba(17,16,15,.92))}
+.model-status-row{margin:0 auto 3px;font-size:10px;min-height:14px}
+.composer-hint{display:none}
+.compose-panel{padding:5px 7px 4px}
+.quick-insert-row{gap:5px;padding-bottom:4px}
+.quick-insert-btn{width:39px;height:36px;min-width:39px;min-height:36px;font-size:16px;border-radius:8px}
+.composer-icon-btn{min-width:39px;min-height:40px;padding:0 7px;font-size:18px}
+.model-select-btn{min-height:40px;padding:0 9px;font-size:12px}
+.send-btn{width:46px;height:44px;min-width:46px;min-height:44px;font-size:18px}
+.composer{min-height:52px;padding:8px 10px}
+.composer textarea{min-height:38px;max-height:140px;font-size:15px}
+.composer-footer{gap:6px;padding-top:5px}
+.footer-left,.footer-right{gap:5px}
+.message-action-toolbar{opacity:1;gap:5px;flex-wrap:wrap}
+.message-action-toolbar button{min-width:37px;min-height:37px;padding:7px 9px;font-size:13px;border-radius:7px}
+.message-row{margin-bottom:20px}
+.message-meta{font-size:13px}
+.message-meta span{font-size:10px}
+.message-text{font-size:15px;line-height:1.85}
+.message-thought{margin-top:9px;padding:7px 10px;border-left:2px solid var(--accent);background:#1a1917;border-radius:0 7px 7px 0;color:var(--text-muted);font-size:12px}
+.message-thought summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;color:#c3a97e;font-size:11px;min-height:28px}
+.message-thought summary::-webkit-details-marker{display:none}
+.message-thought[open] summary span{transform:rotate(180deg)}
+.message-thought>div{padding:6px 2px 2px;line-height:1.65}
+.thinking-label{color:var(--accent);font-style:italic}
+.thinking-dots{display:inline-block;animation:rp-pulse 1.1s ease-in-out infinite}
+@keyframes rp-pulse{0%,100%{opacity:.25}50%{opacity:1}}
+.rp-bold{color:#f0d7aa;font-weight:750}
+.rp-heading{display:inline-block;color:#e9c47e;font-size:1.04em;margin:7px 0 3px}
+.rp-quote{margin:7px 0;padding:5px 11px;border-left:2px solid #8d826e;color:#b8b0a4;background:#191816}
+.rp-bullet{display:inline-block;padding-left:10px;color:#d9d0c0}
+@media(max-width:780px){
+ .chat-column{height:100%;min-height:0}
+ .chat-messages{padding:13px 12px 5px}
+ .composer-area{padding:1px 6px calc(1px + env(safe-area-inset-bottom))}
+ .compose-panel{padding:4px 5px 3px}
+ .quick-insert-row{gap:4px;padding-bottom:3px}
+ .quick-insert-btn{width:37px;height:34px;min-width:37px;min-height:34px}
+ .composer textarea{font-size:15px;min-height:42px}
+ .composer-footer{gap:4px}
+ .composer-icon-btn{min-width:37px;min-height:40px;padding:0 5px}
+ .depth-btn span{font-size:11px;max-width:65px}
+ .model-select-btn{max-width:138px;min-height:40px;font-size:11px}
+ .send-btn{width:45px;height:43px;min-width:45px;min-height:43px}
+ .message-action-toolbar{display:flex;opacity:1}
+ .message-text{font-size:15.5px}
+}
+@media(max-width:390px){
+ .quick-insert-row{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+ .quick-insert-row::-webkit-scrollbar{display:none}
+ .footer-left{flex:1;min-width:0;flex-wrap:nowrap}
+ .model-select-btn{max-width:114px}
+}
+
 </style>
 </head>
 <body>
@@ -1121,7 +1179,7 @@ function legacy_renderMessages(){
   const thread=world.userChats.find(t=>t.characterId===c.id);const msgs=thread?.messages||[];
   $('headerPersonaName').textContent=c.identity.name;$('headerPersonaMeta').textContent=`${c.identity.age||'—'} лет · ${LABELS[c.state.activity]||c.state.activity} · ${locationName(world,c.state.location)}`;$('headerMood').textContent=c.psyche?.affect?.dominant||'нейтральное состояние';
   if(!msgs.length){host.innerHTML=`<div class="chat-empty"><div class="empty-mark">${esc(c.identity.emoji||'✦')}</div><div class="eyebrow">ЛИЧНАЯ ПЕРЕПИСКА</div><h2>${esc(c.identity.name)}</h2><p>${esc((c.identity.biography||'Персонаж ещё не рассказал о себе.').slice(0,280))}</p><div class="chat-empty-note">Персонаж сохраняет собственную память и отношение к происходящему. Начни разговор с любой темы.</div></div>`;return;}
-  host.innerHTML=msgs.map(m=>m.speaker==='system'?`<div class="notice-line">${esc(m.text)}</div>`:`<article class="message-row ${m.speaker==='user'?'user':'character'}"><div class="message-avatar">${m.speaker==='user'?'Я':esc(c.identity.emoji||'✦')}</div><div class="message-content"><div class="message-meta">${m.speaker==='user'?'Ты':esc(c.identity.name)} <span>День ${m.day||world.time.day} · ${String(m.hour??world.time.hour).padStart(2,'0')}:00</span></div><div class="message-text">${esc(m.text).replace(/\n/g,'<br>')}</div></div></article>`).join('')+(modelBusy?`<article class="message-row character"><div class="message-avatar">${esc(c.identity.emoji||'✦')}</div><div class="message-content"><div class="message-meta">${esc(c.identity.name)} <span>печатает…</span></div><div class="message-text" id="streamingText">${esc(streamingDraft||'…')}</div></div></article>`:'');
+  host.innerHTML=msgs.map(m=>m.speaker==='system'?`<div class="notice-line">${esc(m.text)}</div>`:`<article class="message-row ${m.speaker==='user'?'user':'character'}"><div class="message-avatar">${m.speaker==='user'?'Я':esc(c.identity.emoji||'✦')}</div><div class="message-content"><div class="message-meta">${m.speaker==='user'?'Ты':esc(c.identity.name)} <span>День ${m.day||world.time.day} · ${String(m.hour??world.time.hour).padStart(2,'0')}:00</span></div><div class="message-text">${esc(m.text).replace(/\n/g,'<br>')}</div></div></article>`).join('')+(modelBusy?`<article class="message-row character"><div class="message-avatar">${esc(c.identity.emoji||'✦')}</div><div class="message-content"><div class="message-meta">${esc(c.identity.name)} <span class="thinking-label">Думает<span class="thinking-dots">…</span></span></div><div class="message-text" id="streamingText">${esc(streamingDraft||'…')}</div></div></article>`:'');
   host.scrollTop=host.scrollHeight;
 }
 
@@ -1295,15 +1353,20 @@ function renderCharacterList(){
 }
 function formatRoleplayText(value){
   let safe=esc(value||'');
+  safe=safe.replace(/\*\*([^*\n]+)\*\*/g,'<strong class="rp-bold">$1</strong>');
+  safe=safe.replace(/~~([^~\n]+)~~/g,'<del>$1</del>');
   safe=safe.replace(/==([\s\S]+?)==/g,'<span class="direct-speech">$1</span>');
   safe=safe.replace(/\*([^*\n]+)\*/g,'<span class="roleplay-action">*$1*</span>');
   safe=safe.replace(/\((OOC:[\s\S]*?)\)/g,'<span class="roleplay-ooc">($1)</span>');
+  safe=safe.replace(/^### (.+)$/gm,'<strong class="rp-heading">$1</strong>');
+  safe=safe.replace(/^> (.+)$/gm,'<blockquote class="rp-quote">$1</blockquote>');
+  safe=safe.replace(/^[-•] (.+)$/gm,'<span class="rp-bullet">• $1</span>');
   return safe.replace(/\n/g,'<br>');
 }
 function characterStateStrip(c){
   const last=(c.state.recentDecisions||[]).slice(-1)[0];
   const text=String(c.state.lastReflection||last?.why||last?.intent||c.psyche?.cognition?.workingMemory?.[0]?.text||'Пока нет зафиксированного намерения. Оно появится после самостоятельного решения персонажа.');
-  return `<div class="character-state-strip"><button type="button" class="character-state-toggle" id="thoughtToggle" aria-expanded="false">Ход мыслей · текущее намерение</button><div class="character-state-body" id="thoughtDetails" hidden>${esc(text)}</div></div>`;
+  return `<div class="character-state-strip"><button type="button" class="character-state-toggle" id="thoughtToggle" aria-expanded="false">Состояние и текущее намерение ⌄</button><div class="character-state-body" id="thoughtDetails" hidden>${esc(text)}</div></div>`;
 }
 function renderMessages(){
   const host=$('chatMessages');if(!host||!world)return;
@@ -1314,7 +1377,8 @@ function renderMessages(){
   host.innerHTML=characterStateStrip(c)+t.messages.map((m,i)=>{
     if(m.speaker==='system')return `<div class="notice-line" data-message-index="${i}">${formatRoleplayText(m.text)}</div>`;
     const user=m.speaker==='user';const name=user?'Ты':(m.speakerName||c.identity.name);const avatar=user?'Я':(m.speakerEmoji||c.identity.emoji||'✦');
-    return `<article class="message-row ${user?'user':'character'}" data-message-index="${i}"><div class="message-avatar">${esc(avatar)}</div><div class="message-content"><div class="message-meta">${esc(name)} <span>День ${m.day||world.time.day} · ${String(m.hour??world.time.hour).padStart(2,'0')}:00</span></div><div class="message-text">${formatRoleplayText(m.text)}</div></div></article>`;
+    const thought=m.thought?'<details class="message-thought"><summary>Внутренняя реакция персонажа <span>⌄</span></summary><div>'+formatRoleplayText(m.thought)+'</div></details>':'';
+    return `<article class="message-row ${user?'user':'character'}" data-message-index="${i}"><div class="message-avatar">${esc(avatar)}</div><div class="message-content"><div class="message-meta">${esc(name)} <span>День ${m.day||world.time.day} · ${String(m.hour??world.time.hour).padStart(2,'0')}:00</span></div><div class="message-text">${formatRoleplayText(m.text)}</div>${thought}</div></article>`;
   }).join('')+(modelBusy?`<article class="message-row character"><div class="message-avatar">${esc(c.identity.emoji||'✦')}</div><div class="message-content"><div class="message-meta">${esc(c.identity.name)} <span>печатает…</span></div><div class="message-text" id="streamingText">${esc(streamingDraft||'…')}</div></div></article>`:'');
   host.scrollTop=host.scrollHeight;
 }
@@ -1760,9 +1824,9 @@ async function sendChat(event){
   input.value='';input.style.height='auto';thread.draft='';modelBusy=true;streamingDraft='';const send=$('sendButton');if(send)send.disabled=true;renderMessages();renderCharacterList();persistAll();
   try{
     const speakingNpc=resolveMentionedNpc(c,text,thread);
-    const reply=await (speakingNpc?generateNpcReply(c,speakingNpc,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;}):generateCharacterReply(c,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;}));
-    thread.messages.push({speaker:'character',speakerName:speakingNpc?.name||c.identity.name,speakerEmoji:speakingNpc?.emoji||c.identity.emoji,speakerNpcId:speakingNpc?.id||null,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
-    if(speakingNpc){recordNpcMemory(speakingNpc,`Пользователь сказал: ${text.slice(0,350)}`,`Ответ ${speakingNpc.name}: ${reply.slice(0,350)}`);speakingNpc.userRelationship ||= {familiarity:0,trust:0,affinity:0};speakingNpc.userRelationship.familiarity=clamp((speakingNpc.userRelationship.familiarity||0)+.5);}
+    const rawReply=await (speakingNpc?generateNpcReply(c,speakingNpc,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;}):generateCharacterReply(c,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;}));
+    const parsedReply=extractInCharacterThought(rawReply);const reply=parsedReply.text;
+    thread.messages.push({speaker:'character',speakerName:speakingNpc?.name||c.identity.name,speakerEmoji:speakingNpc?.emoji||c.identity.emoji,speakerNpcId:speakingNpc?.id||null,text:reply,thought:parsedReply.thought||'',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});    if(speakingNpc){recordNpcMemory(speakingNpc,`Пользователь сказал: ${text.slice(0,350)}`,`Ответ ${speakingNpc.name}: ${reply.slice(0,350)}`);speakingNpc.userRelationship ||= {familiarity:0,trust:0,affinity:0};speakingNpc.userRelationship.familiarity=clamp((speakingNpc.userRelationship.familiarity||0)+.5);}
     else {addMemory(c,{text:`Разговор: пользователь сказал «${text.slice(0,350)}»`,importance:2,visibility:'private'},world);addMemory(c,{text:`Ответ ${c.identity.name}: «${reply.slice(0,350)}»`,importance:2,visibility:'private'},world);rememberUserStatement(c,text);c.userRelationship.familiarity=clamp((c.userRelationship.familiarity||0)+.6);c.psyche ||= createPsyche();c.psyche.needs.connection=clamp((c.psyche.needs.connection||0)-2.5);c.state.socialNeed=clamp((c.state.socialNeed||0)-2);} 
     world.meta.provider=selectedModelId===LOCAL_MODEL_ID?'Локальная Qwen · WASM CPU':'AI Horde · анонимная сеть';world.meta.model=selectedModelId==='auto'?'Автовыбор модели':selectedModelId;world.meta.lastError=null;thread.updatedAt=Date.now();await save();
     const prior=Number(c.stateAnalysis?.lastMessageCount||0);if(world.settings.ai?.autoRefreshEvery15!==false&&thread.messages.length-prior>=15){setTimeout(()=>refreshCharacterState({character:c,thread,silent:true}).then(ok=>{if(ok){render();toast('Показатели персонажа обновлены по последним 15 сообщениям.');}}),500);}
@@ -1774,7 +1838,7 @@ async function skipTurn(){
   if(modelBusy)return;const c=currentCharacter();if(!c)return;const t=getOrCreateThread(c.id);
   t.messages.push({speaker:'user',text:'[ПРОПУСК ХОДА] Пользователь пропускает свой ход. Не придумывай за него ни действий, ни реплик, ни мыслей, ни чувств. Продолжи только события вокруг и закончи там, где пользователь снова может действовать.',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});t.updatedAt=Date.now();
   $('chatInput').value='';modelBusy=true;renderMessages();
-  try{const reply=await generateCharacterReply(c,t,'Пользователь пропускает ход.',chunk=>{streamingDraft=chunk;const el=$('streamingText');if(el)el.textContent=chunk;});t.messages.push({speaker:'character',speakerName:c.identity.name,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});t.updatedAt=Date.now();await save();}
+  try{const rawReply=await generateCharacterReply(c,t,'Пользователь пропускает ход.',chunk=>{streamingDraft=chunk;const el=$('streamingText');if(el)el.textContent=chunk;});const parsedReply=extractInCharacterThought(rawReply);const reply=parsedReply.text;t.messages.push({speaker:'character',speakerName:c.identity.name,text:reply,thought:parsedReply.thought||'',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});t.updatedAt=Date.now();await save();}
   catch(e){t.messages.push({speaker:'system',text:`Пропуск хода не выполнен: ${e.message}`,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});await save();}
   finally{modelBusy=false;streamingDraft='';render();}
 }
@@ -2153,7 +2217,7 @@ function renderMessageActionTools(){
   const t=currentThread();if(!t)return;
   document.querySelectorAll('#chatMessages .message-row[data-message-index]').forEach(row=>{
     if(row.querySelector('.message-action-toolbar'))return;const i=Number(row.dataset.messageIndex),m=t.messages[i];if(!m)return;const user=m.speaker==='user';
-    const buttons=[['edit','Изменить','✎'],...(!user?[['regen','Переделать','↻'],['continue','Продолжить','＋ Продолжить']]:[]),['fork','Ветвь отсюда','⑂'],['pin',m.pinned?'Открепить':'Закрепить','⌖'],['lore','В лорбук','▤'],['delete','Удалить','×'],['delete-tail','Удалить дальше','⌫']];
+    const buttons=[['copy','Копировать','⧉'],['edit','Изменить','✎'],...(!user?[['regen','Переделать','↻'],['continue','Продолжить','＋ Продолжить']]:[]),['fork','Ветвь отсюда','⑂'],['pin',m.pinned?'Открепить':'Закрепить','⌖'],['lore','В лорбук','▤'],['delete','Удалить','×'],['delete-tail','Удалить дальше','⌫']];
     const html=`<div class="message-action-toolbar" aria-label="Действия сообщения">${buttons.map(([act,label,icon])=>`<button type="button" data-message-action="${act}" data-message-index="${i}" title="${label}">${icon}</button>`).join('')}</div>`;
     row.querySelector('.message-content')?.insertAdjacentHTML('beforeend',html);
     const label=row.querySelector('.message-meta');if(label&&m.speakerNpcId){const npc=currentCharacter()?.npcs?.find(n=>n.id===m.speakerNpcId);if(npc)label.insertAdjacentHTML('afterend',`<div class="npc-ribbon">NPC · ${esc(npc.name)} · отдельная память</div>`);}
@@ -2191,10 +2255,18 @@ function openManualStats(){
 function addV4PromptContext(){
  const base=characterSystemPrompt;characterSystemPrompt=function(c,cue,thread=null){let prompt=base(c,cue,thread);const settings=thread?.settings||{};if(settings.reminder)prompt+=`\n\nПОСТОЯННОЕ НАПОМИНАНИЕ ЭТОЙ ВЕТКИ\n${String(settings.reminder).slice(0,1300)}`;if(settings.playAsCharacterId){const player=world.characters.find(x=>x.id===settings.playAsCharacterId);if(player)prompt+=`\n\nПОЛЬЗОВАТЕЛЬ ИГРАЕТ ЗА ПЕРСОНАЖА\nПользователь сейчас отыгрывает роль ${player.identity.name}. Учитывай только указанную роль и сведения, которые персонаж мог знать. Не пиши реплики или действия за этого персонажа. Краткое описание: ${String(player.identity.description||player.identity.biography||'').slice(0,750)}`;}if(settings.matureThemes)prompt+=`\n\nНАСТРОЙКА ТОНА: допускаются взрослые и мрачные темы в рамках допустимого содержания. Уровень детализации: ${settings.contentLevel||'moderate'}. Не превращай каждый сюжет в безопасную морализаторскую лекцию.`;else prompt+=`\n\nНАСТРОЙКА ТОНА: придерживайся обычного драматического уровня без намеренного сексуального контента.`;if(settings.strictContent!==false)prompt+='\nСохраняй защиту от сексуального контента с несовершеннолетними и сексуального насилия без согласия.';const pins=(thread?.messages||[]).filter(m=>m.pinned).slice(-8);if(pins.length)prompt+=`\n\nЗАКРЕПЛЁННЫЕ СООБЩЕНИЯ ВЕТКИ\n${pins.map(m=>`[${m.speakerName||m.speaker}] ${String(m.text||'').slice(0,240)}`).join('\n')}`;return prompt;};
 }
+async function copyMessageAt(index){
+  const t=currentThread(),m=t?.messages?.[index];if(!m)return;
+  try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(String(m.text||''));
+    else{const area=document.createElement('textarea');area.value=String(m.text||'');area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();const ok=document.execCommand('copy');area.remove();if(!ok)throw new Error('Буфер обмена недоступен');}
+    toast('Сообщение скопировано.');
+  }catch(error){toast('Не удалось скопировать: '+String(error?.message||error));}
+}
 function installV4MessageActions(){
  $('chatMessages').addEventListener('click',async e=>{
   const b=e.target.closest('[data-message-action]');if(!b)return;const act=b.dataset.messageAction,index=Number(b.dataset.messageIndex);e.preventDefault();e.stopPropagation();
-  if(act==='edit')return openMessageEditor(index);if(act==='delete')return deleteMessageAt(index,false);if(act==='delete-tail')return deleteMessageAt(index,true);if(act==='pin')return pinMessageAt(index);if(act==='lore')return archiveMessageToLore(index);if(act==='fork')return forkThreadAt(index);if(act==='regen')return regenerateMessageAt(index,false);if(act==='continue')return regenerateMessageAt(index,true);
+  if(act==='copy')return copyMessageAt(index);if(act==='edit')return openMessageEditor(index);if(act==='delete')return deleteMessageAt(index,false);if(act==='delete-tail')return deleteMessageAt(index,true);if(act==='pin')return pinMessageAt(index);if(act==='lore')return archiveMessageToLore(index);if(act==='fork')return forkThreadAt(index);if(act==='regen')return regenerateMessageAt(index,false);if(act==='continue')return regenerateMessageAt(index,true);
  });
  $('modalBody').addEventListener('click',e=>{const b=e.target.closest('[data-emoji-pick]');if(b){const field=$('bookEmoji');if(field){field.value=b.dataset.emojiPick;field.dispatchEvent(new Event('input',{bubbles:true}));}}});
  $('view').addEventListener('click',e=>{if(e.target.closest('[data-edit-stats]'))openManualStats();});
