@@ -19,6 +19,7 @@ await fs.mkdir(path.join(root, 'server'), { recursive: true });
 await fs.mkdir(path.join(root, 'tests'), { recursive: true });
 for (const file of ['local-db.mjs', 'local-server.mjs']) await fs.copyFile(new URL(`./server/${file}`, import.meta.url), path.join(root, 'server', file));
 await fs.copyFile(new URL('./local-runtime.test.js', import.meta.url), path.join(root, 'tests/local-runtime.test.js'));
+await fs.copyFile(new URL('./local-provider.test.js', import.meta.url), path.join(root, 'tests/local-provider.test.js'));
 await fs.copyFile(new URL('./.gitignore', import.meta.url), path.join(root, '.gitignore'));
 await fs.copyFile(new URL('./README_RU.md', import.meta.url), path.join(root, 'README_RU.md'));
 const packageJson = JSON.parse(await read('package.json'));
