@@ -1,0 +1,119 @@
+name: Deploy my podwal space
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check required secrets
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Add CLOUDFLARE_API_TOKEN to repository Actions secrets."; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Add CLOUDFLARE_ACCOUNT_ID to repository Actions secrets."; exit 1; }
+          test -n "$APP_PASSWORD" || { echo "::error::Add APP_PASSWORD to repository Actions secrets."; exit 1; }
+
+      - name: Rebuild source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/my-world-release"
+          cat .deploy/archive-parts/part-*.b64 | tr -d '\n\r ' | base64 --decode > "$RUNNER_TEMP/my-world-release/source.zip"
+          unzip -q "$RUNNER_TEMP/my-world-release/source.zip" -d "$RUNNER_TEMP/my-world-release"
+          test -f "$RUNNER_TEMP/my-world-release/MY_WORLD_0_5/wrangler.jsonc"
+          echo "PROJECT_DIR=$RUNNER_TEMP/my-world-release/MY_WORLD_0_5" >> "$GITHUB_ENV"
+
+      - name: Install dependencies and run tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          npm install --no-audit --no-fund
+          npm test
+
+      - name: Create or reuse Cloudflare D1 database
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          npx wrangler d1 list --json > "$RUNNER_TEMP/d1-list.json"
+          DB_ID="$(node - "$RUNNER_TEMP/d1-list.json" <<'NODE'
+          const fs = require('node:fs');
+          const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          function find(value) {
+            if (!value) return '';
+            if (Array.isArray(value)) {
+              for (const item of value) { const id = find(item); if (id) return id; }
+              return '';
+            }
+            if (typeof value !== 'object') return '';
+            if (value.name === 'my-world-db') return value.uuid || value.database_id || '';
+            for (const item of Object.values(value)) { const id = find(item); if (id) return id; }
+            return '';
+          }
+          process.stdout.write(find(data));
+          NODE
+          )"
+          if [[ -z "$DB_ID" ]]; then
+            npx wrangler d1 create my-world-db --json > "$RUNNER_TEMP/d1-create.json"
+            DB_ID="$(node - "$RUNNER_TEMP/d1-create.json" <<'NODE'
+          const fs = require('node:fs');
+          const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          function find(value) {
+            if (!value) return '';
+            if (Array.isArray(value)) {
+              for (const item of value) { const id = find(item); if (id) return id; }
+              return '';
+            }
+            if (typeof value !== 'object') return '';
+            if (value.name === 'my-world-db') return value.uuid || value.database_id || '';
+            for (const item of Object.values(value)) { const id = find(item); if (id) return id; }
+            return '';
+          }
+          process.stdout.write(find(data));
+          NODE
+          )"
+          fi
+          test -n "$DB_ID" || { echo "::error::Could not find or create my-world-db in Cloudflare."; exit 1; }
+          export DB_ID
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          p = Path('wrangler.jsonc')
+          s = p.read_text()
+          s, count = re.subn(r'("database_id"\s*:\s*")[^"]+(")', lambda m: m.group(1) + os.environ['DB_ID'] + m.group(2), s, count=1)
+          if count != 1:
+              raise SystemExit('database_id field was not found in wrangler.jsonc')
+          p.write_text(s)
+          PY
+          npx wrangler d1 migrations apply my-world-db --remote
+
+      - name: Deploy Worker and save server secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          npx wrangler deploy
+          printf '%s' "$APP_PASSWORD" | npx wrangler secret put APP_PASSWORD
+          if [[ -n "$GROQ_API_KEY" ]]; then
+            printf '%s' "$GROQ_API_KEY" | npx wrangler secret put GROQ_API_KEY
+          fi
+          npx wrangler deploy
