@@ -100,6 +100,31 @@ body{background:#11100f}
 .vibe-status{font-size:10px;color:var(--text-muted);min-height:18px}
 @media(max-width:780px){:root{--inspector-width:100vw}.inspector{width:min(375px,94vw)}.vibe-modal{height:94dvh}.vibe-shell{grid-template-columns:1fr;grid-template-rows:auto minmax(230px,1fr);overflow:auto}.vibe-pane textarea.code{min-height:220px}.brain-svg{min-height:270px}}
 
+
+/* V4 message controls, scroll safety, accessibility and theme customization */
+.message-action-toolbar{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;padding-top:7px;border-top:1px solid #302d2a;opacity:.72;transition:opacity .15s}
+.message-row:hover .message-action-toolbar,.message-row:focus-within .message-action-toolbar{opacity:1}
+.message-action-toolbar button{background:#1c1b19;border:1px solid #34312d;color:#aaa49d;border-radius:5px;padding:5px 7px;font-size:10px;min-height:27px}
+.message-action-toolbar button:hover{border-color:#89652f;color:#edbd62}
+.message-action-toolbar button.danger{color:#c98779}
+.message-pinned-tag,.npc-ribbon{display:inline-flex;align-items:center;gap:5px;margin:0 0 6px;padding:3px 7px;border:1px solid #5a472a;border-radius:4px;color:#e9b85f;background:#292219;font-size:9px;letter-spacing:.06em}
+.npc-ribbon{border-color:#495b65;background:#1d272c;color:#b9cdd5}
+.branch-graph{display:flex;flex-direction:column;gap:8px;max-height:65dvh;overflow:auto;padding:4px}
+.branch-graph-card{border:1px solid #3b3731;background:#1b1a18;border-radius:7px;padding:9px}
+.branch-graph-card.active{border-color:#b78943;background:#282218}
+.branch-graph-title{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px}
+.branch-graph-sub{font-size:9px;color:#8f8980;margin-top:4px}
+.branch-graph-messages{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.branch-graph-messages button{border:1px solid #3b3731;background:#22211f;color:#c9c2b8;border-radius:4px;padding:4px 6px;font-size:9px}
+.emoji-quick-grid{display:flex;flex-wrap:wrap;gap:5px}.emoji-quick-grid button{min-width:34px;height:34px;border:1px solid #39342e;background:#242321;border-radius:6px;font-size:18px}
+.range-line{display:grid;grid-template-columns:minmax(90px,1fr) 2fr 38px;gap:8px;align-items:center;margin:10px 0}.range-line label{font-size:11px;color:#bbb}.range-line input{width:100%;accent-color:var(--accent)}.range-line output{font:11px var(--font-mono);color:var(--accent);text-align:right}
+.theme-swatches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.theme-swatches button{min-height:58px;border:1px solid #48423a;border-radius:7px;text-align:left;padding:8px;background:#171615}.theme-swatches button span{display:block;font-size:10px;margin-top:5px;color:#ddd}.theme-dot{display:inline-block;width:22px;height:22px;border-radius:50%;vertical-align:middle;border:1px solid #fff3}
+.inspector-content,.thread-list,.chat-messages,.book-body,.book-lore-list,.book-lore-items,.book-lore-editor,.modalbox,.brain-wrap,.conversation-map,.book-form{min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.inspector-content,.thread-list,.chat-messages,.book-lore-items,.book-lore-editor,.conversation-map{overflow-y:auto}
+.modalbox{overflow-y:auto;max-height:calc(100dvh - 24px);padding-bottom:max(16px,env(safe-area-inset-bottom))}
+.composer-area{position:relative;flex:none;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+@media(max-width:780px){.composer-area{padding:8px 10px calc(18px + env(safe-area-inset-bottom));}.message-action-toolbar{opacity:1}.message-action-toolbar button{padding:6px 8px}.inspector-content{padding-bottom:22px}}
+
 </style>
 </head>
 <body>
@@ -127,14 +152,14 @@ body{background:#11100f}
       <button class="mobile-menu-btn" id="sidebarToggle" aria-label="Открыть историю">☰</button>
       <div class="top-persona"><strong id="headerPersonaName">MY WORLD</strong><small id="headerPersonaMeta">выбери персонажа</small></div>
       <span class="mood-pill" id="headerMood">—</span>
-      <div class="top-actions"><span class="model-pill" id="modelPill">ИИ НЕ ЗАГРУЖЕН</span><span class="time-pill" id="clock">День 1 · 08:00</span><button id="runButton" class="legacy-hidden">▶ Автономность</button><button id="stepButton" class="legacy-hidden">Один цикл</button><button id="modelButton" class="legacy-hidden">Подключить ИИ</button><button id="editAppButton" class="header-icon-btn edit-app-btn" title="Edit — Vibe / Code">Edit</button><button id="inspectorToggle" class="header-icon-btn" title="Открыть правую панель">☷</button><button id="headerBookButton" class="header-icon-btn" title="Книга персонажа">▣</button><button id="headerNewChat" class="header-icon-btn" title="Новый чат">＋</button><button id="headerMenuButton" class="header-icon-btn" title="Меню чата">⋮</button><button id="refreshButton" class="legacy-hidden" title="Обновить">↻</button></div><div id="headerMenuDropdown" class="header-dropdown"><button data-menu-action="branch">☷ Настройки ветки</button><button data-menu-action="map">♧ Карта диалога</button><button data-menu-action="lore">▤ Лорбук персонажа</button><button data-menu-action="scene">◉ Статус сцены</button><button data-menu-action="events">⌁ События и открытые линии</button><button data-menu-action="vibe">⌘ Edit · Vibe / Code</button><div class="menu-separator"></div><button data-menu-action="theme">◐ Настройка темы</button><label class="menu-scale">Масштаб интерфейса <strong id="scaleValue">100%</strong><input id="uiScale" type="range" min="85" max="120" value="100"></label><button data-menu-action="language">Язык <span>🇷🇺 Русский</span></button><div class="menu-bottom"><button data-menu-action="light">☼</button><button data-menu-action="fullscreen">⛶</button></div></div>
+      <div class="top-actions"><span class="model-pill" id="modelPill">ИИ НЕ ЗАГРУЖЕН</span><span class="time-pill" id="clock">День 1 · 08:00</span><button id="runButton" class="legacy-hidden">▶ Автономность</button><button id="stepButton" class="legacy-hidden">Один цикл</button><button id="modelButton" class="legacy-hidden">Загрузить ИИ</button><button id="editAppButton" class="header-icon-btn edit-app-btn" title="Edit — Vibe / Code">Edit</button><button id="inspectorToggle" class="header-icon-btn" title="Открыть правую панель">☷</button><button id="headerBookButton" class="header-icon-btn" title="Книга персонажа">▣</button><button id="headerNewChat" class="header-icon-btn" title="Новый чат">＋</button><button id="headerMenuButton" class="header-icon-btn" title="Меню чата">⋮</button><button id="refreshButton" class="legacy-hidden" title="Обновить">↻</button></div><div id="headerMenuDropdown" class="header-dropdown"><button data-menu-action="branch">☷ Настройки ветки</button><button data-menu-action="map">♧ Карта диалога</button><button data-menu-action="lore">▤ Лорбук персонажа</button><button data-menu-action="scene">◉ Статус сцены</button><button data-menu-action="events">⌁ События и открытые линии</button><button data-menu-action="vibe">⌘ Edit · Vibe / Code</button><div class="menu-separator"></div><button data-menu-action="theme">◐ Настройка темы</button><label class="menu-scale">Масштаб интерфейса <strong id="scaleValue">100%</strong><input id="uiScale" type="range" min="85" max="120" value="100"></label><button data-menu-action="language">Язык <span>🇷🇺 Русский</span></button><div class="menu-bottom"><button data-menu-action="light">☼</button><button data-menu-action="fullscreen">⛶</button></div></div>
     </header>
     <div class="workspace">
       <section class="chat-column">
         <div class="chat-toolbar"><div class="toolbar-left"><span class="model-dot" id="modelDot"></span><span id="worldTitle">MY WORLD</span><span>·</span><span id="charCount">2 персонажа</span></div><span class="world-time" id="aiNotice">локальная психика активна</span></div>
         <div id="chatMessages" class="chat-messages"></div>
         <div class="composer-area">
-          <div class="model-status-row"><span id="modelStatusText">Интернет-ИИ не подключён. Выбери бесплатную модель и добавь API-ключ.</span><button id="openSettingsLink" type="button">Статус ИИ</button></div>
+          <div class="model-status-row"><span id="modelStatusText">Локальный ИИ Qwen2.5 · без ключа. Нажми «Статус ИИ» для первой загрузки модели.</span><button id="openSettingsLink" type="button">Статус ИИ</button></div>
           <div class="compose-panel">
             <div class="quick-insert-row" id="quickInsertRow" aria-label="Быстрые режимы отыгрыша">
               <button type="button" class="quick-insert-btn" data-insert="speech" title="Прямая речь">💬</button>
@@ -155,11 +180,11 @@ body{background:#11100f}
                   <div class="composer-pop-wrap"><button type="button" class="composer-icon-btn" id="summonButton" title="Вызвать персонажа">＠</button><div class="composer-popover" id="summonMenu"></div></div>
                   <div class="composer-pop-wrap"><button type="button" class="composer-icon-btn depth-btn" id="depthButton" title="Глубина размышления">♧ <span id="depthLabel">Стандарт</span></button><div class="composer-popover" id="depthMenu"><button data-depth="fast">Быстро · короткий контекст</button><button data-depth="standard">Стандарт</button><button data-depth="deep">Глубоко · больше памяти</button><button data-depth="max">Максимум · длинный контекст</button></div></div>
                 </div>
-                <div class="footer-right"><div class="composer-pop-wrap"><button type="button" class="model-select-btn" id="modelSelectButton"><span id="currentModelLabel">Qwen2.5 · 0.5B</span><span>⌄</span></button><div class="composer-popover model-popover" id="modelMenu"><div class="popover-heading">Бесплатные интернет-модели</div><div class="model-key-strip"><span id="modelKeyStatus">Ключ не подключён</span><button type="button" id="modelKeyButton">Настроить ключ</button></div><div id="modelOptions"><button data-model="openrouter/free">Автовыбор бесплатной модели<small>OpenRouter free router</small></button></div><div class="model-refresh-row"><button id="refreshFreeModels" type="button">↻ Обновить список</button><a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">Получить бесплатный API-ключ ↗</a></div></div></div><button id="sendButton" class="send-btn" type="submit" aria-label="Отправить">➤</button></div>
+                <div class="footer-right"><div class="composer-pop-wrap"><button type="button" class="model-select-btn" id="modelSelectButton"><span id="currentModelLabel">Qwen2.5 · 0.5B</span><span>⌄</span></button><div class="composer-popover model-popover" id="modelMenu"><div class="popover-heading">Локальная модель без ключа</div><div class="model-key-strip"><span id="modelKeyStatus">Ключи не требуются</span><button type="button" id="modelKeyButton">Статус модели</button></div><div id="modelOptions"><button data-model="onnx-community/Qwen2.5-0.5B-Instruct">Qwen2.5 · 0.5B<small>Локально · без аккаунта · без ключа</small></button></div><div class="model-refresh-row"><button id="refreshFreeModels" type="button">↻ Повторить загрузку</button></div></div></div><button id="sendButton" class="send-btn" type="submit" aria-label="Отправить">➤</button></div>
               </div>
             </form>
           </div>
-          <div class="composer-hint">История, миры и настройки сохраняются в браузере. Бесплатные модели имеют квоты провайдера; приложение не навязывает собственный лимит переписки.</div>
+          <div class="composer-hint">История, миры и настройки сохраняются в браузере. Локальный ИИ работает без ключа и без серверной квоты сообщений. Первый запуск скачивает модель (~786 МБ).</div>
           <input type="file" id="attachTextInput" accept=".txt,.md,.json,.csv,text/plain,application/json" class="hidden">
           <div id="timeskipMenu" class="composer-float-menu" hidden></div>
           <div id="commandMenu" class="composer-float-menu" hidden></div>
@@ -187,10 +212,10 @@ body{background:#11100f}
 const $=id=>document.getElementById(id);
 let world=null,revision=0,activeTab='profile',aiConfigured=false,providerStatus=null,selectedMemory=null,chatCharacter=null,refreshTimer=null,localAutoTimer=null;
 let localEngine=null,localEngineLoading=null,modelProgress='Интернет-ИИ не подключён',modelError='',modelBusy=false;
-const LOCAL_MODEL_ID='openrouter/free';
-let freeModels=[], freeModelsLoadedAt=0, selectedModelName='Автовыбор бесплатной модели';
-const OPENROUTER_BASE='https://openrouter.ai/api/v1';
-const OPENROUTER_KEY_STORAGE='my-world-openrouter-key-v1';
+const LOCAL_MODEL_ID='onnx-community/Qwen2.5-0.5B-Instruct';
+let freeModels=[{id:LOCAL_MODEL_ID,name:'Qwen2.5 0.5B Instruct · локально',context_length:8192}], freeModelsLoadedAt=0, selectedModelName='Qwen2.5 0.5B Instruct · WASM CPU';
+const OPENROUTER_BASE='';
+const OPENROUTER_KEY_STORAGE=''; // retained only for legacy data migration; no key is read or requested
 const STORE_KEY='my-world-browser-v2';let savedWorlds=[],activeWorldId=null;
 const LABELS={custom:'Занят собственным делом',sleep:'Спит',rest:'Отдыхает',work:'Работает',study:'Учится',create:'Занимается своим делом',music:'Занимается музыкой',explore:'Исследует',talk:'Разговаривает',wait:'Ничего не предпринимает',travelling:'В пути',arrived:'Прибыл(а)'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -240,9 +265,9 @@ function toast(msg){const el=$('toast');el.textContent=msg;el.style.display='blo
 function setConnected(ok,label){const el=$('connectionState');if(!el)return;el.textContent=(ok?'● ':'○ ')+(label||(ok?'ЛОКАЛЬНО':'НЕТ СВЯЗИ'));el.className='pill '+(ok?'good':'warn');}
 async function load(){ensureStore();const rec=activeRecord();world=normalizeWorld(rec.state);ensureWorldSystems();rec.state=world;revision++;render();}
 async function save(){world=normalizeWorld(world);storeActive();revision++;if(persistQueue)await persistQueue;}
-async function init(){ensureStore();await restoreWorldDB();ensureStore();await load();showApp();setConnected(true,'ВЕБ-ПРИЛОЖЕНИЕ');if(world.settings?.selectedModelId&&world.settings.selectedModelId!=='Qwen2.5-0.5B-Instruct-q4f16_1-MLC')selectedModelId=world.settings.selectedModelId;updateModelStatus();refreshWorldPicker();}
+async function init(){ensureStore();await restoreWorldDB();ensureStore();await load();showApp();setConnected(true,'ВЕБ-ПРИЛОЖЕНИЕ');selectedModelId=LOCAL_MODEL_ID; world.settings ||= {}; world.settings.selectedModelId=LOCAL_MODEL_ID;updateModelStatus();refreshWorldPicker();}
 function showApp(){$('loginScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('bottomNav').classList.remove('hidden');}
-async function refreshStatus(){aiConfigured=Boolean(getOpenRouterKey());updateModelStatus();}
+async function refreshStatus(){aiConfigured=Boolean(localEngine);updateModelStatus();}
 const clean = (value, max = 160) => String(value ?? '').trim().replace(/[\u0000-\u001f]/g, ' ').slice(0, max);
 const words = value => new Set(clean(value, 1200).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(x => x.length > 2));
 
@@ -1061,96 +1086,18 @@ function selectNextActor(world) {
 
 
 
-function legacy_updateModelStatus(message=null){
-  const s=message||modelError||modelProgress||'Интернет-ИИ не загружен';
-  const label=localEngine?'ИИ ГОТОВ · ЛОКАЛЬНО':localEngineLoading?'ЗАГРУЗКА МОДЕЛИ':(navigator.gpu?'ИИ НЕ ЗАГРУЖЕН':'WEBGPU НЕДОСТУПЕН');
-  const pill=$('modelPill');if(pill){pill.textContent=label;pill.className='model-pill '+(localEngine?'good':localEngineLoading?'loading':'');}
-  const text=$('modelStatusText');if(text)text.textContent=s;
-  const bar=$('modelProgressBar');if(bar&&localEngine)bar.style.width='100%';
-  const btn=$('modelButton');if(btn){btn.textContent=localEngine?'ИИ подключён':localEngineLoading?'Загрузка…':'Подключить ИИ';btn.disabled=Boolean(localEngine||localEngineLoading);}
-  const notice=$('aiNotice');if(notice)notice.textContent=localEngine?'Локальная модель готова. Ответы создаются локальной языковой моделью.':'Локальная психика готова; для свободной речи загрузи локальную языковую модель.';
-}
-async function legacy_ensureLocalModel(){
-  if(localEngine)return localEngine;
-  if(localEngineLoading)return localEngineLoading;
-  if(!navigator.gpu)throw new Error('В этом браузере нет доступного WebGPU. Попробуй обновлённый Chrome на совместимом Android-устройстве или компьютер.');
-  localEngineLoading=(async()=>{
-    modelError='';modelProgress='Подключение библиотеки WebLLM…';updateModelStatus();
-    const webllm=await import('https://esm.run/@mlc-ai/web-llm@0.2.87');
-    const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw new Error('Браузер не смог получить графический адаптер WebGPU.');
-    localEngine=await webllm.CreateMLCEngine(LOCAL_MODEL_ID,{
-      initProgressCallback:p=>{modelProgress=p?.text||'Загрузка модели…';const progress=Math.max(0,Math.min(100,Number(p?.progress||0)*100));const bar=$('modelProgressBar');if(bar)bar.style.width=progress+'%';const txt=$('modelProgressText');if(txt)txt.textContent=modelProgress;const chatStatus=$('modelStatusText');if(chatStatus)chatStatus.textContent=modelProgress;updateModelStatus(modelProgress);}
-    });
-    aiConfigured=true;modelProgress='Модель загружена и готова. Она останется в кэше браузера.';updateModelStatus();return localEngine;
-  })().catch(err=>{localEngine=null;modelError=err?.message||String(err);modelProgress='Не удалось загрузить модель';updateModelStatus(modelError);throw err;}).finally(()=>{localEngineLoading=null;});
-  return localEngineLoading;
-}
-function legacy_characterSystemPrompt(c,cue){
-  const context=buildAgentContext(world,c);
-  const relevant=retrieveLongTermFacts(c,cue,world,8,1200).map(f=>f.text||f);
-  const p=c.psyche||{};const state={time:worldTimestamp(world),place:locationName(world,c.state.location),activity:LABELS[c.state.activity]||c.state.activity,currentAction:c.state.currentAction?.title||'',mood:c.state.mood,energy:c.state.energy,stress:c.state.stress,socialNeed:c.state.socialNeed,dominantEmotion:p.affect?.dominant||'нейтральное состояние',needs:p.needs||{},currentMotives:p.cognition?.currentMotives||[]};
-  const memories=[...(c.memory.episodes||[]).slice(0,10).map(x=>x.text),...(c.memory.privateNotes||[]).slice(0,5).map(x=>x.text)];
-  return `Ты — ${c.identity.name}, самостоятельный вымышленный человек внутри MY WORLD. Ты не ChatGPT, не ассистент и не рассказчик. Ты разговариваешь от первого лица как этот конкретный человек.\n\nЛИЧНОСТЬ\nИмя: ${c.identity.name}. Возраст: ${c.identity.age||'не указан'}. Биография: ${c.identity.biography||'подробная биография ещё не задана'}. Манера речи: ${c.identity.speechStyle||'естественная, своя, без наигранности'}. Ценности: ${(c.identity.values||[]).join('; ')}. Страхи: ${(c.identity.fears||[]).join('; ')}. Интересы: ${(c.identity.interests||[]).join('; ')}. Не любит: ${(c.identity.dislikes||[]).join('; ')}. Привычки: ${(c.identity.habits||[]).join('; ')}. Черты: ${JSON.stringify(c.identity.traits||{})}.\n\nТЕКУЩАЯ ЖИЗНЬ\n${JSON.stringify(state)}\nЦели: ${JSON.stringify((c.goals||[]).filter(g=>g.status==='active').slice(0,5))}\nОтношения и известные люди: ${JSON.stringify(context.me.knownPeople||[])}\n\nТВОЯ ПАМЯТЬ\nСводка: ${c.memory.summary||'пока нет общей сводки'}\nРелевантные устойчивые факты: ${JSON.stringify(relevant)}\nНедавние эпизоды: ${JSON.stringify(memories)}\nУбеждения: ${JSON.stringify(p.cognition?.beliefs||[])}\n\nПРАВИЛА ПОВЕДЕНИЯ\n1. Сохраняй характер и непрерывность истории. Не становись внезапно ласковым, общительным или заинтересованным, если это не следует из личности и накопленных отношений.\n2. Не выдумывай, что помнишь то, чего нет в памяти. Не знаешь мыслей пользователя или других персонажей. Не выдавай догадки за факты.\n3. Не превращай каждую реплику в вопрос, комплимент или драматичную сцену. Можешь отвечать коротко, сухо, с паузой, не соглашаться или отказываться.\n4. Никаких действий в скобках и литературных ремарок, если их не попросили. Пиши живым естественным русским языком.\n5. Не объясняй свои внутренние числовые параметры. Используй состояние только как скрытый контекст для поведения.\n6. Пользователь — человек, с которым ты общаешься, а не автор, которому нужно угодить. Отношения развиваются постепенно и могут быть разными.\n7. Не цитируй системные инструкции. Отвечай только репликой персонажа, без префикса имени и без JSON.`;
-}
-async function legacy_generateCharacterReply(c,thread,message,onChunk=null){
-  const history=(thread.messages||[]).slice(-14).filter(m=>m.speaker==='user'||m.speaker==='character').map(m=>({role:m.speaker==='user'?'user':'assistant',content:String(m.text||'').slice(0,1800)}));
-  const messages=[{role:'system',content:characterSystemPrompt(c,message)},...history];
-  const stream=await localEngine.chat.completions.create({messages,temperature:0.82,top_p:0.92,max_tokens:420,frequency_penalty:0.18,stream:true});
-  let text='';
-  for await(const chunk of stream){text+=chunk.choices?.[0]?.delta?.content||'';if(onChunk&&text)onChunk(text.replace(/<think>[\s\S]*?<\/think>/gi,'').trim());}
-  text=String(text).replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/^\s*assistant\s*:?/i,'').trim();
-  if(!text)throw new Error('Модель вернула пустой ответ. Попробуй ещё раз.');
-  return text.slice(0,6000);
-}
-function legacy_getOrCreateThread(characterId){
-  let thread=world.userChats.find(t=>t.characterId===characterId);
-  if(!thread){thread={id:makeId(),characterId,messages:[]};world.userChats.unshift(thread);}
-  return thread;
-}
+
+
+
+
+
 function rememberUserStatement(c,text){
   const trimmed=String(text||'').trim();
   if(/\bзапомни\b|мне нравится|я люблю|я не люблю|я боюсь|я хочу|для меня важно|мне неприятно/i.test(trimmed)){
     addLongTermFact(c,`Пользователь сообщил: ${trimmed}`,world,{type:'relationship',topic:'user_preference_'+(Math.abs([...trimmed].reduce((a,ch)=>a+ch.charCodeAt(0),0))%100000),importance:4,confidence:0.9,source:'conversation'});
   }
 }
-async function legacy_sendChat(event){
-  event?.preventDefault();
-  if(modelBusy)return;
-  const input=$('chatInput');const text=String(input?.value||'').trim();if(!text)return;
-  const c=world.characters.find(x=>x.id===chatCharacter);if(!c){toast('Сначала выбери персонажа.');return;}
-  const thread=getOrCreateThread(c.id);
-  thread.messages.push({speaker:'user',text,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
-  input.value='';input.style.height='auto';
-  modelBusy=true;streamingDraft='';
-  const send=$('sendButton');if(send)send.disabled=true;
-  const status=$('modelStatusText');if(status)status.textContent='Персонаж обдумывает ответ…';
-  renderMessages();renderCharacterList();persistAll();
-  try{
-    await ensureLocalModel();
-    const reply=await generateCharacterReply(c,thread,text,chunk=>{
-      streamingDraft=chunk;
-      const pending=$('streamingText');if(pending)pending.textContent=chunk;
-      else renderMessages();
-      const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;
-    });
-    thread.messages.push({speaker:'character',text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
-    addMemory(c,{text:`Разговор с пользователем: «${text.slice(0,260)}»`,importance:2,visibility:'private'},world);
-    addMemory(c,{text:`Ответ ${c.identity.name}: «${reply.slice(0,260)}»`,importance:2,visibility:'private'},world);
-    rememberUserStatement(c,text);
-    c.userRelationship.familiarity=clamp((c.userRelationship.familiarity||0)+0.6);
-    c.psyche ||= createPsyche();c.psyche.needs.connection=clamp((c.psyche.needs.connection||0)-2.5);
-    c.state.socialNeed=clamp((c.state.socialNeed||0)-2);
-    if(/спасибо|классно|рада|рад|приятно|люблю/i.test(text))c.userRelationship.trust=clamp((c.userRelationship.trust||0)+0.3);
-    world.meta.provider='Интернет-ИИ';world.meta.model=LOCAL_MODEL_ID;world.meta.lastError=null;
-    await save();
-  }catch(error){
-    const err=String(error?.message||error);
-    thread.messages.push({speaker:'system',text:`ИИ не смог ответить: ${err}`,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
-    world.meta.lastError=err.slice(0,400);await save();toast('Не удалось получить ответ от локального ИИ.');
-  }finally{
-    modelBusy=false;streamingDraft='';if(send)send.disabled=false;if(status)status.textContent=localEngine?'Интернет-ИИ готов. Сообщения не расходуют облачную квоту.':'Загрузка ИИ не завершена.';render();input?.focus();
-  }
-}
+
 let streamingDraft='';
 async function runModelWorldCycle(){
   throw new Error('Автономный цикл с шаблонными действиями отключён. Сначала используется ролевая переписка, затем ИИ-анализирует сцену и состояние по фактам.');
@@ -1200,7 +1147,15 @@ function memoryView(){const c=world.characters.find(x=>x.id===selectedMemory)||w
 function chatView(){return '<div class="empty">Переписка отображается в центральной области.</div>'; }
 function historyView(){return `<section class="panel"><div class="sectionhead"><h2>Журнал действий</h2><span class="pill">${world.history.length} записей</span></div>${world.history.length?world.history.slice(0,100).map(h=>{const who=world.characters.find(c=>c.id===h.actorId)?.identity.name;return `<div class="entry"><div class="between"><strong>${esc(who||h.text||'Событие')}</strong><span class="tag">${esc(h.action||h.type||'event')}</span></div><p class="small muted">День ${h.day} · ${String(h.hour).padStart(2,'0')}:00 · ${esc(h.intent||h.text||'')}</p></div>`}).join(''):'<div class="empty">История пока пуста.</div>'}</section>`;}
 function settingsView(){
- const key=getOpenRouterKey();return `<section class="panel"><div class="sectionhead"><h2>Интернет-ИИ</h2><span class="pill ${key?'good':'warn'}">${key?'подключён':'не подключён'}</span></div><p class="small muted">Модель выполняется на стороне провайдера. Этот сайт сам не грузит видеокарту телефона и не вызывает WebGPU.</p><div class="model-card"><div><strong>${esc(selectedModelName)}</strong><div class="small muted">Текущая бесплатная модель</div></div><button class="primary" id="modelStartSettings" onclick="document.getElementById('modelSelectButton').click()">Сменить</button></div><div class="controls"><button id="providerSettingsButton">Настроить API-ключ</button><button id="refreshProviderModels">Обновить каталог free-моделей</button></div><div class="divider"></div><h3>Бесплатная квота</h3><p class="small muted">Бесплатные модели OpenRouter сейчас ограничены 50 запросами в сутки на бесплатном тарифе. Это не безлимит, и нагрузка провайдеров может приводить к ошибкам. Платные модели здесь отфильтрованы и выбрать их нельзя.</p><p class="small"><a href="https://openrouter.ai/pricing" target="_blank" rel="noopener">Официальная страница тарифов</a> · <a href="https://openrouter.ai/collections/free-models" target="_blank" rel="noopener">Текущие бесплатные модели</a></p><div class="divider"></div><h3>Фильтры приложения</h3><label class="small"><input type="checkbox" id="extraFiltersToggle" ${world.settings.ai?.extraFilters?'checked':''}> Включить дополнительные мягкие ограничения самого MY WORLD</label><p class="small muted">Выключение этого параметра убирает дополнительные смягчающие инструкции приложения. Ограничения выбранной модели и провайдера он не отключает.</p><div class="divider"></div><h3>Автообновление состояния</h3><label class="small"><input type="checkbox" id="autoRefresh15Toggle" ${world.settings.ai?.autoRefreshEvery15!==false?'checked':''}> Анализировать состояние персонажа каждые 15 новых сообщений</label><p class="small muted">Или нажми «Обновить» вручную на вкладках «Состояние», «Мозг», «Связи», «Сцена» или «События».</p></section><section class="panel"><h2>Хранилище и резервные копии</h2><p class="small muted">Переписки, лорбук, персонажи, связи и сюжетные линии сохраняются в IndexedDB этого браузера. Чтобы перенести данные на другое устройство, используй экспорт мира.</p><div class="controls"><button id="export2">Экспорт мира</button><button id="import2">Импорт мира</button></div></section>`;
+ const ready=Boolean(localEngine),loading=Boolean(localEngineLoading);
+ return `<section class="panel"><div class="sectionhead"><h2>Локальный ИИ</h2><span class="pill ${ready?'good':loading?'warn':''}">${ready?'готов':loading?'загрузка':'не загружен'}</span></div>
+ <p class="small muted">Qwen2.5 0.5B Instruct работает прямо на устройстве через WebAssembly CPU. Никаких API-ключей, регистрации, оплаты за сообщения или дневных серверных квот.</p>
+ <div class="model-card"><div><strong>Qwen2.5 0.5B Instruct · Q4</strong><div class="small muted">Локальная модель · 786 МБ при первом скачивании</div></div><button class="primary" id="modelStartSettings">${ready?'Готово':loading?'Загрузка…':'Загрузить ИИ'}</button></div>
+ <p class="small muted">После первого скачивания веса сохраняются в кэше браузера. Интернет нужен для первоначальной загрузки, затем генерация выполняется на телефоне/компьютере.</p>
+ <div class="divider"></div><h3>Честно о «безлимите»</h3><p class="small muted">В приложении нет счётчика сообщений и квоты провайдера. Количество сообщений не ограничивается сервером. Практические ограничения — память устройства, температура, заряд и место в браузерном кэше. Контекст модели конечен: приложение подбирает последние реплики и релевантные воспоминания.</p>
+ <div class="divider"></div><h3>Фильтры MY WORLD</h3><label class="small"><input type="checkbox" id="extraFiltersToggle" ${world.settings.ai?.extraFilters?'checked':''}> Включить дополнительные мягкие ограничения самого MY WORLD</label><p class="small muted">Это управляет только дополнительными инструкциями приложения, а не встроенными ограничениями самой модели.</p>
+ <div class="divider"></div><h3>Автообновление состояния</h3><label class="small"><input type="checkbox" id="autoRefresh15Toggle" ${world.settings.ai?.autoRefreshEvery15!==false?'checked':''}> Анализировать состояние персонажа каждые 15 новых сообщений</label><p class="small muted">Или нажми «Обновить» вручную в панелях состояния, мозга, связей, сцены и событий.</p></section>
+ <section class="panel"><h2>Хранилище и резервные копии</h2><p class="small muted">Переписки, лорбук, персонажи, связи и сюжетные линии хранятся в IndexedDB этого браузера. Для переноса на другое устройство используй экспорт мира.</p><div class="controls"><button id="export2">Экспорт мира</button><button id="import2">Импорт мира</button></div></section>`;
 }
 async function legacy_generateCharacterProfileWithAI(c,brief){
   const idea=String(brief||'').trim();if(!idea){toast('Опиши хотя бы направление персонажа.');return;}
@@ -1211,8 +1166,7 @@ async function legacy_generateCharacterProfileWithAI(c,brief){
     await ensureLocalModel();
     const prompt=`Создай полноценного, психологически непротиворечивого вымышленного персонажа для интерактивного мира. Не делай его идеальным или шаблонным. Дай конкретные привычки, внутренние противоречия, ограничения, ценности и естественную манеру речи. Не добавляй пользователя в биографию. Идея автора: ${idea}
 Верни только JSON без Markdown по схеме: {"name":"имя","age":22,"biography":"краткая, но конкретная биография","speechStyle":"как говорит и ведёт себя","values":["..."],"fears":["..."],"interests":["..."],"dislikes":["..."],"habits":["..."],"possessions":["..."],"traits":{"sociability":0,"curiosity":0,"orderliness":0,"creativity":0,"empathy":0,"sensitivity":0},"goals":[{"title":"цель","priority":60}]} Значения traits — целые числа 0–100. goals — 2–4 осмысленные цели. Пиши все текстовые поля по-русски.`;
-    const result=await localEngine.chat.completions.create({messages:[{role:'system',content:'Ты — редактор персонажей и психологически точный сценарист. Верни корректный JSON и ничего кроме него.'},{role:'user',content:prompt}],temperature:0.78,top_p:0.9,max_tokens:720,response_format:{type:'json_object'}});
-    const raw=result.choices?.[0]?.message?.content||'';const data=parseDecisionText(raw);const d=data.identity||data;
+    const raw=await openRouterChat([{role:'system',content:'Ты — редактор персонажей и психологически точный сценарист. Верни корректный JSON и ничего кроме него.'},{role:'user',content:prompt}],{temperature:0.35,max_tokens:650});const data=parseDecisionText(raw);const d=data.identity||data;
     const name=clean(d.name||'',60);if(!name)throw new Error('Модель не указала имя персонажа.');
     c.identity.name=name;c.identity.age=clamp(d.age||22,1,120);c.identity.biography=clean(d.biography||'',2000);c.identity.speechStyle=clean(d.speechStyle||'',1200);
     for(const key of ['values','fears','interests','dislikes','habits','possessions'])c.identity[key]=Array.isArray(d[key])?d[key].map(x=>clean(x,160)).filter(Boolean).slice(0,30):[];
@@ -1352,7 +1306,7 @@ function renderMessages(){
   const c=currentCharacter();if(!c){host.innerHTML='<div class="empty">Создай персонажа, чтобы начать.</div>';return;}
   let t=currentThread();if(!t)t=getOrCreateThread(c.id);
   $('headerPersonaName').textContent=c.identity.name;$('headerPersonaMeta').textContent=`${threadLabel(t)} · ${c.identity.age||'—'} лет · ${LABELS[c.state.activity]||c.state.activity}`;$('headerMood').textContent=c.psyche?.affect?.dominant||'нейтрально';
-  if(!t.messages?.length){host.innerHTML=characterStateStrip(c)+`<div class="chat-empty"><div class="empty-mark">${esc(c.identity.emoji||'✦')}</div><div class="eyebrow">МИР · ${esc(world.name)}</div><h2>${esc(c.identity.name)}</h2><p>${esc((c.identity.biography||'Персонаж ещё не заполнен. Открой книгу персонажа и добавь биографию, характер и лор.').slice(0,400))}</p><div class="chat-empty-note">Новая ветка переписки. Память персонажа, лорбук и отношения общие для его историй в пределах этого мира; сообщения остаются в отдельном чате.</div><div class="empty-tools"><button id="emptyCharacterBook">▣ Книга персонажа</button><button id="emptyLoadModel">✧ Подключить ИИ</button></div></div>`;return;}
+  if(!t.messages?.length){host.innerHTML=characterStateStrip(c)+`<div class="chat-empty"><div class="empty-mark">${esc(c.identity.emoji||'✦')}</div><div class="eyebrow">МИР · ${esc(world.name)}</div><h2>${esc(c.identity.name)}</h2><p>${esc((c.identity.biography||'Персонаж ещё не заполнен. Открой книгу персонажа и добавь биографию, характер и лор.').slice(0,400))}</p><div class="chat-empty-note">Новая ветка переписки. Память персонажа, лорбук и отношения общие для его историй в пределах этого мира; сообщения остаются в отдельном чате.</div><div class="empty-tools"><button id="emptyCharacterBook">▣ Книга персонажа</button><button id="emptyLoadModel">✧ Загрузить ИИ</button></div></div>`;return;}
   host.innerHTML=characterStateStrip(c)+t.messages.map((m,i)=>{
     if(m.speaker==='system')return `<div class="notice-line" data-message-index="${i}">${formatRoleplayText(m.text)}</div>`;
     const user=m.speaker==='user';const name=user?'Ты':(m.speakerName||c.identity.name);const avatar=user?'Я':(m.speakerEmoji||c.identity.emoji||'✦');
@@ -1378,7 +1332,7 @@ function render(){
 }
 function updateHero(){if(!world)return;const c=currentCharacter();$('clock').textContent=worldTimestamp(world);$('charCount').textContent=String(world.characters.length);$('worldSub').textContent=`${world.name} · локальное сохранение`;if($('turnInfo'))$('turnInfo').textContent=`Циклов: ${world.tick} · решений: ${world.meta.localDecisions||0}`;$('runButton').textContent=world.running?'Ⅱ Пауза':'▶ Автономность';$('stepButton').textContent='Один цикл';$('worldTitle').textContent=world.name;if($('profileNameLabel'))$('profileNameLabel').textContent=world.settings?.userProfile?.name||'Личный профиль';updateModelStatus();}
 function updateDepthLabel(){const el=$('depthLabel');if(el)el.textContent=DEPTH_CONFIG[reasoningDepth]?.label||'Стандарт';}
-function ensureCharacterExtras(c){c.npcs ||= [];c.lorebook ||= {};c.userProfile ||= {};c.identity ||= {};c.identity.appearance ||= '';c.identity.description ||= '';for(const k of ['values','fears','interests','dislikes','habits','possessions'])if(!Array.isArray(c.identity[k]))c.identity[k]=[];}
+function ensureCharacterExtras(c){c.npcs ||= [];c.lorebook ||= {};c.userProfile ||= {};c.identity ||= {};c.identity.appearance ||= '';c.identity.description ||= '';for(const k of ['values','fears','interests','dislikes','habits','possessions'])if(!Array.isArray(c.identity[k]))c.identity[k]=[];for(const n of c.npcs){n.id ||= 'npc_'+uid();n.memory ||= {summary:'',episodes:[],facts:[],privateNotes:[]};n.memory.episodes ||= [];n.memory.facts ||= [];n.memory.privateNotes ||= [];n.relationships ||= {};n.knowledge ||= [];n.lorebook ||= {};}}
 function openModal(title,html){$('modalTitle').textContent=title;$('modalBody').innerHTML=html;$('modal').classList.remove('book-mode');$('modal').querySelector('.modalbox')?.classList.remove('book-modal');$('modal').classList.remove('hidden');}
 function closeModal(){$('modal').classList.add('hidden');$('modal').classList.remove('book-mode');$('modal').querySelector('.modalbox')?.classList.remove('book-modal');}
 function editCharacter(id){openCharacterBook('character',id);}
@@ -1401,64 +1355,113 @@ function openPopover(id){const el=$(id);if(!el)return;document.querySelectorAll(
 function closePopovers(){document.querySelectorAll('.composer-popover.open').forEach(x=>x.classList.remove('open'));}
 function populateSummonMenu(){const menu=$('summonMenu');if(!menu)return;menu.innerHTML='<div class="popover-heading">Вызвать в эту переписку</div>'+world.characters.filter(c=>c.id!==chatCharacter).map(c=>`<button data-summon="${esc(c.id)}">${esc(c.identity.emoji||'✦')} ${esc(c.identity.name)} ${summonedIds.includes(c.id)?'✓':''}</button>`).join('')||'<button disabled>Других персонажей нет</button>';}
 function setReasoningDepth(key){if(!DEPTH_CONFIG[key])return;reasoningDepth=key;const t=currentThread();if(t){t.settings ||= {};t.settings.contextDepth=DEPTH_CONFIG[key].messages;}updateDepthLabel();closePopovers();storeActive();}
-function getOpenRouterKey(){return localStorage.getItem(OPENROUTER_KEY_STORAGE)||'';}
-function setOpenRouterKey(value){const key=String(value||'').trim();if(key)localStorage.setItem(OPENROUTER_KEY_STORAGE,key);else localStorage.removeItem(OPENROUTER_KEY_STORAGE);updateModelStatus();}
+function updateLocalAIStatus(){updateModelStatus();}
 function updateModelStatus(message=null){
-  const key=getOpenRouterKey();aiConfigured=Boolean(key);
-  const label=key?'ИНТЕРНЕТ · FREE':'ИИ НЕ ПОДКЛЮЧЁН';
-  const pill=$('modelPill');if(pill){pill.textContent=label;pill.className='model-pill '+(key?'good':'');}
-  const text=$('modelStatusText');if(text)text.textContent=message||(key?`Подключён OpenRouter · ${selectedModelName}. Ответы идут через интернет.`:'Нужен бесплатный API-ключ OpenRouter. Нажми на выбор модели → «Настроить ключ».');
-  const keyStatus=$('modelKeyStatus');if(keyStatus)keyStatus.textContent=key?'API-ключ сохранён на этом устройстве':'API-ключ не подключён';
-  const dot=$('modelDot');if(dot)dot.classList.toggle('active',Boolean(key));
-  const notice=$('aiNotice');if(notice)notice.textContent=key?`Интернет-ИИ · ${selectedModelName}`:'Бесплатный интернет-ИИ не подключён';
-  const current=$('currentModelLabel');if(current)current.textContent=selectedModelName;
+  aiConfigured=Boolean(localEngine);
+  const loading=Boolean(localEngineLoading);
+  const label=localEngine?'ИИ · ЛОКАЛЬНО ГОТОВ':loading?'ИИ · ЗАГРУЗКА':'ИИ · ОЖИДАЕТ ПЕРВОГО ЗАПУСКА';
+  const pill=$('modelPill');if(pill){pill.textContent=label;pill.className='model-pill '+(localEngine?'good':loading?'loading':'');}
+  const text=$('modelStatusText');if(text)text.textContent=message||(localEngine?'Qwen2.5 загружена на устройство · без ключа, аккаунта и квоты.':loading?(modelProgress||'Загрузка локальной модели…'):'Первый запуск скачает модель Qwen2.5 0.5B (~786 МБ). После кэширования повторно скачивать её не нужно.');
+  const keyStatus=$('modelKeyStatus');if(keyStatus)keyStatus.textContent=localEngine?'Модель готова · CPU/WASM':'Ключи и регистрация не нужны';
+  const dot=$('modelDot');if(dot)dot.classList.toggle('active',Boolean(localEngine));
+  const notice=$('aiNotice');if(notice)notice.textContent=localEngine?'Локальный ИИ активен · сообщения без серверной квоты':loading?'Загружается локальная модель…':'Локальный ИИ · без аккаунта и API-ключа';
+  const current=$('currentModelLabel');if(current)current.textContent='Qwen2.5 · 0.5B';
+  const btn=$('modelButton');if(btn){btn.textContent=localEngine?'ИИ готов':loading?'Загрузка…':'Загрузить ИИ';btn.disabled=loading||Boolean(localEngine);}
 }
 function updateSelectedModelLabel(){
-  const found=freeModels.find(m=>m.id===selectedModelId);selectedModelName=selectedModelId==='openrouter/free'?'Автовыбор free':(found?.name||selectedModelId);
-  const el=$('currentModelLabel');if(el)el.textContent=selectedModelName;
+  selectedModelId=LOCAL_MODEL_ID;selectedModelName='Qwen2.5 0.5B Instruct · локально';
+  const el=$('currentModelLabel');if(el)el.textContent='Qwen2.5 · 0.5B';
 }
-async function fetchFreeModels(force=false){
-  if(!force&&freeModels.length&&Date.now()-freeModelsLoadedAt<10*60*1000)return freeModels;
-  const response=await fetch(`${OPENROUTER_BASE}/models?output_modalities=text`,{headers:{'Accept':'application/json'}});
-  if(!response.ok)throw new Error(`Каталог моделей недоступен: HTTP ${response.status}`);
-  const payload=await response.json();
-  const all=Array.isArray(payload.data)?payload.data:[];
-  const free=all.filter(m=>{
-    const p=m.pricing||{};
-    const prompt=Number(p.prompt),completion=Number(p.completion);
-    return (m.id||'').includes(':free') || (Number.isFinite(prompt)&&Number.isFinite(completion)&&prompt===0&&completion===0);
-  }).filter(m=>!m.architecture?.input_modalities||m.architecture.input_modalities.includes('text'));
-  freeModels=free.sort((a,b)=>Number(b.context_length||0)-Number(a.context_length||0)).slice(0,80);
+async function fetchFreeModels(){
+  freeModels=[{id:LOCAL_MODEL_ID,name:'Qwen2.5 0.5B Instruct · локально',context_length:8192}];
   freeModelsLoadedAt=Date.now();createModelOptionList();return freeModels;
 }
 function createModelOptionList(){
   const host=$('modelOptions');if(!host)return;
-  const items=[{id:'openrouter/free',name:'Автовыбор бесплатной модели',context_length:0,description:'Автоматический выбор доступной модели с нулевой ценой'} ,...freeModels];
-  host.innerHTML=items.map(m=>`<button type="button" data-model="${esc(m.id)}">${esc(m.name||m.id)}${m.id===selectedModelId?' ✓':''}<small>${m.id==='openrouter/free'?'Роутер выбирает только доступную free-модель':`${esc(m.id)} · ${Number(m.context_length||0).toLocaleString('ru-RU')} токенов · $0`}</small></button>`).join('')||'<div class="small muted">Нажми «Обновить список», чтобы загрузить бесплатные модели.</div>';
+  host.innerHTML=`<button type="button" data-model="${LOCAL_MODEL_ID}">Qwen2.5 0.5B Instruct ✓<small>Локально · WASM CPU · без API-ключа · без лимита запросов</small></button>`;
 }
 function selectModel(id){
-  const value=String(id||'openrouter/free');
-  if(value!=='openrouter/free'&&!freeModels.some(m=>m.id===value)){toast('Можно выбрать только модель с нулевой ценой.');return;}
-  selectedModelId=value;world.settings ||= {};world.settings.selectedModelId=value;updateSelectedModelLabel();closePopovers();storeActive();updateModelStatus(`Выбрана бесплатная модель: ${selectedModelName}.`);
+  selectedModelId=LOCAL_MODEL_ID;selectedModelName='Qwen2.5 0.5B Instruct · локально';
+  world.settings ||= {};world.settings.selectedModelId=LOCAL_MODEL_ID;updateSelectedModelLabel();closePopovers();storeActive();updateModelStatus();
+  if(id!==LOCAL_MODEL_ID)toast('В этой тестовой версии доступна одна локальная модель.');
 }
 function openAISettings(){
-  const current=getOpenRouterKey();
-  openModal('Подключение бесплатного интернет-ИИ',`<div class="book-form"><p>MY WORLD подключается к бесплатным моделям через OpenRouter. Нужен ваш собственный бесплатный API-ключ. Он хранится только в локальном хранилище этого браузера и не попадает в экспорт мира.</p><div class="book-field"><label>OpenRouter API key</label><input id="openRouterKeyInput" type="password" autocomplete="off" placeholder="sk-or-v1-…" value="${esc(current)}"></div><div class="controls"><button class="primary" id="saveOpenRouterKey">Сохранить ключ и проверить</button><button id="clearOpenRouterKey">Удалить ключ</button><a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">Создать бесплатный ключ ↗</a></div><div id="openRouterKeyFeedback" class="small muted">Бесплатный тариф OpenRouter сейчас ограничен 50 запросами в сутки для free-моделей. Не безлимитно. <a href="https://openrouter.ai/pricing" target="_blank" rel="noopener">Условия тарифа</a></div><p class="book-help">Не отправляй ключи в чат и не используй общий компьютер. На публичном статическом сайте ключ нельзя спрятать на сервере, поэтому он хранится только у тебя.</p></div>`);
-  $('saveOpenRouterKey').onclick=async()=>{
-    const key=$('openRouterKeyInput').value.trim();if(!key){$('openRouterKeyFeedback').textContent='Вставь ключ из OpenRouter.';return;}
-    setOpenRouterKey(key);$('openRouterKeyFeedback').textContent='Проверяю ключ…';
-    try{const r=await fetch(`${OPENROUTER_BASE}/models?output_modalities=text`,{headers:{Authorization:`Bearer ${key}`,'Accept':'application/json'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);const j=await r.json();if(!Array.isArray(j.data))throw new Error('Каталог не вернул список моделей.');await fetchFreeModels(true);$('openRouterKeyFeedback').textContent=`Ключ принят. Найдено ${freeModels.length} бесплатных текстовых моделей.`;updateModelStatus('Подключение успешно.');setTimeout(()=>{closeModal();openModelMenu();},650);}catch(e){setOpenRouterKey('');$('openRouterKeyFeedback').textContent=`Проверка не прошла: ${e.message}. Проверь ключ или попробуй позже.`;updateModelStatus();}
+  const loaded=Boolean(localEngine),loading=Boolean(localEngineLoading);
+  openModal('Локальный ИИ · без ключа и квот',`<div class="book-form">
+    <p><strong>Qwen2.5 0.5B Instruct</strong> работает на CPU телефона через WebAssembly. Не нужны аккаунт, API-ключ, регистрация или платный ИИ-провайдер.</p>
+    <div class="model-card"><div><strong>${loaded?'Модель готова':loading?'Модель загружается':'Первичная загрузка'}</strong><div class="small muted">Около 786 МБ один раз · модель и WASM-библиотека сохраняются в кэше браузера</div></div><span class="pill ${loaded?'good':loading?'warn':''}">${loaded?'ПРОВЕРЕНА':loading?'ЗАГРУЗКА':'НЕ ЗАГРУЖЕНА'}</span></div>
+    <div class="small muted" id="localModelProgressText">${esc(modelProgress||(loaded?'ИИ отвечает локально. Квоты сообщений нет.':'Нужен интернет только для первой загрузки модели и библиотеки. После загрузки ответы считаются на телефоне.'))}</div>
+    <div class="progress-track" style="height:6px;background:#29241c;border-radius:6px;overflow:hidden;margin:10px 0"><div id="localModelProgressBar" style="height:100%;width:${loaded?100:0}%;background:var(--accent);transition:width .2s"></div></div>
+    <div class="controls"><button class="primary" id="loadLocalModelNow" ${loading?'disabled':''}>${loaded?'Проверить ИИ ещё раз':loading?'Загрузка…':'Скачать модель и проверить ИИ'}</button></div>
+    <div class="model-card" id="localModelTestResult" style="display:${loaded?'block':'none'}"><strong>Тестовый ответ</strong><div class="small muted" id="localModelTestText">${loaded?'Модель уже была проверена при загрузке.':'Ожидание проверки…'}</div></div>
+    <p class="book-help">«Безлимит» означает отсутствие дневной квоты или счётчика сообщений со стороны провайдера. Физические ограничения остаются: оперативная память, скорость процессора, заряд и доступное место в браузере. Ответы могут быть медленнее облачных моделей; длинную переписку приложение сжимает в контекст и воспоминания.</p>
+  </div>`);
+  const btn=$('loadLocalModelNow');if(btn)btn.onclick=async()=>{
+    btn.disabled=true;btn.textContent=localEngine?'Проверка…':'Загрузка и тест…';
+    const progress=$('localModelProgressText');
+    try{
+      await ensureLocalModel();
+      const answer=await runLocalModelSmokeTest();
+      const card=$('localModelTestResult');if(card)card.style.display='block';
+      const out=$('localModelTestText');if(out)out.textContent=answer||'Ответ пустой';
+      if(progress)progress.textContent='Успешно: модель сгенерировала ответ на устройстве. Теперь можно закрыть окно и писать персонажам.';
+      btn.textContent='ИИ работает · повторить тест';btn.disabled=false;
+      const bar=$('localModelProgressBar');if(bar)bar.style.width='100%';
+    }catch(e){
+      if(progress)progress.textContent='Не удалось запустить ИИ: '+e.message;
+      btn.disabled=false;btn.textContent='Повторить загрузку / тест';
+    }
   };
-  $('clearOpenRouterKey').onclick=()=>{setOpenRouterKey('');$('openRouterKeyInput').value='';$('openRouterKeyFeedback').textContent='Ключ удалён из этого браузера.';};
 }
 async function ensureLocalModel(){
-  if(!getOpenRouterKey()){openAISettings();throw new Error('Сначала подключи бесплатный API-ключ OpenRouter.');}
-  return true;
+  if(localEngine)return localEngine;
+  if(localEngineLoading)return localEngineLoading;
+  localEngineLoading=(async()=>{
+    modelError='';modelProgress='Загрузка библиотеки Transformers.js…';updateModelStatus();
+    const {pipeline,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2');
+    env.useBrowserCache=true;env.useWasmCache=true;env.allowRemoteModels=true;
+    // Stable CPU/WASM path. One thread avoids SharedArrayBuffer / COOP-COEP requirements on mobile.
+    if(env.backends?.onnx?.wasm){env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;}
+    modelProgress='Загрузка Qwen2.5 0.5B · CPU/WASM…';updateModelStatus();
+    localEngine=await pipeline('text-generation',LOCAL_MODEL_ID,{
+      device:'wasm',dtype:'q4',
+      progress_callback:p=>{
+        if(p?.status==='progress_total'||p?.status==='progress'){
+          const pct=Math.max(0,Math.min(100,Number(p.progress)||0));
+          const loaded=(Number(p.loaded)||0)/1048576,total=(Number(p.total)||0)/1048576;
+          const file=p.file?` · ${String(p.file).split('/').pop()}`:'';
+          modelProgress=`Загрузка модели · ${pct.toFixed(0)}%${loaded?` · ${loaded.toFixed(0)} / ${total?total.toFixed(0):'—'} МБ`:''}${file}`;
+          const bar=$('localModelProgressBar')||$('modelProgressBar');if(bar)bar.style.width=pct+'%';
+          const txt=$('localModelProgressText')||$('modelProgressText')||$('modelStatusText');if(txt)txt.textContent=modelProgress;
+          updateModelStatus(modelProgress);
+        }else if(p?.status==='ready'){
+          modelProgress='Модель загружена. Проверяю генерацию ответа…';updateModelStatus(modelProgress);
+        }
+      }
+    });
+    modelProgress='Проверка генерации…';updateModelStatus(modelProgress);
+    const test=await runLocalModelSmokeTest();
+    if(!test||test.length<2)throw new Error('Модель загрузилась, но тестовый ответ пустой. Проверь свободную память телефона.');
+    modelProgress='Проверка пройдена · ИИ отвечает локально';modelError='';aiConfigured=true;updateModelStatus(modelProgress);return localEngine;
+  })().catch(err=>{
+    localEngine=null;modelError=err?.message||String(err);modelProgress='Не удалось запустить локальную модель';
+    updateModelStatus(modelError);throw new Error(modelError);
+  }).finally(()=>{localEngineLoading=null;updateModelStatus();});
+  return localEngineLoading;
+}
+async function runLocalModelSmokeTest(){
+  if(!localEngine)throw new Error('Локальная модель ещё не загружена.');
+  const result=await localEngine([
+    {role:'system',content:'Ты русскоязычный собеседник. Ответь коротко и естественно по-русски.'},
+    {role:'user',content:'Напиши одно короткое приветствие.'}
+  ],{max_new_tokens:32,do_sample:false});
+  const output=result?.[0]?.generated_text;
+  const text=Array.isArray(output)?String(output.at(-1)?.content||''):(typeof output==='string'?output:'');
+  return text.replace(/<think>[\s\S]*?<\/think>/gi,'').trim();
 }
 async function openModelMenu(){
-  openPopover('modelMenu');updateSelectedModelLabel();
-  try{await fetchFreeModels(false);}catch(e){toast(e.message||'Не удалось загрузить бесплатные модели.');}
-  if(!getOpenRouterKey())setTimeout(()=>{const status=$('modelKeyStatus');if(status)status.textContent='Нужен бесплатный API-ключ';},0);
+  selectedModelId=LOCAL_MODEL_ID;updateSelectedModelLabel();
+  createModelOptionList();openPopover('modelMenu');
 }
 function selectedLore(c,cue,thread){
   ensureCharacterExtras(c);
@@ -1574,47 +1577,48 @@ async function generateCharacterReply(c,thread,message,onChunk=null){
     model:selectedModelId
   });
 }
-async function openRouterChat(messages,{model=selectedModelId,temperature=.82,max_tokens=1400,onChunk=null,signal=null,tools=null}={}){
-  const key=getOpenRouterKey();if(!key)throw new Error('Не подключён бесплатный API-ключ OpenRouter.');
-  if(model!=='openrouter/free'&&!freeModels.some(m=>m.id===model))throw new Error('Выбрана модель, которая не подтверждена как бесплатная.');
-  const response=await fetch(`${OPENROUTER_BASE}/chat/completions`,{
-    method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','HTTP-Referer':location.origin,'X-OpenRouter-Title':'MY WORLD'},
-    body:JSON.stringify({model,messages,temperature,top_p:.94,max_tokens,stream:true, ...(tools?{tools}: {})}),signal
-  });
-  if(!response.ok){let detail='';try{const j=await response.json();detail=j.error?.message||j.message||'';}catch{};if(response.status===429)throw new Error('Бесплатная квота OpenRouter исчерпана или провайдер перегружен (HTTP 429).');if(response.status===401)throw new Error('OpenRouter не принял API-ключ. Открой настройки ИИ и проверь его.');throw new Error(`ИИ-провайдер вернул HTTP ${response.status}${detail?`: ${detail}`:''}`);}
-  if(!response.body)throw new Error('Провайдер не открыл поток ответа.');
-  const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',text='';
-  while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let cut;
-    while((cut=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,cut).trim();buffer=buffer.slice(cut+1);if(!line.startsWith('data:'))continue;const payload=line.slice(5).trim();if(payload==='[DONE]')continue;
-      try{const chunk=JSON.parse(payload);const part=chunk.choices?.[0]?.delta?.content||'';if(part){text+=part;if(onChunk)onChunk(text);}}catch(e){if(payload&&!payload.includes('[DONE]'))console.warn('Skipped malformed OpenRouter SSE chunk',e);}
-    }
-  }
-  text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/^\s*assistant\s*:?/i,'').trim();
-  if(!text)throw new Error('Модель вернула пустой ответ.');
-  return text.slice(0,24000);
+async function openRouterChat(messages,{model=LOCAL_MODEL_ID,temperature=.82,max_tokens=360,onChunk=null,signal=null,tools=null}={}){
+  const generator=await ensureLocalModel();
+  if(signal?.aborted)throw new Error('Запрос отменён.');
+  const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'')}));
+  // Keep the system instructions and newest dialogue while avoiding very long contexts on mobile RAM.
+  const system=normalized.find(m=>m.role==='system');
+  const tail=normalized.filter(m=>m!==system);
+  const kept=[];let room=Math.max(3000,Math.min(24000,Number(currentThread()?.settings?.promptLimit)||9300));
+  for(let i=tail.length-1;i>=0&&room>0;i--){const m=tail[i],content=m.content.slice(-Math.min(room,2200));if(content){kept.unshift({role:m.role,content});room-=content.length;}}
+  const safeSystem=system?{role:'system',content:system.content.slice(0,Math.min(5600,room+5600))}:null;
+  const promptMessages=safeSystem?[safeSystem,...kept]:kept;
+  const maxNew=Math.max(48,Math.min(768,Number(max_tokens)||360));
+  const opts={max_new_tokens:maxNew,do_sample:Number(temperature)>.15,temperature:Math.max(.15,Math.min(1.25,Number(temperature)||.82)),top_p:.9,repetition_penalty:1.08};
+  const result=await generator(promptMessages,opts);
+  const generated=result?.[0]?.generated_text;
+  let text=Array.isArray(generated)?String(generated.at(-1)?.content||''):(typeof generated==='string'?generated:'');
+  text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/^\s*assistant\s*: ?/i,'').trim();
+  if(!text)throw new Error('Qwen2.5 вернула пустой ответ. Попробуй сократить сообщение или отправить ещё раз.');
+  if(onChunk)onChunk(text);
+  return text.slice(0,12000);
 }
 async function sendChat(event){
   event?.preventDefault();if(modelBusy)return;const input=$('chatInput');let text=String(input?.value||'').trim();if(!text)return;const c=currentCharacter();if(!c){toast('Сначала выбери персонажа.');return;}
-  if(!getOpenRouterKey()){openAISettings();return;}
   const thread=getOrCreateThread(c.id);thread.summonedCharacterIds=[...summonedIds];thread.settings ||= {};thread.settings.contextDepth=Number(thread.settings.contextDepth)||DEPTH_CONFIG[reasoningDepth].messages;
   if(text.startsWith('/')){const handled=await handleSlashCommand(text,thread,c);if(handled){input.value='';input.style.height='auto';return;}}
   const mode=/^\(OOC:/i.test(text)?'ooc':text.startsWith('==')?'speech':text.startsWith('*')?'action':text.startsWith('(')?'thought':'plain';
-  thread.messages.push({speaker:'user',text,day:world.time.day,hour:world.time.hour,createdAt:Date.now(),mode});thread.updatedAt=Date.now();if(thread.title==='Новый чат'||!thread.title)thread.title=text.replace(/\s+/g,' ').slice(0,52);
+  const playerRole=world.characters.find(x=>x.id===thread.settings.playAsCharacterId);thread.messages.push({speaker:'user',speakerName:playerRole?.identity?.name||'Ты',speakerEmoji:playerRole?.identity?.emoji||null,speakerCharacterId:playerRole?.id||null,text,day:world.time.day,hour:world.time.hour,createdAt:Date.now(),mode});thread.updatedAt=Date.now();if(thread.title==='Новый чат'||!thread.title)thread.title=text.replace(/\s+/g,' ').slice(0,52);
   input.value='';input.style.height='auto';thread.draft='';modelBusy=true;streamingDraft='';const send=$('sendButton');if(send)send.disabled=true;renderMessages();renderCharacterList();persistAll();
   try{
-    const reply=await generateCharacterReply(c,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;});
-    const npcNames=(c.npcs||[]).filter(n=>n.enabled!==false&&[n.name,...(n.aliases||[])].some(a=>a&&text.toLowerCase().includes(String(a).toLowerCase()))).map(n=>n.name);
-    thread.messages.push({speaker:'character',speakerName:npcNames.length?[c.identity.name,...npcNames].join(' · '):c.identity.name,speakerEmoji:c.identity.emoji,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
-    addMemory(c,{text:`Разговор: пользователь сказал «${text.slice(0,350)}»`,importance:2,visibility:'private'},world);addMemory(c,{text:`Ответ ${c.identity.name}: «${reply.slice(0,350)}»`,importance:2,visibility:'private'},world);rememberUserStatement(c,text);
-    c.userRelationship.familiarity=clamp((c.userRelationship.familiarity||0)+.6);c.psyche ||= createPsyche();c.psyche.needs.connection=clamp((c.psyche.needs.connection||0)-2.5);c.state.socialNeed=clamp((c.state.socialNeed||0)-2);
-    world.meta.provider='OpenRouter · бесплатная модель';world.meta.model=selectedModelId;world.meta.lastError=null;thread.updatedAt=Date.now();await save();
+    const speakingNpc=resolveMentionedNpc(c,text,thread);
+    const reply=await (speakingNpc?generateNpcReply(c,speakingNpc,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;}):generateCharacterReply(c,thread,text,chunk=>{streamingDraft=chunk;const pending=$('streamingText');if(pending)pending.textContent=chunk;else renderMessages();const host=$('chatMessages');if(host)host.scrollTop=host.scrollHeight;}));
+    thread.messages.push({speaker:'character',speakerName:speakingNpc?.name||c.identity.name,speakerEmoji:speakingNpc?.emoji||c.identity.emoji,speakerNpcId:speakingNpc?.id||null,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
+    if(speakingNpc){recordNpcMemory(speakingNpc,`Пользователь сказал: ${text.slice(0,350)}`,`Ответ ${speakingNpc.name}: ${reply.slice(0,350)}`);speakingNpc.userRelationship ||= {familiarity:0,trust:0,affinity:0};speakingNpc.userRelationship.familiarity=clamp((speakingNpc.userRelationship.familiarity||0)+.5);}
+    else {addMemory(c,{text:`Разговор: пользователь сказал «${text.slice(0,350)}»`,importance:2,visibility:'private'},world);addMemory(c,{text:`Ответ ${c.identity.name}: «${reply.slice(0,350)}»`,importance:2,visibility:'private'},world);rememberUserStatement(c,text);c.userRelationship.familiarity=clamp((c.userRelationship.familiarity||0)+.6);c.psyche ||= createPsyche();c.psyche.needs.connection=clamp((c.psyche.needs.connection||0)-2.5);c.state.socialNeed=clamp((c.state.socialNeed||0)-2);} 
+    world.meta.provider='Локальная модель · WASM CPU';world.meta.model=LOCAL_MODEL_ID;world.meta.lastError=null;thread.updatedAt=Date.now();await save();
     const prior=Number(c.stateAnalysis?.lastMessageCount||0);if(world.settings.ai?.autoRefreshEvery15!==false&&thread.messages.length-prior>=15){setTimeout(()=>refreshCharacterState({character:c,thread,silent:true}).then(ok=>{if(ok){render();toast('Показатели персонажа обновлены по последним 15 сообщениям.');}}),500);}
   }catch(error){const err=String(error?.message||error);thread.messages.push({speaker:'system',text:`ИИ не смог ответить: ${err}`,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});world.meta.lastError=err.slice(0,400);await save();toast(`Ошибка ИИ: ${err.slice(0,150)}`);}
   finally{modelBusy=false;streamingDraft='';if(send)send.disabled=false;updateModelStatus();render();input?.focus();}
 }
 
 async function skipTurn(){
-  if(modelBusy)return;if(!getOpenRouterKey()){openAISettings();return;}const c=currentCharacter();if(!c)return;const t=getOrCreateThread(c.id);
+  if(modelBusy)return;const c=currentCharacter();if(!c)return;const t=getOrCreateThread(c.id);
   t.messages.push({speaker:'user',text:'[ПРОПУСК ХОДА] Пользователь пропускает свой ход. Не придумывай за него ни действий, ни реплик, ни мыслей, ни чувств. Продолжи только события вокруг и закончи там, где пользователь снова может действовать.',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});t.updatedAt=Date.now();
   $('chatInput').value='';modelBusy=true;renderMessages();
   try{const reply=await generateCharacterReply(c,t,'Пользователь пропускает ход.',chunk=>{streamingDraft=chunk;const el=$('streamingText');if(el)el.textContent=chunk;});t.messages.push({speaker:'character',speakerName:c.identity.name,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});t.updatedAt=Date.now();await save();}
@@ -1702,7 +1706,7 @@ function applyStateAnalysis(c,data,thread){
   world.chronicle=world.chronicle.slice(0,300);storeActive();
 }
 async function refreshCharacterState({character=currentCharacter(),thread=currentThread(),silent=false}={}){
-  if(!character||modelBusy&&!silent){toast('ИИ сейчас занят.');return false;}if(!getOpenRouterKey()){openAISettings();return false;}
+  if(!character||modelBusy&&!silent){toast('ИИ сейчас занят.');return false;}
   const messages=currentAnalysisMessages(thread,15);if(!messages.length){toast('Сначала нужна переписка для анализа.');return false;}
   const self=character.identity.name;const context={character:{name:self,identity:character.identity,state:character.state,psyche:character.psyche,knowledge:character.knowledge,openPlots:character.openPlots,relationships:character.relationships},scene:world.sceneStatus,world:{name:world.name,background:world.background,scene:world.scene,knownCharacters:world.characters.map(x=>({id:x.id,name:x.identity.name}))},messages};
   const system=`Ты — модуль непрерывности и памяти персонажа MY WORLD. Анализируй ТОЛЬКО последние сообщения и имеющийся контекст. Не додумывай то, чего нет в тексте. Не управляй пользователем. Верни только один валидный JSON-объект без markdown по схеме: {"state":{"energy":0-100,"mood":0-100,"stress":0-100,"socialNeed":0-100},"needs":{"rest":0-100,"nourishment":0-100,"hydration":0-100,"hygiene":0-100,"connection":0-100,"autonomy":0-100,"competence":0-100,"novelty":0-100,"safety":0-100,"expression":0-100},"emotion":{"dominant":"","values":{"joy":0,"sadness":0,"anger":0,"fear":0,"curiosity":0,"loneliness":0,"affection":0}},"currentThought":"", "motives":[{"label":"","score":0}],"customStates":[{"name":"Хочет/боится/избегает...","value":0,"note":""}],"knowledge":[{"kind":"знает|считает|думает|сказал|факт","claim":"","source":"кто/где/когда сообщил или наблюдал","confidence":0-100,"visibility":"character|private"}],"selfPerception":"", "othersPerception":{"имя":"как этот человек видит персонажа"},"reputation":{"score":0-100,"description":""},"achievements":[{"title":"","description":""}],"relationships":[{"target":"имя","affinity":-100..100,"trust":-100..100,"respect":-100..100,"irritation":0..100,"opinion":""}],"scene":{"where":"","what":"","when":"","how":"","tone":"","participants":[]},"openPlots":[{"title":"","summary":"","closeWhen":"точное условие закрытия","status":"open|closed"}],"chronicle":[{"text":"подтверждённое событие"}]}. Для показателей выводи только разумное изменение на основании сообщений; неизвестное оставляй без изменения (можно не включать). Разделяй: знает = лично увидел/услышал или достоверно узнал; считает = устойчивое мнение; думает = текущая гипотеза; сказал = произнесено; факт = объективно подтверждённое событие. Всегда указывай источник. Не создавай достижений и открытых линий без события. Незавершённые линии остаются open, пока условие closeWhen действительно не выполнено.`;
@@ -1712,7 +1716,7 @@ async function refreshCharacterState({character=currentCharacter(),thread=curren
   finally{if(!silent)modelBusy=false;}
 }
 async function generateRandomEvent(){
-  const thread=currentThread(),c=currentCharacter();if(!getOpenRouterKey()){openAISettings();return;}
+  const thread=currentThread(),c=currentCharacter();
   if(modelBusy){toast('ИИ занят другим запросом.');return;}modelBusy=true;
   try{
     const context={scene:world.sceneStatus,world:{name:world.name,background:world.background,scene:world.scene,time:worldTimestamp(world)},characters:world.characters.map(x=>({name:x.identity.name,state:x.state,goals:x.goals,relationships:x.relationships,openPlots:x.openPlots})),recent:(thread?.messages||[]).slice(-15).map(m=>({speaker:m.speaker,text:m.text})),openPlots:world.characters.flatMap(x=>x.openPlots.filter(p=>p.status==='open').map(p=>({character:x.identity.name,...p}))).slice(0,15)};
@@ -1730,7 +1734,7 @@ function addCustomState(){const c=currentCharacter();if(!c)return;openModal('Д�
 function addOpenPlot(){const c=currentCharacter();if(!c)return;openModal('Новая незавершённая линия',`<div class="book-form"><div class="book-field"><label>Название линии</label><input id="plotTitle"></div><div class="book-field"><label>Что остаётся нерешённым</label><textarea id="plotSummary"></textarea></div><div class="book-field"><label>Когда линия считается завершённой</label><textarea id="plotCloseWhen" placeholder="Закрывается только когда…"></textarea></div><button class="primary" id="savePlot">Создать открытую линию</button></div>`);$('savePlot').onclick=()=>{const title=$('plotTitle').value.trim();if(!title)return; c.openPlots.unshift({id:uid(),title,summary:$('plotSummary').value,closeWhen:$('plotCloseWhen').value,status:'open',createdAt:Date.now()});storeActive();closeModal();render();};}
 function sceneView(){ensureWorldSystems();const s=world.sceneStatus;return `<section class="panel"><div class="state-head"><h2>Статус сцены</h2><button class="refresh-status-button" data-refresh-state>↻ Обновить ИИ</button></div><p class="small muted">Место, участники, время и происходящее. ИИ обновляет эти поля по последним 15 сообщениям; ручные изменения сохраняются отдельно.</p><dl class="scene-facts"><dt>Где</dt><dd>${esc(s.where||'Не определено')}</dd><dt>Что</dt><dd>${esc(s.what||world.scene||'Не определено')}</dd><dt>Когда</dt><dd>${esc(s.when||worldTimestamp(world))}</dd><dt>Как</dt><dd>${esc(s.how||'Не описано')}</dd><dt>Тон</dt><dd>${esc(s.tone||'Не определён')}</dd><dt>Участники</dt><dd>${esc((s.participants||[]).join(', ')||'Не определены')}</dd></dl><div class="small muted" style="margin-top:10px">Обновлено: ${s.updatedAt?new Date(s.updatedAt).toLocaleString('ru-RU'):'ещё не обновлялось'} · источник: ${esc(s.source||'ручной ввод')}</div><div class="controls"><button data-edit-scene>✎ Изменить вручную</button><button data-refresh-state>↻ Обновить по переписке</button></div></section><section class="panel"><h2>Последний анализ</h2><div class="small muted">${currentCharacter()?.stateAnalysis?.updatedAt?new Date(currentCharacter().stateAnalysis.updatedAt).toLocaleString('ru-RU'):'Анализ ещё не запускался'} · ${currentCharacter()?.stateAnalysis?.lastMessageCount||0} сообщений</div></section>`;}
 function editSceneStatus(){ensureWorldSystems();const s=world.sceneStatus;openModal('Редактировать статус сцены',`<div class="book-form">${bookField('Где','sceneWhere',s.where,'input')}${bookField('Что происходит','sceneWhat',s.what,'large')}${bookField('Когда','sceneWhen',s.when,'input')}${bookField('Как / в каком состоянии','sceneHow',s.how,'large')}${bookField('Эмоциональный тон','sceneTone',s.tone,'input')}${bookField('Участники (через запятую)','sceneParticipants',(s.participants||[]).join(', '),'input')}<button class="primary" id="saveSceneStatus">Сохранить</button></div>`);$('saveSceneStatus').onclick=()=>{s.where=$('sceneWhere').value;s.what=$('sceneWhat').value;s.when=$('sceneWhen').value;s.how=$('sceneHow').value;s.tone=$('sceneTone').value;s.participants=$('sceneParticipants').value.split(',').map(x=>x.trim()).filter(Boolean);s.updatedAt=Date.now();s.source='manual';storeActive();closeModal();render();};}
-function stateView(){const c=currentCharacter();if(!c)return '';ensureWorldSystems();const p=ensurePsyche(c);const needs={rest:'Отдых',nourishment:'Еда',hydration:'Вода',hygiene:'Гигиена',connection:'Общение',autonomy:'Автономия',competence:'Компетентность',novelty:'Новизна',safety:'Безопасность',expression:'Самовыражение'};const bars=Object.entries(needs).map(([k,l])=>`<div class="barrow"><span class="barlabel">${l}</span><div class="bar"><div class="fill" style="width:${clamp(p.needs[k])}%"></div></div><span class="barval">${Math.round(p.needs[k])}%</span></div>`).join('');const custom=c.customNeeds.map(x=>`<div class="data-row"><div class="between"><strong>${esc(x.name)}</strong><span class="small muted">${Math.round(x.value)}%</span></div><div class="bar"><div class="fill" style="width:${clamp(x.value)}%"></div></div><p>${esc(x.note||'')}</p></div>`).join('');const knowledge=c.knowledge.slice(0,12).map(x=>`<div class="belief-line"><div class="between"><strong>${esc(x.claim)}</strong><span class="data-tag">${esc(x.kind)}</span></div><small>Источник: ${esc(x.source||'не указан')} · уверенность ${Math.round(x.confidence||0)}%</small></div>`).join('');return `<section class="panel"><div class="state-head"><h2>Состояние · ${esc(c.identity.name)}</h2><button class="refresh-status-button" data-refresh-state>↻ Обновить</button></div><div class="state-grid">${[['Энергия',c.state.energy],['Настроение',c.state.mood],['Стресс',c.state.stress],['Общение',100-(c.state.socialNeed||0)]].map(([l,v])=>`<div class="state-cell"><strong>${Math.round(v)}%</strong><small>${l}</small><div class="mini-meter"><i style="width:${clamp(v)}%"></i></div></div>`).join('')}</div><h3>Потребности</h3>${bars}<h3>Свои строки</h3>${custom||'<div class="small muted">Добавь собственные параметры: хочет, боится, избегает, скрывает, стремится…</div>'}<button class="inline-add" data-add-custom-state>＋ Добавить строку</button><div class="state-head"><h3>Репутация и достижения</h3><span class="data-tag">${Math.round(c.reputation.score||0)} / 100</span></div><p class="small muted">${esc(c.reputation.description||'Пока не сформирована.')}</p><div class="rep-achievements">${(c.achievements||[]).slice(0,8).map(a=>`<div><strong>✦</strong><small>${esc(a.title||a)}</small></div>`).join('')||'<div class="small muted">Достижения появятся только из подтверждённых событий.</div>'}</div></section><section class="panel"><div class="state-head"><h2>Знает / считает / думает / сказал / факт</h2><button data-refresh-state>↻ Анализ 15 сообщений</button></div><div class="knowledge-grid">${knowledge||'<div class="small muted">Пока нет записей. Нажми «Обновить» после переписки.</div>'}</div></section><section class="panel"><h2>Собственная точка зрения</h2><p class="small">${esc(c.perceptions.self||'Пока не обновлялась.')}</p><h3>Как его видят другие</h3>${Object.entries(c.perceptions.others||{}).map(([name,text])=>`<div class="data-row"><strong>${esc(name)}</strong><p>${esc(text)}</p></div>`).join('')||'<div class="small muted">Оценки других персонажей ещё не сформированы.</div>'}</section>`;}
+function stateView(){const c=currentCharacter();if(!c)return '';ensureWorldSystems();const p=ensurePsyche(c);const needs={rest:'Отдых',nourishment:'Еда',hydration:'Вода',hygiene:'Гигиена',connection:'Общение',autonomy:'Автономия',competence:'Компетентность',novelty:'Новизна',safety:'Безопасность',expression:'Самовыражение'};const bars=Object.entries(needs).map(([k,l])=>`<div class="barrow"><span class="barlabel">${l}</span><div class="bar"><div class="fill" style="width:${clamp(p.needs[k])}%"></div></div><span class="barval">${Math.round(p.needs[k])}%</span></div>`).join('');const custom=c.customNeeds.map(x=>`<div class="data-row"><div class="between"><strong>${esc(x.name)}</strong><span class="small muted">${Math.round(x.value)}%</span></div><div class="bar"><div class="fill" style="width:${clamp(x.value)}%"></div></div><p>${esc(x.note||'')}</p></div>`).join('');const knowledge=c.knowledge.slice(0,12).map(x=>`<div class="belief-line"><div class="between"><strong>${esc(x.claim)}</strong><span class="data-tag">${esc(x.kind)}</span></div><small>Источник: ${esc(x.source||'не указан')} · уверенность ${Math.round(x.confidence||0)}%</small></div>`).join('');return `<section class="panel"><div class="state-head"><h2>Состояние · ${esc(c.identity.name)}</h2><div class="controls"><button data-edit-stats>✎ Изменить показатели</button><button class="refresh-status-button" data-refresh-state>↻ Обновить</button></div></div><div class="state-grid">${[['Энергия',c.state.energy],['Настроение',c.state.mood],['Стресс',c.state.stress],['Общение',100-(c.state.socialNeed||0)]].map(([l,v])=>`<div class="state-cell"><strong>${Math.round(v)}%</strong><small>${l}</small><div class="mini-meter"><i style="width:${clamp(v)}%"></i></div></div>`).join('')}</div><h3>Потребности</h3>${bars}<h3>Свои строки</h3>${custom||'<div class="small muted">Добавь собственные параметры: хочет, боится, избегает, скрывает, стремится…</div>'}<button class="inline-add" data-add-custom-state>＋ Добавить строку</button><div class="state-head"><h3>Репутация и достижения</h3><span class="data-tag">${Math.round(c.reputation.score||0)} / 100</span></div><p class="small muted">${esc(c.reputation.description||'Пока не сформирована.')}</p><div class="rep-achievements">${(c.achievements||[]).slice(0,8).map(a=>`<div><strong>✦</strong><small>${esc(a.title||a)}</small></div>`).join('')||'<div class="small muted">Достижения появятся только из подтверждённых событий.</div>'}</div></section><section class="panel"><div class="state-head"><h2>Знает / считает / думает / сказал / факт</h2><button data-refresh-state>↻ Анализ 15 сообщений</button></div><div class="knowledge-grid">${knowledge||'<div class="small muted">Пока нет записей. Нажми «Обновить» после переписки.</div>'}</div></section><section class="panel"><h2>Собственная точка зрения</h2><p class="small">${esc(c.perceptions.self||'Пока не обновлялась.')}</p><h3>Как его видят другие</h3>${Object.entries(c.perceptions.others||{}).map(([name,text])=>`<div class="data-row"><strong>${esc(name)}</strong><p>${esc(text)}</p></div>`).join('')||'<div class="small muted">Оценки других персонажей ещё не сформированы.</div>'}</section>`;}
 function brainView(){const c=currentCharacter();if(!c)return '';const p=ensurePsyche(c),n=p.needs||{},em=p.affect?.emotions||{};const defs=[['self',180,156,'Я',Math.max(24,Math.round((c.state.mood||50)/4))],['memory',90,75,'Память',Math.max(20,(c.memory.episodes||[]).length*2+20)],['emotion',270,75,'Эмоции',Math.round(p.affect?.arousal||25)],['needs',70,235,'Потребности',Math.round(Object.values(n).reduce((a,b)=>a+b,0)/Math.max(1,Object.keys(n).length))],['goals',290,235,'Цели',Math.min(100,(c.goals||[]).filter(g=>g.status==='active').length*18+25)],['beliefs',180,288,'Убеждения',Math.min(100,(p.cognition?.beliefs||[]).length*8+20)],['social',45,155,'Связи',Math.min(100,Object.keys(c.relationships||{}).length*18+25)],['world',315,155,'Мир',Math.min(100,(world.events||[]).length/3+20)]];const saved=c.brainLayout||{};const xy=defs.map(([id,x,y,label,val])=>({id,x:Number(saved[id]?.x??x),y:Number(saved[id]?.y??y),label,val}));const edges=[['self','memory'],['self','emotion'],['self','needs'],['self','goals'],['self','beliefs'],['self','social'],['self','world'],['memory','beliefs'],['emotion','needs'],['social','world'],['goals','world']];return `<section class="panel"><div class="state-head"><h2>Когнитивная схема</h2><button class="refresh-status-button" data-refresh-state>↻ Обновить</button></div><p class="small muted">Условная визуализация цифровой психики: размер узла отражает показатель. Перетаскивай узлы, нажимай на них для деталей. Это карта модели состояния, не буквальная биологическая нейросеть.</p><div class="brain-wrap"><svg id="brainGraph" class="brain-svg" viewBox="0 0 360 330" role="img" aria-label="Карта психики персонажа">${edges.map(([a,b])=>{const x=xy.find(v=>v.id===a),y=xy.find(v=>v.id===b);return `<line class="brain-edge" x1="${x.x}" y1="${x.y}" x2="${y.x}" y2="${y.y}"/>`;}).join('')}${xy.map(v=>`<g class="brain-node" data-brain-node="${v.id}" transform="translate(${v.x} ${v.y})" tabindex="0"><circle r="${Math.max(13,Math.min(30,12+v.val*.17))}"/><text y="3">${esc(v.label)}</text><text class="node-value" y="${Math.max(24,Math.min(40,18+v.val*.17))}">${Math.round(v.val)}%</text></g>`).join('')}</svg></div><div class="graph-legend"><span>● Память</span><span>● Эмоции</span><span>● Потребности</span><span>● Цели</span><span>● Связи</span></div><p class="small muted">Последний анализ: ${c.stateAnalysis?.updatedAt?new Date(c.stateAnalysis.updatedAt).toLocaleString('ru-RU'):'ещё не проводился'}</p></section><section class="panel"><h2>Активные сигналы</h2><div class="pillset">${Object.entries(em).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v])=>`<span class="badge">${esc(k)} · ${Math.round(v)}%</span>`).join('')||'<span class="small muted">Нет данных</span>'}</div><p class="small">${esc(p.affect?.dominant||'Нейтральное состояние')}</p></section>`;}
 function socialGraphView(){const c=currentCharacter();if(!c)return '';const chars=world.characters;const center={x:180,y:150};const radius=105;const nodes=chars.map((a,i)=>{const angle=(i/Math.max(1,chars.length))*Math.PI*2-Math.PI/2;return {c:a,x:chars.length===1?180:center.x+Math.cos(angle)*radius,y:chars.length===1?150:center.y+Math.sin(angle)*radius};});const me=nodes.find(x=>x.c.id===c.id)||nodes[0];return `<section class="panel"><div class="state-head"><h2>Социальная сеть / граф отношений</h2><button class="refresh-status-button" data-refresh-state>↻ Пересчитать по переписке</button></div><p class="small muted">Связи направленные. A → B — мнение A о B; обратная стрелка хранится отдельно.</p><div class="brain-wrap"><svg viewBox="0 0 360 300" class="brain-svg">${nodes.filter(x=>x.c.id!==me.c.id).map(x=>{const r=me.c.relationships[x.c.id]||{};const opacity=.25+Math.abs(Number(r.affinity||0))/150;return `<g><line x1="${me.x}" y1="${me.y}" x2="${x.x}" y2="${x.y}" stroke="#d9a34a" stroke-opacity="${opacity}" stroke-width="${1+Math.abs(Number(r.trust||0))/70}"/><text x="${(me.x+x.x)/2}" y="${(me.y+x.y)/2-6}" fill="#b9a77f" font-size="8">${Math.round(r.affinity||0)} / ${Math.round(r.trust||0)}</text></g>`;}).join('')}${nodes.map(x=>`<g><circle cx="${x.x}" cy="${x.y}" r="${x.c.id===c.id?29:24}" fill="${x.c.id===c.id?'#6a4b23':'#2a2927'}" stroke="${x.c.id===c.id?'#edbd62':'#77716a'}" stroke-width="1.5"/><text x="${x.x}" y="${x.y+4}" text-anchor="middle" font-size="10" fill="#f0e7d5">${esc(x.c.identity.name.slice(0,12))}</text></g>`).join('')}</svg></div>${chars.filter(x=>x.id!==c.id).map(x=>{const r=c.relationships[x.id]||{};return `<div class="data-row"><div class="between"><strong>${esc(c.identity.name)} → ${esc(x.identity.name)}</strong><span class="data-tag">доверие ${Math.round(r.trust||0)}</span></div><p>Симпатия ${Math.round(r.affinity||0)} · уважение ${Math.round(r.respect||0)} · раздражение ${Math.round(r.irritation||0)}</p><p>${esc(r.opinion||'Мнение пока не сформировано.')}</p><button data-edit-relation="${esc(x.id)}">Редактировать</button></div>`;}).join('')}</section>`;}
 function eventsView(){const c=currentCharacter();if(!c)return '';const open=(c.openPlots||[]).filter(x=>x.status!=='closed'),closed=(c.openPlots||[]).filter(x=>x.status==='closed');const events=(world.chronicle||world.events||[]).slice(0,30);return `<section class="panel"><div class="state-head"><h2>Открытые сюжетные линии · ${open.length}</h2><button class="refresh-status-button" data-refresh-state>↻ Обновить линии</button></div>${open.map(x=>`<div class="plot-card open"><div class="between"><strong>${esc(x.title)}</strong><span class="plot-status">● ОТКРЫТА</span></div><p class="small">${esc(x.summary||'')}</p><div class="trigger">Закроется, когда: ${esc(x.closeWhen||'условие не задано')}</div><button data-close-plot="${esc(x.id)}">Закрыть вручную</button></div>`).join('')||'<div class="empty">Открытых линий пока нет.</div>'}<button class="inline-add" data-add-plot>＋ Добавить незавершённую линию</button><h3>Закрытые линии · ${closed.length}</h3>${closed.slice(0,15).map(x=>`<div class="plot-card closed"><div class="between"><strong>${esc(x.title)}</strong><span class="plot-status">✓ ЗАКРЫТА</span></div><p class="small">${esc(x.closeReason||x.summary||'')}</p></div>`).join('')||'<div class="small muted">Пока ни одна линия не закрыта.</div>'}</section><section class="panel"><div class="state-head"><h2>Хроника событий · ${events.length}</h2><button data-refresh-state>↻ Пересобрать из последних сообщений</button></div>${events.map(e=>`<div class="data-row"><div class="between"><span class="data-tag">День ${e.day||1} · ${String(e.hour??'').padStart(2,'0')}:00</span><span class="small muted">${esc(e.source||e.type||'event')}</span></div><p>${esc(e.text||'')}</p></div>`).join('')||'<div class="empty">Хроника появится после анализа реальных событий.</div>'}</section>`;}
@@ -1741,7 +1745,7 @@ function openVibeCoder(){
   $('modal').querySelector('.modalbox')?.classList.add('vibe-modal');
   const frame=$('vibeFrame');frame.srcdoc=last.code||'';
   $('runVibePreview').onclick=()=>{frame.srcdoc=$('vibeCode').value;toast('Превью обновлено.');};
-  $('generateVibeCode').onclick=async()=>{const prompt=$('vibePrompt').value.trim();if(!prompt)return toast('Опиши задачу для кода.');if(!getOpenRouterKey())return openAISettings();$('generateVibeCode').disabled=true;$('vibeStatus').textContent='ИИ пишет HTML, CSS и JavaScript…';try{const code=await openRouterChat([{role:'system',content:'Ты senior frontend engineer. Создай законченную автономную HTML-страницу (CSS и JavaScript внутри), адаптивную, с доступностью и рабочей интерактивностью. Возвращай ТОЛЬКО полный HTML-код от <!doctype html> до </html>, без markdown-ограждений, без внешних библиотек и без внешних ресурсов. Содержимое будет запущено в изолированном sandbox iframe.'},{role:'user',content:prompt}],{temperature:.45,max_tokens:3500});const html=code.replace(/^```(?:html)?/i,'').replace(/```$/,'').trim();$('vibeCode').value=html;frame.srcdoc=html;$('vibeStatus').textContent=`Код создан (${html.length.toLocaleString('ru-RU')} символов). Проверь превью, затем сохрани модуль.`;}catch(e){$('vibeStatus').textContent='Ошибка: '+e.message;}finally{$('generateVibeCode').disabled=false;}};
+  $('generateVibeCode').onclick=async()=>{const prompt=$('vibePrompt').value.trim();if(!prompt)return toast('Опиши задачу для кода.');$('generateVibeCode').disabled=true;$('vibeStatus').textContent='ИИ пишет HTML, CSS и JavaScript…';try{const code=await openRouterChat([{role:'system',content:'Ты senior frontend engineer. Создай законченную автономную HTML-страницу (CSS и JavaScript внутри), адаптивную, с доступностью и рабочей интерактивностью. Возвращай ТОЛЬКО полный HTML-код от <!doctype html> до </html>, без markdown-ограждений, без внешних библиотек и без внешних ресурсов. Содержимое будет запущено в изолированном sandbox iframe.'},{role:'user',content:prompt}],{temperature:.45,max_tokens:3500});const html=code.replace(/^```(?:html)?/i,'').replace(/```$/,'').trim();$('vibeCode').value=html;frame.srcdoc=html;$('vibeStatus').textContent=`Код создан (${html.length.toLocaleString('ru-RU')} символов). Проверь превью, затем сохрани модуль.`;}catch(e){$('vibeStatus').textContent='Ошибка: '+e.message;}finally{$('generateVibeCode').disabled=false;}};
   $('saveVibeCode').onclick=()=>{const module={id:uid(),title:$('vibePrompt').value.trim().slice(0,80)||'Пользовательский модуль',prompt:$('vibePrompt').value,code:$('vibeCode').value,updatedAt:Date.now()};world.settings.vibeModules.unshift(module);world.settings.vibeModules=world.settings.vibeModules.slice(0,30);storeActive();toast('Модуль сохранён в этом мире.');};
   $('downloadVibeCode').onclick=()=>download('my-world-module.html',$('vibeCode').value,'text/html');
   $('copyVibeCode').onclick=()=>navigator.clipboard?.writeText($('vibeCode').value).then(()=>toast('Код скопирован.')).catch(()=>toast('Браузер не дал доступ к буферу.'));
@@ -1750,7 +1754,23 @@ function openVibeCoder(){
 function editRelationship(id){const c=currentCharacter(),target=world.characters.find(x=>x.id===id);if(!c||!target)return;const r=c.relationships[id]||{};openModal('Связь: '+esc(target.identity.name),`<div class="book-form">${bookField('Мнение о человеке','relOpinion',r.opinion||'','large')}<div class="book-grid">${[['Симпатия','relAffinity','affinity'],['Доверие','relTrust','trust'],['Уважение','relRespect','respect'],['Раздражение','relIrritation','irritation']].map(([l,id,k])=>`<div class="book-field"><label>${l} · <span id="${id}Val">${Math.round(r[k]||0)}</span></label><input id="${id}" type="range" min="-100" max="100" value="${Math.round(r[k]||0)}"></div>`).join('')}</div><button class="primary" id="saveRelation">Сохранить</button></div>`);for(const id of ['relAffinity','relTrust','relRespect','relIrritation'])$(id).oninput=()=>$(id+'Val').textContent=$(id).value;$('saveRelation').onclick=()=>{c.relationships[id] ||= {affinity:0,trust:0,respect:0,irritation:0,opinion:'',history:[]};const x=c.relationships[id];x.affinity=Number($('relAffinity').value);x.trust=Number($('relTrust').value);x.respect=Number($('relRespect').value);x.irritation=Number($('relIrritation').value);x.opinion=$('relOpinion').value;storeActive();closeModal();render();};}
 
 function openHeaderMenu(){const m=$('headerMenuDropdown');m?.classList.toggle('open');}
-function openBranchSettings(){const t=currentThread();if(!t){toast('Сначала создай чат.');return;}t.settings ||= {};openModal('Настройки ветки',`<div class="book-form"><div class="book-field"><label>Название ветки</label><input id="branchTitle" value="${esc(threadLabel(t))}"></div><div class="book-field"><label>Дополнительные инструкции для этой ветки</label><textarea id="branchSystemNote" class="large">${esc(t.settings.systemNote||'')}</textarea></div><div class="book-grid"><div class="book-field"><label>Глубина контекста (сообщений)</label><input id="branchDepth" type="number" min="4" max="60" value="${Number(t.settings.contextDepth)||14}"></div><div class="book-field"><label>Температура модели</label><input id="branchTemperature" type="number" min="0.1" max="1.5" step="0.05" value="${Number(t.settings.temperature)||.82}"></div></div><div class="book-field"><label><input id="branchMemory" type="checkbox" ${t.settings.memoryEnabled!==false?'checked':''}> Использовать долговременную память персонажа</label></div><div class="book-field"><label><input id="branchLore" type="checkbox" ${t.settings.loreEnabled!==false?'checked':''}> Подключать активные записи лорбука</label></div><div class="book-field"><label><input id="branchLoreDepth" type="number" min="1" max="20" value="${Number(t.settings.loreScanDepth)||4}"> Глубина поиска по последним сообщениям для лорбука</label></div><div class="book-save-row"><button class="primary" id="saveBranchSettings">Сохранить настройки</button></div></div>`);$('saveBranchSettings').onclick=async()=>{t.title=$('branchTitle').value.trim()||'Новый чат';t.settings.systemNote=$('branchSystemNote').value;t.settings.contextDepth=clamp($('branchDepth').value,4,60);t.settings.temperature=clamp($('branchTemperature').value,.1,1.5);t.settings.memoryEnabled=$('branchMemory').checked;t.settings.loreEnabled=$('branchLore').checked;t.settings.loreScanDepth=clamp($('branchLoreDepth').value,1,20);t.updatedAt=Date.now();await save();closeModal();render();toast('Настройки ветки сохранены.');};}
+function openBranchSettings(){
+  const t=currentThread();if(!t){toast('Сначала создай чат.');return;}t.settings ||= {};
+  const playOptions=world.characters.map(x=>`<option value="${esc(x.id)}" ${t.settings.playAsCharacterId===x.id?'selected':''}>${esc(x.identity.name)}</option>`).join('');
+  openModal('Настройки ветки',`<div class="book-form">
+    <div class="book-field"><label>Название ветки</label><input id="branchTitle" value="${esc(threadLabel(t))}"></div>
+    <div class="book-field"><label>Системный промпт / правила именно этой ветки</label><textarea id="branchSystemNote" class="large">${esc(t.settings.systemNote||'')}</textarea></div>
+    <div class="book-field"><label>Напоминание для модели (добавляется в каждый запрос)</label><textarea id="branchReminder" class="large" placeholder="Например: сохраняй медленный темп, не управляй действиями игрока…">${esc(t.settings.reminder||'')}</textarea></div>
+    <div class="book-grid"><div class="book-field"><label>Глубина контекста (сообщений)</label><input id="branchDepth" type="number" min="4" max="60" value="${Number(t.settings.contextDepth)||14}"></div><div class="book-field"><label>Длина контекста (символов)</label><input id="branchPromptLimit" type="number" min="3000" max="24000" step="500" value="${Number(t.settings.promptLimit)||9300}"></div><div class="book-field"><label>Температура модели</label><input id="branchTemperature" type="number" min="0.1" max="1.5" step="0.05" value="${Number(t.settings.temperature)||.82}"></div><div class="book-field"><label>Играть за персонажа</label><select id="branchPlayAs"><option value="">Пользователь / свой профиль</option>${playOptions}</select></div></div>
+    <div class="book-field"><label><input id="branchMemory" type="checkbox" ${t.settings.memoryEnabled!==false?'checked':''}> Использовать долговременную память персонажа</label></div>
+    <div class="book-field"><label><input id="branchLore" type="checkbox" ${t.settings.loreEnabled!==false?'checked':''}> Подключать активные записи лорбука</label></div>
+    <div class="book-field"><label><input id="branchLoreDepth" type="number" min="1" max="20" value="${Number(t.settings.loreScanDepth)||4}"> Глубина поиска по последним сообщениям для лорбука</label></div>
+    <div class="controls"><button id="openContentSettings">Настройки содержания / NSFW</button><button id="showBranchGraph">Граф веток</button></div>
+    <div class="book-save-row"><button class="primary" id="saveBranchSettings">Сохранить настройки</button></div>
+  </div>`);
+  $('saveBranchSettings').onclick=async()=>{t.title=$('branchTitle').value.trim()||'Новый чат';t.settings.systemNote=$('branchSystemNote').value;t.settings.reminder=$('branchReminder').value;t.settings.contextDepth=clamp($('branchDepth').value,4,60);t.settings.promptLimit=clamp($('branchPromptLimit').value,3000,24000);t.settings.temperature=clamp($('branchTemperature').value,.1,1.5);t.settings.playAsCharacterId=$('branchPlayAs').value||null;t.settings.memoryEnabled=$('branchMemory').checked;t.settings.loreEnabled=$('branchLore').checked;t.settings.loreScanDepth=clamp($('branchLoreDepth').value,1,20);t.updatedAt=Date.now();await save();closeModal();render();toast('Настройки ветки сохранены.');};
+  $('openContentSettings').onclick=()=>openContentSettings();$('showBranchGraph').onclick=()=>openConversationMap();
+}
 function openConversationMap(){const t=currentThread();if(!t){toast('В этой ветке пока нет сообщений.');return;}const msgs=t.messages||[];openModal('Карта диалога',`<div class="book-form"><div class="small muted">${esc(threadLabel(t))} · ${msgs.length} узлов</div><div class="conversation-map">${msgs.map((m,i)=>`<button class="map-node ${m.speaker}" data-map-index="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${esc(m.speaker==='user'?'Ты':m.speaker==='system'?'Событие':m.speakerName||currentCharacter()?.identity.name||'Персонаж')}</strong><small>${esc(String(m.text||'').replace(/\s+/g,' ').slice(0,115))}</small></button>`).join('')}</div></div>`);}
 function openCharacterBook(tab='character',id=null){
   const c=world.characters.find(x=>x.id===(id||chatCharacter))||currentCharacter();if(!c)return;ensureCharacterExtras(c);bookCharacterId=c.id;bookTab=tab;selectedLoreIds.clear();bookSelectedLoreId=bookSelectedLoreId&&c.lorebook[bookSelectedLoreId]?bookSelectedLoreId:Object.keys(c.lorebook)[0]||null;bookLoreFilter='';renderCharacterBook();
@@ -1770,8 +1790,8 @@ function bookField(label,id,value='',type='textarea',help=''){
   return `<div class="book-field"><label>${label}</label>${input}${help?`<div class="book-help">${help}</div>`:''}</div>`;
 }
 function bookTabContent(c){
-  if(bookTab==='character')return `<div class="book-form"><h3>Идентичность и описание</h3><div class="book-grid">${bookField('Имя','bookName',c.identity.name,'input')}${bookField('Возраст','bookAge',c.identity.age,'input')}${bookField('Аватар / символ','bookEmoji',c.identity.emoji,'input')}${bookField('Краткое структурированное описание','bookDescription',c.identity.description||'','textarea','Короткая выжимка, которая отображается в профиле и используется моделью.')}</div>${bookField('Биография','bookBiography',c.identity.biography||'','large')}${bookField('Внешность','bookAppearance',c.identity.appearance||'')}${bookField('Характер и манера речи','bookSpeech',c.identity.speechStyle||'','large') }<h3>Психологический профиль</h3><div class="book-grid">${bookField('Ценности','bookValues',(c.identity.values||[]).join('\n'))}${bookField('Страхи и уязвимости','bookFears',(c.identity.fears||[]).join('\n'))}${bookField('Интересы','bookInterests',(c.identity.interests||[]).join('\n'))}${bookField('Не любит / избегает','bookDislikes',(c.identity.dislikes||[]).join('\n'))}${bookField('Привычки','bookHabits',(c.identity.habits||[]).join('\n'))}${bookField('Личные вещи','bookPossessions',(c.identity.possessions||[]).join('\n'))}</div><div class="book-save-row"><button id="generateBookCharacter">✧ Создать / дополнить личность ИИ</button></div><div class="book-help">Ползунки психических черт и текущее состояние находятся во вкладке «Психика» справа.</div></div>`;
-  if(bookTab==='npc')return `<div class="book-form"><div class="sectionhead"><div><h3>NPC, связанные с ${esc(c.identity.name)}</h3><p class="small muted">Они принадлежат профилю этого персонажа. Их можно вызвать через @ в конкретный чат.</p></div><button id="addNpcButton">＋ Новый NPC</button></div><div class="npc-grid">${(c.npcs||[]).map((n,i)=>`<div class="npc-card" data-npc-index="${i}"><div class="npc-card-head"><strong>${esc(n.name||'Новый NPC')}</strong><button class="danger" data-remove-npc="${i}">Удалить</button></div><div class="book-field"><label>Имя</label><input data-npc-field="name" value="${esc(n.name)}"></div><div class="book-field"><label>Псевдонимы / ключи вызова (через запятую)</label><input data-npc-field="aliases" value="${esc((n.aliases||[]).join(', '))}"></div><div class="book-grid"><div class="book-field"><label>Возраст</label><input data-npc-field="age" value="${esc(n.age||'')}"></div><div class="book-field"><label>Пол / гендер (по желанию)</label><input data-npc-field="gender" value="${esc(n.gender||'')}"></div></div><div class="book-field"><label>Внешность</label><textarea data-npc-field="appearance">${esc(n.appearance||'')}</textarea></div><div class="book-field"><label>Характер и манера речи</label><textarea data-npc-field="persona">${esc(n.persona||'')}</textarea></div><div class="book-field"><label>Описание / биография</label><textarea data-npc-field="description">${esc(n.description||'')}</textarea></div><div class="book-grid"><label class="small"><input data-npc-field="enabled" type="checkbox" ${n.enabled!==false?'checked':''}> Активен</label><label class="small"><input data-npc-field="constant" type="checkbox" ${n.constant?'checked':''}> Всегда учитывать</label></div><div class="book-field"><label>Приоритет</label><input data-npc-field="priority" type="number" min="1" max="100" value="${Number(n.priority)||10}"></div></div>`).join('')||'<div class="book-empty">NPC ещё не добавлены. Создай первого участника мира.</div>'}</div><div class="book-save-row"><button class="primary" id="saveNpcTab">Сохранить NPC</button></div></div>`;
+  if(bookTab==='character')return `<div class="book-form"><h3>Идентичность и описание</h3><div class="book-grid">${bookField('Имя','bookName',c.identity.name,'input')}${bookField('Возраст','bookAge',c.identity.age,'input')}${bookField('Аватар / символ','bookEmoji',c.identity.emoji,'input')}<div class="book-field"><label>Быстрый выбор символа</label><div class="emoji-quick-grid">${['✦','◇','◆','☾','☼','♟','猫','🖤','🦇','🐈','🕯️','⚙️','🎸','🌙','🪐','🩶','🦋','🗝️'].map(e=>`<button type="button" data-emoji-pick="${e}">${e}</button>`).join('')}</div></div>${bookField('Краткое структурированное описание','bookDescription',c.identity.description||'','textarea','Короткая выжимка, которая отображается в профиле и используется моделью.')}</div>${bookField('Биография','bookBiography',c.identity.biography||'','large')}${bookField('Внешность','bookAppearance',c.identity.appearance||'')}${bookField('Характер и манера речи','bookSpeech',c.identity.speechStyle||'','large') }<h3>Психологический профиль</h3><div class="book-grid">${bookField('Ценности','bookValues',(c.identity.values||[]).join('\n'))}${bookField('Страхи и уязвимости','bookFears',(c.identity.fears||[]).join('\n'))}${bookField('Интересы','bookInterests',(c.identity.interests||[]).join('\n'))}${bookField('Не любит / избегает','bookDislikes',(c.identity.dislikes||[]).join('\n'))}${bookField('Привычки','bookHabits',(c.identity.habits||[]).join('\n'))}${bookField('Личные вещи','bookPossessions',(c.identity.possessions||[]).join('\n'))}</div><div class="book-save-row"><button id="generateBookCharacter">✧ Создать / дополнить личность ИИ</button></div><div class="book-help">Ползунки психических черт и текущее состояние находятся во вкладке «Психика» справа.</div></div>`;
+  if(bookTab==='npc')return `<div class="book-form"><div class="sectionhead"><div><h3>NPC, связанные с ${esc(c.identity.name)}</h3><p class="small muted">Они принадлежат профилю этого персонажа. Их можно вызвать через @ в конкретный чат.</p></div><button id="addNpcButton">＋ Новый NPC</button></div><div class="npc-grid">${(c.npcs||[]).map((n,i)=>`<div class="npc-card" data-npc-index="${i}"><div class="npc-card-head"><strong>${esc(n.name||'Новый NPC')}</strong><button class="danger" data-remove-npc="${i}">Удалить</button></div><div class="book-field"><label>Имя</label><input data-npc-field="name" value="${esc(n.name)}"></div><div class="book-field"><label>Псевдонимы / ключи вызова (через запятую)</label><input data-npc-field="aliases" value="${esc((n.aliases||[]).join(', '))}"></div><div class="book-grid"><div class="book-field"><label>Возраст</label><input data-npc-field="age" value="${esc(n.age||'')}"></div><div class="book-field"><label>Пол / гендер (по желанию)</label><input data-npc-field="gender" value="${esc(n.gender||'')}"></div></div><div class="book-field"><label>Внешность</label><textarea data-npc-field="appearance">${esc(n.appearance||'')}</textarea></div><div class="book-field"><label>Характер и манера речи</label><textarea data-npc-field="persona">${esc(n.persona||'')}</textarea></div><div class="book-field"><label>Описание / биография</label><textarea data-npc-field="description">${esc(n.description||'')}</textarea></div><div class="book-field"><label>Личная сводка памяти NPC</label><textarea data-npc-field="memorySummary" placeholder="Что этот NPC лично пережил и запомнил…">${esc(n.memory?.summary||'')}</textarea><div class="book-help">Память этого NPC хранится отдельно от памяти главного персонажа.</div></div><div class="book-grid"><label class="small"><input data-npc-field="enabled" type="checkbox" ${n.enabled!==false?'checked':''}> Активен</label><label class="small"><input data-npc-field="constant" type="checkbox" ${n.constant?'checked':''}> Всегда учитывать</label></div><div class="book-field"><label>Приоритет</label><input data-npc-field="priority" type="number" min="1" max="100" value="${Number(n.priority)||10}"></div></div>`).join('')||'<div class="book-empty">NPC ещё не добавлены. Создай первого участника мира.</div>'}</div><div class="book-save-row"><button class="primary" id="saveNpcTab">Сохранить NPC</button></div></div>`;
   if(bookTab==='user'){const u={...(world.settings.userProfile||{}),...(c.userProfile||{})};return `<div class="book-form"><h3>Краткий структурированный профиль пользователя</h3><p class="small muted">Эти сведения передаются ИИ как контекст о собеседнике. Можно оставить поля пустыми или переопределить их только для этого персонажа.</p><div class="book-grid">${bookField('Имя / как обращаться','userName',u.name||'','input')}${bookField('Возраст','userAge',u.age||'','input')}${bookField('Обращение / местоимения','userPronouns',u.pronouns||'','input')}${bookField('Внешность / аватар словами','userAppearance',u.appearance||'')}</div>${bookField('Краткая личность','userPersonality',u.personality||'')}${bookField('Биография / важный контекст','userBackground',u.background||'','large')}${bookField('Интересы и предпочтения','userPreferences',u.preferences||'')}${bookField('Дополнительные инструкции для ИИ','userInstructions',u.customInstructions||'','large')}<div class="book-save-row"><button id="useGlobalUserProfile">Сохранить как общий профиль для всех персонажей</button><button class="primary" id="saveUserTab">Сохранить только для этого персонажа</button></div></div>`;}
   if(bookTab==='background')return `<div class="book-form"><h3>Мир и текущий фон сцены</h3><p class="small muted">Общий контекст вселенной, который видят все персонажи этого мира. Сюда можно поместить правила сеттинга, место, эпоху, ограничения и события, не привязанные к одному герою.</p>${bookField('Описание мира / сеттинг','worldBackground',world.background||'','large')}${bookField('Текущая сцена / место действия','worldScene',world.scene||'','large')}${bookField('Правила и важные ограничения','worldRules',world.rules||'','large')}<div class="book-save-row"><button class="primary" id="saveBackgroundTab">Сохранить фон</button></div></div>`;
   if(bookTab==='lore'){
@@ -1810,7 +1830,7 @@ function saveBookTab(closeAfter=false,globalUser=false){
     for(const [id,key] of [['bookValues','values'],['bookFears','fears'],['bookInterests','interests'],['bookDislikes','dislikes'],['bookHabits','habits'],['bookPossessions','possessions']])c.identity[key]=val(id).split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,100);
   }
   if(bookTab==='npc'){
-    document.querySelectorAll('.npc-card').forEach(card=>{const i=Number(card.dataset.npcIndex);const n=c.npcs[i];if(!n)return;const v=k=>card.querySelector(`[data-npc-field="${k}"]`);n.name=v('name')?.value.trim()||'NPC';n.aliases=(v('aliases')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);for(const k of ['age','gender','appearance','persona','description'])n[k]=v(k)?.value||'';n.enabled=!!v('enabled')?.checked;n.constant=!!v('constant')?.checked;n.priority=clamp(v('priority')?.value||10,1,100);});
+    document.querySelectorAll('.npc-card').forEach(card=>{const i=Number(card.dataset.npcIndex);const n=c.npcs[i];if(!n)return;const v=k=>card.querySelector(`[data-npc-field="${k}"]`);n.name=v('name')?.value.trim()||'NPC';n.aliases=(v('aliases')?.value||'').split(',').map(x=>x.trim()).filter(Boolean);for(const k of ['age','gender','appearance','persona','description'])n[k]=v(k)?.value||'';n.memory ||= {summary:'',episodes:[],facts:[],privateNotes:[]};n.memory.summary=v('memorySummary')?.value||n.memory.summary||'';n.enabled=!!v('enabled')?.checked;n.constant=!!v('constant')?.checked;n.priority=clamp(v('priority')?.value||10,1,100);});
   }
   if(bookTab==='user'){
     const profile={name:val('userName'),age:val('userAge'),pronouns:val('userPronouns'),appearance:val('userAppearance'),personality:val('userPersonality'),background:val('userBackground'),preferences:val('userPreferences'),customInstructions:val('userInstructions')};
@@ -1849,7 +1869,7 @@ async function handleSlashCommandWrapper(cmd){const ta=$('chatInput');if(ta){ta.
 function updateScale(v){document.documentElement.style.setProperty('--app-user-scale',Number(v)/100);document.body.style.zoom=String(Number(v)/100);$('scaleValue').textContent=v+'%';localStorage.setItem('my-world-scale',v);}
 function enhanceURVLayout(){
   applySavedTheme();
-  if(world?.settings?.selectedModelId)selectedModelId=world.settings.selectedModelId;
+  selectedModelId=LOCAL_MODEL_ID; if(world?.settings){world.settings.selectedModelId=LOCAL_MODEL_ID;}
   const body=document.body;
   // Store all popovers under one dismissal rule.
   $('newChatButton').onclick=createNewThread;$('headerNewChat').onclick=createNewThread;$('headerBookButton').onclick=()=>openCharacterBook('character');$('sidebarClose').onclick=()=>body.classList.remove('sidebar-open');$('addCharacterButton').onclick=addCharacter;
@@ -1857,13 +1877,13 @@ function enhanceURVLayout(){
   $('selectAllThreads').onclick=()=>{for(const t of world.userChats)selectedThreadIds.add(t.id);renderCharacterList();};
   $('exportSelectedThreads').onclick=()=>{const data=world.userChats.filter(t=>selectedThreadIds.has(t.id));download('my-world-selected-chats.json',JSON.stringify(data,null,2),'application/json');};
   $('deleteSelectedThreads').onclick=()=>{const ids=new Set(selectedThreadIds);if(!ids.size){toast('Сначала отметь переписки.');return;}if(!confirm(`Удалить выбранные переписки (${ids.size})?`))return;world.userChats=world.userChats.filter(t=>!ids.has(t.id));selectedThreadIds.clear();if(ids.has(activeThreadId)){const next=world.userChats[0];activeThreadId=next?.id||null;chatCharacter=next?.characterId||world.characters[0]?.id||null;if(!activeThreadId&&chatCharacter)makeThread(chatCharacter);}save().then(()=>render());};
-  $('headerMenuButton').onclick=openHeaderMenu;$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>fetchFreeModels(true).then(()=>toast(`Найдено ${freeModels.length} бесплатных моделей.`)).catch(e=>toast(e.message));
+  $('headerMenuButton').onclick=openHeaderMenu;$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>ensureLocalModel().then(()=>toast('Локальный ИИ готов.')).catch(e=>toast(e.message));
   $('headerMenuDropdown').addEventListener('click',e=>{const b=e.target.closest('[data-menu-action]');if(!b)return;const action=b.dataset.menuAction;$('headerMenuDropdown').classList.remove('open');if(action==='branch')openBranchSettings();if(action==='map')openConversationMap();if(action==='lore')openCharacterBook('lore');if(action==='scene'){activeTab='scene';render();document.body.classList.add('inspector-open');}if(action==='events'){activeTab='events';render();document.body.classList.add('inspector-open');}if(action==='vibe')openVibeCoder();if(action==='theme')openThemeSettings();if(action==='light')openThemeSettings();if(action==='fullscreen'){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}if(action==='language')toast('Русский интерфейс выбран.');});
   $('inspectorToggle').onclick=()=>body.classList.toggle('inspector-open');
   $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){activeTab=b.dataset.tab;render();}});
-  $('view').addEventListener('click',e=>{const b=e.target.closest('[data-inspector-book]');if(b)openCharacterBook(b.dataset.inspectorBook);if(e.target.id==='emptyCharacterBook')openCharacterBook('character');if(e.target.id==='emptyLoadModel')openAISettings();if(e.target.id==='providerSettingsButton')openAISettings();if(e.target.id==='refreshProviderModels')fetchFreeModels(true).then(()=>toast(`Найдено ${freeModels.length} бесплатных моделей.`)).catch(x=>toast(x.message));if(e.target.id==='extraFiltersToggle'){world.settings.ai.extraFilters=e.target.checked;storeActive();}if(e.target.id==='autoRefresh15Toggle'){world.settings.ai.autoRefreshEvery15=e.target.checked;storeActive();}if(e.target.closest('[data-refresh-state]'))refreshCharacterState();if(e.target.closest('[data-add-custom-state]'))addCustomState();if(e.target.closest('[data-add-plot]'))addOpenPlot();if(e.target.closest('[data-edit-scene]'))editSceneStatus();const rel=e.target.closest('[data-edit-relation]');if(rel)editRelationship(rel.dataset.editRelation);const close=e.target.closest('[data-close-plot]');if(close){const c=currentCharacter(),p=c.openPlots.find(x=>x.id===close.dataset.closePlot);if(p){p.status='closed';p.closedAt=Date.now();p.closeReason='Закрыто вручную пользователем.';storeActive();render();}}});
+  $('view').addEventListener('click',e=>{const b=e.target.closest('[data-inspector-book]');if(b)openCharacterBook(b.dataset.inspectorBook);if(e.target.id==='emptyCharacterBook')openCharacterBook('character');if(e.target.id==='emptyLoadModel')openAISettings();if(e.target.id==='providerSettingsButton'||e.target.id==='localModelLoadButton')openAISettings();if(e.target.id==='refreshProviderModels')ensureLocalModel().then(()=>toast('Локальный ИИ готов.')).catch(x=>toast(x.message));if(e.target.id==='extraFiltersToggle'){world.settings.ai.extraFilters=e.target.checked;storeActive();}if(e.target.id==='autoRefresh15Toggle'){world.settings.ai.autoRefreshEvery15=e.target.checked;storeActive();}if(e.target.closest('[data-refresh-state]'))refreshCharacterState();if(e.target.closest('[data-add-custom-state]'))addCustomState();if(e.target.closest('[data-add-plot]'))addOpenPlot();if(e.target.closest('[data-edit-scene]'))editSceneStatus();const rel=e.target.closest('[data-edit-relation]');if(rel)editRelationship(rel.dataset.editRelation);const close=e.target.closest('[data-close-plot]');if(close){const c=currentCharacter(),p=c.openPlots.find(x=>x.id===close.dataset.closePlot);if(p){p.status='closed';p.closedAt=Date.now();p.closeReason='Закрыто вручную пользователем.';storeActive();render();}}});
   $('worldChatList').addEventListener('click',e=>{const more=e.target.closest('[data-thread-menu]');if(more){e.preventDefault();e.stopPropagation();const id=more.dataset.threadMenu;const t=world.userChats.find(x=>x.id===id);if(!t)return;openModal('Действия с чатом',`<div class="book-form"><p class="small muted">${esc(threadLabel(t))}</p><div class="controls"><button class="primary" id="renameThreadButton">Переименовать</button><button id="deleteThreadButton">Удалить чат</button></div></div>`);$('renameThreadButton').onclick=()=>{const name=prompt('Новое название ветки:',threadLabel(t));if(name){t.title=name.trim().slice(0,100);t.updatedAt=Date.now();save();closeModal();render();}};$('deleteThreadButton').onclick=()=>{if(!confirm('Удалить эту ветку со всей её перепиской?'))return;world.userChats=world.userChats.filter(x=>x.id!==id);if(activeThreadId===id){activeThreadId=null;const next=world.userChats[0];if(next){activeThreadId=next.id;chatCharacter=next.characterId;}else makeThread(world.characters[0].id);}save();closeModal();render();};return;}const check=e.target.closest('[data-thread-check]');if(check){if(check.checked)selectedThreadIds.add(check.dataset.threadCheck);else selectedThreadIds.delete(check.dataset.threadCheck);return;}const thread=e.target.closest('[data-thread]');if(thread){if(historySelectionMode){const id=thread.dataset.thread;if(selectedThreadIds.has(id))selectedThreadIds.delete(id);else selectedThreadIds.add(id);renderCharacterList();}else selectThread(thread.dataset.thread);return;}const character=e.target.closest('[data-chat]');if(character)selectCharacter(character.dataset.chat);});
-  $('plusButton').onclick=()=>openPopover('plusMenu');$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>fetchFreeModels(true).then(()=>toast(`Найдено ${freeModels.length} бесплатных моделей.`)).catch(e=>toast(e.message));$('refreshButton').onclick=()=>refreshCharacterState();$('openSettingsLink').onclick=openAISettings;$('summonButton').onclick=()=>{populateSummonMenu();openPopover('summonMenu');};$('depthButton').onclick=()=>openPopover('depthMenu');$('modelSelectButton').onclick=openModelMenu;
+  $('plusButton').onclick=()=>openPopover('plusMenu');$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>ensureLocalModel().then(()=>toast('Локальный ИИ готов.')).catch(e=>toast(e.message));$('refreshButton').onclick=()=>refreshCharacterState();$('openSettingsLink').onclick=openAISettings;$('summonButton').onclick=()=>{populateSummonMenu();openPopover('summonMenu');};$('depthButton').onclick=()=>openPopover('depthMenu');$('modelSelectButton').onclick=openModelMenu;
   $('plusMenu').addEventListener('click',e=>{const b=e.target.closest('[data-plus]');if(!b)return;const action=b.dataset.plus;closePopovers();if(action==='search'){const q=prompt('Что найти в интернете?','');if(q)window.open('https://duckduckgo.com/?q='+encodeURIComponent(q),'_blank','noopener');}if(action==='attach')$('attachTextInput').click();if(action==='dice'){generateRandomEvent();return;}if(action==='scene'){activeTab='scene';render();document.body.classList.add('inspector-open');return;}if(action==='time'){$('chatInput').value+=($('chatInput').value?'\n':'')+worldTimestamp(world);}if(action==='ai'){openAISettings();return;}$('chatInput').dispatchEvent(new Event('input',{bubbles:true}));$('chatInput').focus();});
   $('summonMenu').addEventListener('click',e=>{const b=e.target.closest('[data-summon]');if(!b)return;const id=b.dataset.summon;if(summonedIds.includes(id))summonedIds=summonedIds.filter(x=>x!==id);else summonedIds.push(id);const c=world.characters.find(x=>x.id===id);if(c){const ta=$('chatInput');ta.value+=(ta.value?' ':'')+'@'+c.identity.name;ta.dispatchEvent(new Event('input',{bubbles:true}));}const t=currentThread();if(t)t.summonedCharacterIds=[...summonedIds];populateSummonMenu();storeActive();});
   $('depthMenu').addEventListener('click',e=>{const b=e.target.closest('[data-depth]');if(b)setReasoningDepth(b.dataset.depth);});
@@ -1884,6 +1904,132 @@ function enhanceURVLayout(){
 }
 
 enhanceURVLayout();
+
+/* ──────────────────────────────────────────────────────────────────────
+   MY WORLD V4 interaction layer: branches, message actions, NPC isolation,
+   manual state, appearance and mature-content preferences.
+   ────────────────────────────────────────────────────────────────────── */
+function resolveMentionedNpc(character,text,thread){
+  ensureCharacterExtras(character);const source=String(text||'').toLocaleLowerCase('ru');
+  return (character.npcs||[]).filter(n=>n.enabled!==false).sort((a,b)=>(Number(b.priority)||10)-(Number(a.priority)||10)).find(n=>[n.name,...(n.aliases||[])].filter(Boolean).some(alias=>{const key=String(alias).toLocaleLowerCase('ru').trim();return key.length>1&&(source.includes('@'+key)||source.includes(key));}))||null;
+}
+function recordNpcMemory(npc,userText,replyText){
+  npc.memory ||= {summary:'',episodes:[],facts:[],privateNotes:[]};
+  npc.memory.episodes ||= [];const day=world?.time?.day||1,hour=world?.time?.hour||8;
+  npc.memory.episodes.unshift({id:uid(),text:`День ${day} · ${String(hour).padStart(2,'0')}:00. ${userText} ${replyText}`,day,hour,importance:2,visibility:'private',createdAt:Date.now()});
+  npc.memory.episodes=npc.memory.episodes.slice(0,120);
+}
+async function generateNpcReply(owner,npc,thread,message,onChunk=null){
+  const depth=Math.max(4,Math.min(60,Number(thread.settings?.contextDepth)||18));
+  const history=(thread.messages||[]).filter(m=>m.speaker==='user'||m.speaker==='character').slice(-depth).map(m=>({role:m.speaker==='user'?'user':'assistant',content:m.speaker==='user'?`Пользователь: ${String(m.text||'').slice(-1200)}`:`[Реплика ${m.speakerName||owner.identity.name}${m.speakerNpcId===npc.id?' · этот NPC':' · другой участник'}]: ${String(m.text||'').slice(-1200)}`}));
+  const nmem=npc.memory||{summary:'',episodes:[],facts:[],privateNotes:[]};
+  const ownLore=Object.values(npc.lorebook||{}).filter(e=>e.enabled!==false&&(e.constant||(e.keys||[]).some(k=>String(message||'').toLowerCase().includes(String(k).toLowerCase())))).sort((a,b)=>(b.priority||10)-(a.priority||10)).slice(0,8);
+  const system=`Ты — NPC «${npc.name||'Безымянный'}», самостоятельный участник мира. Ты НЕ ${owner.identity.name} и не говоришь от его имени. У тебя своя память и своя точка зрения.
+
+ЛИЧНОСТЬ NPC
+Имя: ${npc.name||'NPC'}; возраст: ${npc.age||'не указан'}; гендер: ${npc.gender||'не указан'}.
+Внешность: ${String(npc.appearance||'').slice(0,700)}
+Характер и речь: ${String(npc.persona||'').slice(0,1500)}
+Биография: ${String(npc.description||'').slice(0,1700)}
+
+СОБСТВЕННАЯ ПАМЯТЬ ЭТОГО NPC
+Сводка: ${String(nmem.summary||'Пока пуста').slice(0,900)}
+Личные эпизоды: ${JSON.stringify((nmem.episodes||[]).slice(0,8)).slice(0,1800)}
+Факты, которые он узнал: ${JSON.stringify((nmem.facts||[]).slice(0,12)).slice(0,1000)}
+
+МИР И ОБЩАЯ СЦЕНА
+Мир: ${String(world.background||'').slice(0,600)}
+Сцена: ${JSON.stringify(world.sceneStatus||{}).slice(0,800)}
+Другие участники рядом: ${owner.identity.name}; ${(owner.npcs||[]).filter(x=>x.id!==npc.id).map(x=>x.name).join(', ')}
+
+Ограничения знания: не используй личные воспоминания ${owner.identity.name} как свои; не выдумывай, что NPC присутствовал при событиях, которых не видел; факты, которые он не знает, остаются ему неизвестны. Не управляй действиями или чувствами пользователя. Отвечай как NPC, не как ассистент. Пиши естественно, без шаблонных вариантов.
+
+Лорбук NPC: ${ownLore.map(e=>`[${e.name}] ${e.content}`).join('\n').slice(0,2400)||'Нет активных записей.'}
+
+Инструкции ветки: ${String(thread.settings?.systemNote||'').slice(0,500)}
+Напоминание: ${String(thread.settings?.reminder||'').slice(0,500)}
+`;
+  return openRouterChat([{role:'system',content:system},...history],{temperature:Number(thread.settings?.temperature)||.82,max_tokens:(DEPTH_CONFIG[reasoningDepth]||DEPTH_CONFIG.standard).tokens,onChunk});
+}
+function getThreadFamily(thread){return thread.familyId||thread.id;}
+function forkThreadAt(index){
+  const parent=currentThread();if(!parent)return;const cut=parent.messages.slice(0,index+1);if(!cut.length)return;
+  const root=getThreadFamily(parent);const child=deepClone(parent);child.id=uid();child.parentThreadId=parent.id;child.familyId=root;child.forkedFromMessageId=cut.at(-1)?.id||null;child.forkedAtIndex=index;child.branchLabel=`Ветка ${world.userChats.filter(x=>getThreadFamily(x)===root).length+1}`;child.title=`${threadLabel(parent)} · ${child.branchLabel}`;child.createdAt=Date.now();child.updatedAt=Date.now();child.messages=cut.map(m=>({...m,id:m.id||uid()}));child.draft='';world.userChats.unshift(child);activeThreadId=child.id;chatCharacter=child.characterId;summonedIds=[...(child.summonedCharacterIds||[])];saveActiveThreadId();save().then(()=>{render();toast('Создана отдельная ветка с выбранного сообщения.');});
+}
+function openMessageEditor(index){const t=currentThread(),m=t?.messages?.[index];if(!m)return;openModal('Изменить сообщение',`<div class="book-form"><div class="book-field"><label>Текст сообщения</label><textarea id="editMessageText" class="large">${esc(m.text||'')}</textarea></div><div class="book-save-row"><button class="primary" id="saveEditedMessage">Сохранить</button></div></div>`);$('saveEditedMessage').onclick=async()=>{m.text=$('editMessageText').value;m.editedAt=Date.now();await save();closeModal();render();toast('Сообщение изменено.');};}
+async function deleteMessageAt(index,deleteTail=false){const t=currentThread();if(!t||!t.messages[index])return;const label=deleteTail?'это сообщение и все следующие сообщения':'только это сообщение';if(!confirm(`Удалить ${label}?`))return;if(deleteTail)t.messages.splice(index);else t.messages.splice(index,1);t.updatedAt=Date.now();await save();render();}
+async function pinMessageAt(index){const t=currentThread(),m=t?.messages?.[index];if(!m)return;m.pinned=!m.pinned;await save();render();toast(m.pinned?'Сообщение закреплено в контексте ветки.':'Закрепление снято.');}
+function archiveMessageToLore(index){const t=currentThread(),m=t?.messages?.[index],c=currentCharacter();if(!m||!c)return;ensureCharacterExtras(c);openModal('Добавить сообщение в лорбук',`<div class="book-form"><div class="book-field"><label>Название записи</label><input id="archiveLoreName" value="${esc((m.speakerName||c.identity.name)+' · '+String(m.text||'').slice(0,38))}"></div><div class="book-field"><label>Ключевые слова-триггеры через запятую</label><input id="archiveLoreKeys" placeholder="имя, место, предмет, событие"></div><div class="book-field"><label>Содержание</label><textarea id="archiveLoreContent" class="large">${esc(m.text||'')}</textarea></div><div class="book-save-row"><button class="primary" id="archiveLoreSave">Добавить</button></div></div>`);$('archiveLoreSave').onclick=async()=>{const id='lore_'+uid();c.lorebook[id]={id,name:$('archiveLoreName').value.trim()||'Архивированное сообщение',keys:$('archiveLoreKeys').value.split(',').map(x=>x.trim()).filter(Boolean),content:$('archiveLoreContent').value,priority:20,constant:false,enabled:true,excludeRecursion:false,scanDepth:4,sourceMessageId:m.id||null};await save();closeModal();render();toast('Сообщение сохранено как запись лорбука.');};}
+async function regenerateMessageAt(index,continuation=false){
+  if(modelBusy)return;const t=currentThread(),c=currentCharacter();if(!t||!c)return;let speakerIndex=continuation?index:(index);
+  const target=t.messages[speakerIndex];if(!target)return;
+  let npc=(target.speakerNpcId?c.npcs.find(n=>n.id===target.speakerNpcId):null)||resolveMentionedNpc(c,t.messages.slice(0,speakerIndex).reverse().find(m=>m.speaker==='user')?.text||'',t);
+  if(continuation){
+    const original=t.messages;const prefix=original.slice(0,speakerIndex+1);t.messages=prefix.concat([{speaker:'user',internal:true,text:'[ВНУТРЕННЯЯ ИНСТРУКЦИЯ: продолжи предыдущий ответ с того места, где он закончился. Не повторяй уже написанное. Сохраняй стиль, сцену и характер.]'}]);
+    modelBusy=true;renderMessages();try{const reply=npc?await generateNpcReply(c,npc,t,'Продолжи предыдущую реплику.'):await generateCharacterReply(c,t,'Продолжи предыдущую реплику.');t.messages=original;t.messages.splice(speakerIndex+1,0,{speaker:'character',speakerName:npc?.name||c.identity.name,speakerEmoji:npc?.emoji||c.identity.emoji,speakerNpcId:npc?.id||null,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now(),continuedFrom:target.id||null});await save();}catch(e){t.messages=original;toast('Продолжение не удалось: '+e.message);}finally{modelBusy=false;render();}return;
+  }
+  let userIndex=speakerIndex-1;while(userIndex>=0&&t.messages[userIndex].speaker!=='user')userIndex--;if(userIndex<0){toast('Не найдено пользовательское сообщение для повторной генерации.');return;}
+  const userText=t.messages[userIndex].text;const original=t.messages;t.messages=original.slice(0,userIndex+1);modelBusy=true;renderMessages();
+  try{const reply=npc?await generateNpcReply(c,npc,t,userText):await generateCharacterReply(c,t,userText);t.messages.push({speaker:'character',speakerName:npc?.name||c.identity.name,speakerEmoji:npc?.emoji||c.identity.emoji,speakerNpcId:npc?.id||null,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now(),regenerated:true});if(npc)recordNpcMemory(npc,`Пользователь сказал: ${String(userText).slice(0,280)}`,`Повторный ответ: ${reply.slice(0,300)}`);await save();}catch(e){t.messages=original;toast('Перегенерация не удалась: '+e.message);}finally{modelBusy=false;render();}
+}
+function renderMessageActionTools(){
+  const t=currentThread();if(!t)return;
+  document.querySelectorAll('#chatMessages .message-row[data-message-index]').forEach(row=>{
+    if(row.querySelector('.message-action-toolbar'))return;const i=Number(row.dataset.messageIndex),m=t.messages[i];if(!m)return;const user=m.speaker==='user';
+    const buttons=[['edit','Изменить','✎'],...(!user?[['regen','Переделать','↻'],['continue','Продолжить','＋ Продолжить']]:[]),['fork','Ветвь отсюда','⑂'],['pin',m.pinned?'Открепить':'Закрепить','⌖'],['lore','В лорбук','▤'],['delete','Удалить','×'],['delete-tail','Удалить дальше','⌫']];
+    const html=`<div class="message-action-toolbar" aria-label="Действия сообщения">${buttons.map(([act,label,icon])=>`<button type="button" data-message-action="${act}" data-message-index="${i}" title="${label}">${icon}</button>`).join('')}</div>`;
+    row.querySelector('.message-content')?.insertAdjacentHTML('beforeend',html);
+    const label=row.querySelector('.message-meta');if(label&&m.speakerNpcId){const npc=currentCharacter()?.npcs?.find(n=>n.id===m.speakerNpcId);if(npc)label.insertAdjacentHTML('afterend',`<div class="npc-ribbon">NPC · ${esc(npc.name)} · отдельная память</div>`);}
+    if(m.pinned)row.querySelector('.message-content')?.insertAdjacentHTML('afterbegin','<div class="message-pinned-tag">⌖ ЗАКРЕПЛЕНО В КОНТЕКСТЕ</div>');
+    if(user&&m.speakerName){const meta=row.querySelector('.message-meta');if(meta)meta.firstChild.textContent=m.speakerName;const avatar=row.querySelector('.message-avatar');if(avatar&&m.speakerEmoji)avatar.textContent=m.speakerEmoji;}
+  });
+}
+const originalRenderMessagesV4=renderMessages;
+renderMessages=function(){originalRenderMessagesV4();renderMessageActionTools();};
+openConversationMap = function(){
+  const t=currentThread();if(!t){toast('В этой ветке пока нет сообщений.');return;}const family=getThreadFamily(t);const related=world.userChats.filter(x=>getThreadFamily(x)===family).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  openModal('Граф веток и карта диалога',`<div class="book-form"><p class="small muted">Выбирай ветку, чтобы открыть её, или нажми на узел сообщения, чтобы перейти к нему.</p><div class="branch-graph">${related.map(branch=>`<div class="branch-graph-card ${branch.id===t.id?'active':''}"><div class="branch-graph-title"><strong>${esc(threadLabel(branch))}</strong><button data-map-thread="${esc(branch.id)}">Открыть</button></div><div class="branch-graph-sub">${branch.id===family?'Основная ветка':`Ответвление от ${Number(branch.forkedAtIndex||0)+1}-го сообщения`} · ${(branch.messages||[]).length} сообщений</div><div class="branch-graph-messages">${(branch.messages||[]).map((m,i)=>`<button data-map-index="${i}" data-map-thread="${esc(branch.id)}">${i+1}. ${esc((m.speakerName|| (m.speaker==='user'?'Ты':m.speaker==='system'?'Событие':'Персонаж')))} · ${esc(String(m.text||'').replace(/\s+/g,' ').slice(0,35))}</button>`).join('')}</div></div>`).join('')}</div></div>`);
+};
+function openContentSettings(){
+  const t=currentThread();if(!t)return;t.settings ||= {};const settings=t.settings;
+  openModal('Настройки содержания',`<div class="book-form"><p class="small muted">Это предпочтение для локальной модели, а не отключатель встроенных ограничений самой модели.</p><label class="book-field"><input id="contentMature" type="checkbox" ${settings.matureThemes?'checked':''}> Разрешить взрослые темы и более мрачные сюжеты</label><label class="book-field"><input id="contentStrict" type="checkbox" ${settings.strictContent!==false?'checked':''}> Сохранять строгую защиту от сексуального контента с несовершеннолетними, принуждения и несанкционированного насилия</label><div class="book-field"><label>Уровень подробности</label><select id="contentLevel"><option value="fade" ${settings.contentLevel==='fade'?'selected':''}>За кадром</option><option value="moderate" ${!settings.contentLevel||settings.contentLevel==='moderate'?'selected':''}>Умеренно</option><option value="explicit" ${settings.contentLevel==='explicit'?'selected':''}>Подробно (если допустимо для сюжета)</option></select></div><button class="primary" id="saveContentSettings">Сохранить</button></div>`);
+  $('saveContentSettings').onclick=async()=>{settings.matureThemes=$('contentMature').checked;settings.strictContent=$('contentStrict').checked;settings.contentLevel=$('contentLevel').value;await save();closeModal();toast('Предпочтения содержания сохранены.');};
+}
+openThemeSettings = function(){
+ const current=world?.settings?.themePreset||'amber';const swatches=[['amber','Уголь + янтарь','#1b1b1b','#e2a43a'],['violet','Ночной фиолетовый','#17141d','#b69bd9'],['blue','Холодный синий','#131a20','#83b5d8'],['green','Хвойный','#141b17','#92b68c'],['rose','Пыльная роза','#201719','#d99ca9']];
+ openModal('Оформление MY WORLD',`<div class="book-form"><div class="theme-swatches">${swatches.map(([id,label,bg,accent])=>`<button data-theme-preset="${id}"><span class="theme-dot" style="background:${accent}"></span><span>${label}</span></button>`).join('')}</div><div class="book-field" style="margin-top:12px"><label>Свой акцентный цвет</label><input type="color" id="customAccent" value="${esc(world?.settings?.customAccent||'#e2a43a')}"></div><div class="controls"><button id="resetTheme">Сбросить тему</button><button id="themeLightToggle">Светлая / тёмная база</button></div></div>`);
+ $('modalBody').querySelectorAll('[data-theme-preset]').forEach(b=>b.onclick=async()=>{applyThemePreset(b.dataset.themePreset);await save();});$('customAccent').oninput=e=>{world.settings.customAccent=e.target.value;document.documentElement.style.setProperty('--accent',e.target.value);document.documentElement.style.setProperty('--accent-dim',e.target.value+'22');storeActive();};$('resetTheme').onclick=async()=>{world.settings.themePreset='amber';world.settings.customAccent='#e2a43a';applyThemePreset('amber');await save();};$('themeLightToggle').onclick=()=>{const light=document.body.dataset.theme==='light';document.body.dataset.theme=light?'dark':'light';localStorage.setItem('my-world-theme',document.body.dataset.theme);};
+};
+function applyThemePreset(id){
+ const map={amber:['#11100f','#1b1b1b','#2a2928','#e5e2df','#9b999a','#e2a43a'],violet:['#100f16','#1a1822','#302b3b','#e9e3f1','#a69db1','#b69bd9'],blue:['#0f1419','#171f26','#29333c','#e2eaf0','#9eacb7','#83b5d8'],green:['#101511','#19211b','#2a372d','#e2ebe3','#9cab9e','#92b68c'],rose:['#181114','#241a1d','#38272d','#f0e3e6','#b5a0a6','#d99ca9']};
+ const vals=map[id]||map.amber;const root=document.documentElement;['--bg-main','--bg-sec','--bg-ter','--text-main','--text-muted','--accent'].forEach((k,i)=>root.style.setProperty(k,vals[i]));document.body.style.background=vals[0];world.settings ||= {};world.settings.themePreset=id;localStorage.setItem('my-world-theme-preset',id);
+}
+function applyCustomThemeSaved(){const id=world?.settings?.themePreset||localStorage.getItem('my-world-theme-preset')||'amber';applyThemePreset(id);if(world?.settings?.customAccent)document.documentElement.style.setProperty('--accent',world.settings.customAccent);}
+function openManualStats(){
+ const c=currentCharacter();if(!c)return;const p=ensurePsyche(c);const sliders=[['Энергия','energy',c.state.energy],['Настроение','mood',c.state.mood],['Стресс','stress',c.state.stress],['Потребность в общении','socialNeed',c.state.socialNeed],...Object.entries(p.needs).map(([k,v])=>[({rest:'Потребность: отдых',nourishment:'Потребность: еда',hydration:'Потребность: вода',hygiene:'Потребность: гигиена',connection:'Потребность: общение',autonomy:'Потребность: автономия',competence:'Потребность: компетентность',novelty:'Потребность: новизна',safety:'Потребность: безопасность',expression:'Потребность: самовыражение'})[k]||k,'need:'+k,v])];
+ openModal('Ручная настройка показателей',`<div class="book-form"><p class="small muted">Эти значения можно установить вручную. Следующий ИИ-анализ изменит их только по новым сообщениям.</p>${sliders.map(([label,id,val])=>`<div class="range-line"><label>${esc(label)}</label><input type="range" min="0" max="100" value="${clamp(val)}" data-stat-slider="${id}"><output data-stat-value="${id}">${Math.round(val)}</output></div>`).join('')}<button class="primary" id="saveManualStats">Сохранить показатели</button></div>`);
+ $('modalBody').querySelectorAll('[data-stat-slider]').forEach(el=>el.oninput=()=>{$(`modalBody`)?.querySelector(`[data-stat-value="${el.dataset.statSlider}"]`)?.replaceChildren(document.createTextNode(el.value));});
+ $('saveManualStats').onclick=async()=>{for(const el of $('modalBody').querySelectorAll('[data-stat-slider]')){const v=Number(el.value),key=el.dataset.statSlider;if(key.startsWith('need:'))p.needs[key.slice(5)]=v;else c.state[key]=v;}p.needs.rest=clamp(100-c.state.energy);p.needs.connection=clamp(c.state.socialNeed);p.lastManualEdit=Date.now();await save();closeModal();render();toast('Показатели изменены вручную.');};
+}
+function addV4PromptContext(){
+ const base=characterSystemPrompt;characterSystemPrompt=function(c,cue,thread=null){let prompt=base(c,cue,thread);const settings=thread?.settings||{};if(settings.reminder)prompt+=`\n\nПОСТОЯННОЕ НАПОМИНАНИЕ ЭТОЙ ВЕТКИ\n${String(settings.reminder).slice(0,1300)}`;if(settings.playAsCharacterId){const player=world.characters.find(x=>x.id===settings.playAsCharacterId);if(player)prompt+=`\n\nПОЛЬЗОВАТЕЛЬ ИГРАЕТ ЗА ПЕРСОНАЖА\nПользователь сейчас отыгрывает роль ${player.identity.name}. Учитывай только указанную роль и сведения, которые персонаж мог знать. Не пиши реплики или действия за этого персонажа. Краткое описание: ${String(player.identity.description||player.identity.biography||'').slice(0,750)}`;}if(settings.matureThemes)prompt+=`\n\nНАСТРОЙКА ТОНА: допускаются взрослые и мрачные темы в рамках допустимого содержания. Уровень детализации: ${settings.contentLevel||'moderate'}. Не превращай каждый сюжет в безопасную морализаторскую лекцию.`;else prompt+=`\n\nНАСТРОЙКА ТОНА: придерживайся обычного драматического уровня без намеренного сексуального контента.`;if(settings.strictContent!==false)prompt+='\nСохраняй защиту от сексуального контента с несовершеннолетними и сексуального насилия без согласия.';const pins=(thread?.messages||[]).filter(m=>m.pinned).slice(-8);if(pins.length)prompt+=`\n\nЗАКРЕПЛЁННЫЕ СООБЩЕНИЯ ВЕТКИ\n${pins.map(m=>`[${m.speakerName||m.speaker}] ${String(m.text||'').slice(0,240)}`).join('\n')}`;return prompt;};
+}
+function installV4MessageActions(){
+ $('chatMessages').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-message-action]');if(!b)return;const act=b.dataset.messageAction,index=Number(b.dataset.messageIndex);e.preventDefault();e.stopPropagation();
+  if(act==='edit')return openMessageEditor(index);if(act==='delete')return deleteMessageAt(index,false);if(act==='delete-tail')return deleteMessageAt(index,true);if(act==='pin')return pinMessageAt(index);if(act==='lore')return archiveMessageToLore(index);if(act==='fork')return forkThreadAt(index);if(act==='regen')return regenerateMessageAt(index,false);if(act==='continue')return regenerateMessageAt(index,true);
+ });
+ $('modalBody').addEventListener('click',e=>{const b=e.target.closest('[data-emoji-pick]');if(b){const field=$('bookEmoji');if(field){field.value=b.dataset.emojiPick;field.dispatchEvent(new Event('input',{bubbles:true}));}}});
+ $('view').addEventListener('click',e=>{if(e.target.closest('[data-edit-stats]'))openManualStats();});
+ $('modalBody').addEventListener('click',e=>{const b=e.target.closest('[data-map-thread]');if(!b)return;const id=b.dataset.mapThread,index=b.dataset.mapIndex;closeModal();selectThread(id);if(index!=null)setTimeout(()=>{const el=document.querySelector(`#chatMessages [data-message-index="${Number(index)}"]`);el?.scrollIntoView({behavior:'smooth',block:'center'});},100);});
+}
+const oldEnsureExtrasV4=ensureCharacterExtras;ensureCharacterExtras=function(c){oldEnsureExtrasV4(c);for(const n of c.npcs||[]){n.id||='npc_'+uid();n.memory||={summary:'',episodes:[],facts:[],privateNotes:[]};n.memory.episodes||=[];n.memory.facts||=[];n.memory.privateNotes||=[];n.relationships||={};n.knowledge||=[];n.lorebook||={};}};
+addV4PromptContext();
+const oldRenderV4=render;
+render=function(){oldRenderV4();try{if(world?.settings?.themePreset||localStorage.getItem('my-world-theme-preset'))applyCustomThemeSaved();renderMessageActionTools();}catch(e){console.warn('V4 render extension:',e);}};
+installV4MessageActions();
+applySavedTheme();
+
 init();
 
 
