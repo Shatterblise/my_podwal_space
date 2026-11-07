@@ -1396,6 +1396,7 @@ async function fetchFreeModels(force=false){
     const rows=Array.isArray(models)?models:(models.models||[]);
     freeModels=rows.filter(x=>x&&x.name&&Number(x.count||0)>0).map(x=>({id:x.name,name:x.name,count:Number(x.count||0),performance:Number(x.performance||0),queued:Number(x.queued||0),eta:Number(x.eta||0),context_length:Number(x.max_context_length||2048)})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
     hordeStatus={online:true,textWorkers:Number(performance.text_worker_count||0),queued:Number(performance.queued_text_requests||0),queuedTokens:Number(performance.queued_tokens||0),threads:Number(performance.text_thread_count||0)};
+    if(selectedModelId!=='auto'&&selectedModelId!==LOCAL_MODEL_ID&&!freeModels.some(x=>x.id===selectedModelId)){selectedModelId='auto';if(world?.settings){world.settings.selectedModelId='auto';storeActive();}updateSelectedModelLabel();}
     freeModelsLoadedAt=Date.now();modelError='';createModelOptionList();updateModelStatus();return freeModels;
   }catch(error){
     hordeStatus={...hordeStatus,online:false};modelError=error.message||String(error);updateModelStatus('Не удалось получить каталог AI Horde: '+modelError);createModelOptionList();throw error;
@@ -1613,10 +1614,10 @@ async function openRouterChat(messages,{model=selectedModelId,temperature=.82,ma
   }
   const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'').trim()})).filter(m=>m.content);
   const system=normalized.find(m=>m.role==='system');const tail=normalized.filter(m=>m!==system);
-  const cap=Math.max(1800,Math.min(5600,Number(currentThread()?.settings?.promptLimit)||4500));
+  const cap=Math.max(1600,Math.min(3600,Number(currentThread()?.settings?.promptLimit)||3600));
   let room=Math.max(400,cap-(system?.content.length||0));const kept=[];
   for(let i=tail.length-1;i>=0&&room>0;i--){const item=tail[i],content=item.content.slice(-Math.min(room,1000));if(content){kept.unshift(`${item.role==='user'?'Пользователь':'Персонаж'}: ${content}`);room-=content.length;}}
-  const prefix=system?.content?.slice(0,Math.min(3000,cap))||'Ты — персонаж в ролевом диалоге. Пиши естественно и последовательно.';
+  const prefix=system?.content?.slice(0,Math.min(2300,cap))||'Ты — персонаж в ролевом диалоге. Пиши естественно и последовательно.';
   const prompt=[prefix,kept.join('\n\n'),'Продолжи сцену от лица персонажа. Не управляй пользователем. Пиши только продолжение, без пояснений.'].filter(Boolean).join('\n\n');
   const chosen=(model&&model!=='auto'&&freeModels.some(x=>x.id===model))?[model]:undefined;
   const maxLength=Math.max(32,Math.min(640,Number(max_tokens)||360));
@@ -1630,7 +1631,7 @@ async function openRouterChat(messages,{model=selectedModelId,temperature=.82,ma
   const started=Date.now(),deadline=started+19*60*1000;let lastStatus='';
   while(Date.now()<deadline){
     if(signal?.aborted){hordeFetch(`/generate/text/status/${encodeURIComponent(requestId)}`,{method:'DELETE'}).catch(()=>{});throw new Error('Запрос отменён.');}
-    await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,2500);if(signal)signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new Error('Запрос отменён.'));},{once:true});});
+    await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,4000);if(signal)signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new Error('Запрос отменён.'));},{once:true});});
     let status;
     try{status=await hordeFetch(`/generate/text/status/${encodeURIComponent(requestId)}`,{method:'GET',signal});}
     catch(error){if(/404/.test(error.message))throw new Error('Задача AI Horde исчезла из очереди. Отправь сообщение ещё раз.');throw error;}
