@@ -22,6 +22,8 @@ await fs.copyFile(new URL('./local-runtime.test.js', import.meta.url), path.join
 await fs.copyFile(new URL('./local-provider.test.js', import.meta.url), path.join(root, 'tests/local-provider.test.js'));
 await fs.copyFile(new URL('./.gitignore', import.meta.url), path.join(root, '.gitignore'));
 await fs.copyFile(new URL('./README_RU.md', import.meta.url), path.join(root, 'README_RU.md'));
+await fs.copyFile(new URL('./START_ANDROID_RU.md', import.meta.url), path.join(root, 'START_ANDROID_RU.md'));
+await fs.copyFile(new URL('./start-android.sh', import.meta.url), path.join(root, 'start-android.sh'));
 const packageJson = JSON.parse(await read('package.json'));
 packageJson.scripts ||= {};
 packageJson.scripts['start:local'] = 'node server/local-server.mjs';
