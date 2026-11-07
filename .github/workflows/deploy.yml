@@ -41,6 +41,9 @@ jobs:
           test -f "$RUNNER_TEMP/my-world-release/MY_WORLD_0_5/wrangler.jsonc"
           echo "PROJECT_DIR=$RUNNER_TEMP/my-world-release/MY_WORLD_0_5" >> "$GITHUB_ENV"
 
+      - name: Apply cognitive engine overlay
+        run: node "$GITHUB_WORKSPACE/.deploy/overlays/apply.mjs" "$PROJECT_DIR"
+
       - name: Install dependencies and run tests
         shell: bash
         run: |
