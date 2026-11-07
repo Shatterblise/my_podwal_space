@@ -34,7 +34,7 @@ small{font-size:10px;color:#766e62}
  const fail=message=>{status.textContent='Не удалось загрузить приложение';document.getElementById('error').style.display='block';document.getElementById('error').textContent=message;};
  try{
   if(!('DecompressionStream' in window)) throw new Error('Нужен актуальный браузер Chrome или Edge с поддержкой распаковки gzip.');
-  const base='https://rawcdn.githack.com/Shatterblise/my_podwal_space/web-preview/assets/';
+  const base='https://rawcdn.githack.com/Shatterblise/my_podwal_space/f584600280bd3f899fd9bd383dee8c05ea15d978/assets/';
   const parts=8;
   const chunks=[];
   for(let i=1;i<=parts;i++){
