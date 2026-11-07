@@ -1300,10 +1300,10 @@ let summonedIds = [];
 let historySelectionMode = false;
 const selectedThreadIds = new Set();
 const DEPTH_CONFIG = {
-  fast:{label:'Быстрый',messages:8,tokens:220,temperature:.78},
-  standard:{label:'Стандарт',messages:18,tokens:400,temperature:.82},
-  deep:{label:'Глубокий контекст',messages:30,tokens:560,temperature:.84},
-  max:{label:'Максимальный контекст',messages:48,tokens:820,temperature:.86}
+  fast:{label:'Быстрый',messages:8,tokens:800,temperature:.78},
+  standard:{label:'Стандарт',messages:18,tokens:1400,temperature:.82},
+  deep:{label:'Глубокий контекст',messages:30,tokens:2100,temperature:.84},
+  max:{label:'Максимальный контекст',messages:48,tokens:2800,temperature:.86}
 };
 function currentCharacter(){return world?.characters?.find(c=>c.id===chatCharacter)||world?.characters?.[0]||null;}
 function currentThread(){return world?.userChats?.find(t=>t.id===activeThreadId)||null;}
