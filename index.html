@@ -178,7 +178,7 @@ body{background:#11100f}
                 <div class="footer-left">
                   <div class="composer-pop-wrap"><button type="button" class="composer-icon-btn" id="plusButton" title="Дополнительные функции">＋</button><div class="composer-popover" id="plusMenu"><button data-plus="search">⌕ Поиск в интернете</button><button data-plus="attach">↥ Прикрепить текстовый файл</button><button data-plus="dice">⚄ Бросить кубик</button><button data-plus="scene">✧ Случайное событие</button><button data-plus="time">◷ Вставить время мира</button><button data-plus="ai">✧ Подключить / сменить ИИ</button></div></div>
                   <div class="composer-pop-wrap"><button type="button" class="composer-icon-btn" id="summonButton" title="Вызвать персонажа">＠</button><div class="composer-popover" id="summonMenu"></div></div>
-                  <div class="composer-pop-wrap"><button type="button" class="composer-icon-btn depth-btn" id="depthButton" title="Глубина размышления">♧ <span id="depthLabel">Стандарт</span></button><div class="composer-popover" id="depthMenu"><button data-depth="fast">Быстро · короткий контекст</button><button data-depth="standard">Стандарт</button><button data-depth="deep">Глубоко · больше памяти</button><button data-depth="max">Максимум · длинный контекст</button></div></div>
+                  <div class="composer-pop-wrap"><button type="button" class="composer-icon-btn depth-btn" id="depthButton" title="Глубина контекста RP">♧ <span id="depthLabel">Стандарт</span></button><div class="composer-popover" id="depthMenu"><button data-depth="fast">Быстрый ответ · 8 сообщений</button><button data-depth="standard">Стандарт</button><button data-depth="deep">Глубокий контекст · 30 сообщений</button><button data-depth="max">Максимальный контекст · 48 сообщений</button></div></div>
                 </div>
                 <div class="footer-right"><div class="composer-pop-wrap"><button type="button" class="model-select-btn" id="modelSelectButton"><span id="currentModelLabel">Qwen2.5 · 0.5B</span><span>⌄</span></button><div class="composer-popover model-popover" id="modelMenu"><div class="popover-heading">Локальная модель без ключа</div><div class="model-key-strip"><span id="modelKeyStatus">Ключи не требуются</span><button type="button" id="modelKeyButton">Статус модели</button></div><div id="modelOptions"><button data-model="onnx-community/Qwen2.5-0.5B-Instruct">Qwen2.5 · 0.5B<small>Локально · без аккаунта · без ключа</small></button></div><div class="model-refresh-row"><button id="refreshFreeModels" type="button">↻ Повторить загрузку</button></div></div></div><button id="sendButton" class="send-btn" type="submit" aria-label="Отправить">➤</button></div>
               </div>
@@ -1242,10 +1242,10 @@ let summonedIds = [];
 let historySelectionMode = false;
 const selectedThreadIds = new Set();
 const DEPTH_CONFIG = {
-  fast:{label:'Быстро',messages:8,tokens:800,temperature:.78},
-  standard:{label:'Стандарт',messages:18,tokens:1400,temperature:.82},
-  deep:{label:'Глубоко',messages:30,tokens:2100,temperature:.82},
-  max:{label:'Максимум',messages:48,tokens:2800,temperature:.84}
+  fast:{label:'Быстрый',messages:8,tokens:220,temperature:.78},
+  standard:{label:'Стандарт',messages:18,tokens:400,temperature:.82},
+  deep:{label:'Глубокий контекст',messages:30,tokens:560,temperature:.84},
+  max:{label:'Максимальный контекст',messages:48,tokens:820,temperature:.86}
 };
 function currentCharacter(){return world?.characters?.find(c=>c.id===chatCharacter)||world?.characters?.[0]||null;}
 function currentThread(){return world?.userChats?.find(t=>t.id===activeThreadId)||null;}
@@ -1698,19 +1698,17 @@ async function openRouterChat(messages,{model=selectedModelId,temperature=.82,ma
   if(signal?.aborted)throw new Error('Запрос отменён.');
   if(model===LOCAL_MODEL_ID||selectedModelId===LOCAL_MODEL_ID){
     const generator=await ensureLocalModel();
-    const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'')}));
+    const normalized=compactChatMessages(messages,5200,3600);
     const result=await generator(normalized,{max_new_tokens:Math.max(48,Math.min(768,Number(max_tokens)||360)),do_sample:true,temperature:Math.max(.15,Math.min(1.25,Number(temperature)||.82)),top_p:.9,repetition_penalty:1.08});
     const generated=result?.[0]?.generated_text;let text=Array.isArray(generated)?String(generated.at(-1)?.content||''):(typeof generated==='string'?generated:'');
     text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/^\s*assistant\s*: ?/i,'').trim();if(!text)throw new Error('Локальная Qwen вернула пустой ответ.');if(onChunk)onChunk(text);return text.slice(0,12000);
   }
-  const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'').trim()})).filter(m=>m.content);
-  const system=normalized.find(m=>m.role==='system');const tail=normalized.filter(m=>m!==system);
-  const cap=Math.max(1600,Math.min(3600,Number(currentThread()?.settings?.promptLimit)||3600));
-  let room=Math.max(400,cap-Math.min(system?.content.length||0,Math.min(2300,cap)));const kept=[],keptMessages=[];
-  for(let i=tail.length-1;i>=0&&room>0;i--){const item=tail[i],content=item.content.slice(-Math.min(room,1000));if(content){kept.unshift(`${item.role==='user'?'Пользователь':'Персонаж'}: ${content}`);keptMessages.unshift({role:item.role,content});room-=content.length;}}
-  const prefix=system?.content?.slice(0,Math.min(2300,cap))||'Ты — персонаж в ролевом диалоге. Пиши естественно и последовательно.';
-  const prompt=[prefix,kept.join('\n\n'),'Продолжи сцену от лица персонажа. Не управляй пользователем. Пиши только продолжение, без пояснений.'].filter(Boolean).join('\n\n');
-  const boundedMessages=[{role:'system',content:prefix},...keptMessages];
+  const normalized=compactChatMessages(messages,9000,6200);
+  const system=normalized.find(m=>m.role==='system');
+  const tail=normalized.filter(m=>m!==system);
+  const prefix=system?.content||'Ты — персонаж в ролевой сцене. Пиши естественно и последовательно.';
+  const prompt=[prefix,...tail.map(item=>(item.role==='user'?'Пользователь: ':'Персонаж: ')+item.content),'Продолжи сцену от лица персонажа. Не управляй пользователем. Пиши только продолжение, без пояснений.'].filter(Boolean).join('\n\n');
+  const boundedMessages=normalized;
   const dgRequested=String(model||selectedModelId||'auto').startsWith('dg:')?String(model||selectedModelId).slice(3):null;
   const useDG=String(model||selectedModelId||'auto')==='auto'||Boolean(dgRequested);
   if(useDG){
@@ -1723,7 +1721,7 @@ async function openRouterChat(messages,{model=selectedModelId,temperature=.82,ma
   }
   const chosen=(model&&model!=='auto'&&!String(model).startsWith('dg:')&&freeModels.some(x=>x.id===model))?[model]:undefined;
   const maxLength=Math.max(32,Math.min(640,Number(max_tokens)||360));
-  const payload={prompt,params:{max_context_length:2048,max_length:maxLength,temperature:Math.max(.15,Math.min(1.5,Number(temperature)||.82)),top_p:.92,rep_pen:1.08,rep_pen_range:512,frmttriminc:false},trusted_workers:false,validated_backends:true,slow_workers:true,extra_slow_workers:true};
+  const payload={prompt,params:{max_context_length:4096,max_length:maxLength,temperature:Math.max(.15,Math.min(1.5,Number(temperature)||.82)),top_p:.92,rep_pen:1.08,rep_pen_range:512,frmttriminc:false},trusted_workers:false,validated_backends:true,slow_workers:true,extra_slow_workers:true};
   if(chosen)payload.models=chosen;
   if(onChunk)onChunk('Отправляю запрос в бесплатную сеть AI Horde…');
   let accepted;
