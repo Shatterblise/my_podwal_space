@@ -2,6 +2,9 @@ name: Deploy my podwal space
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/digital-psyche-engine
 
 permissions:
   contents: read
