@@ -159,7 +159,7 @@ body{background:#11100f}
         <div class="chat-toolbar"><div class="toolbar-left"><span class="model-dot" id="modelDot"></span><span id="worldTitle">MY WORLD</span><span>·</span><span id="charCount">2 персонажа</span></div><span class="world-time" id="aiNotice">локальная психика активна</span></div>
         <div id="chatMessages" class="chat-messages"></div>
         <div class="composer-area">
-          <div class="model-status-row"><span id="modelStatusText">Локальный ИИ Qwen2.5 · без ключа. Нажми «Статус ИИ» для первой загрузки модели.</span><button id="openSettingsLink" type="button">Статус ИИ</button></div>
+          <div class="model-status-row"><span id="modelStatusText">Бесплатный ИИ через сеть AI Horde · без личного ключа и без загрузки модели на телефон.</span><button id="openSettingsLink" type="button">Статус ИИ</button></div>
           <div class="compose-panel">
             <div class="quick-insert-row" id="quickInsertRow" aria-label="Быстрые режимы отыгрыша">
               <button type="button" class="quick-insert-btn" data-insert="speech" title="Прямая речь">💬</button>
@@ -184,7 +184,7 @@ body{background:#11100f}
               </div>
             </form>
           </div>
-          <div class="composer-hint">История, миры и настройки сохраняются в браузере. Локальный ИИ работает без ключа и без серверной квоты сообщений. Первый запуск скачивает модель (~786 МБ).</div>
+          <div class="composer-hint">История, миры и настройки сохраняются в браузере. Основной ИИ работает через бесплатную сеть и не скачивает модель на устройство.</div>
           <input type="file" id="attachTextInput" accept=".txt,.md,.json,.csv,text/plain,application/json" class="hidden">
           <div id="timeskipMenu" class="composer-float-menu" hidden></div>
           <div id="commandMenu" class="composer-float-menu" hidden></div>
@@ -211,11 +211,14 @@ body{background:#11100f}
 'use strict';
 const $=id=>document.getElementById(id);
 let world=null,revision=0,activeTab='profile',aiConfigured=false,providerStatus=null,selectedMemory=null,chatCharacter=null,refreshTimer=null,localAutoTimer=null;
-let localEngine=null,localEngineLoading=null,modelProgress='Интернет-ИИ не подключён',modelError='',modelBusy=false;
+let localEngine=null,localEngineLoading=null,modelProgress='AI Horde: подключение к сети добровольных моделей…',modelError='',modelBusy=false;
 const LOCAL_MODEL_ID='onnx-community/Qwen2.5-0.5B-Instruct';
-let freeModels=[{id:LOCAL_MODEL_ID,name:'Qwen2.5 0.5B Instruct · локально',context_length:8192}], freeModelsLoadedAt=0, selectedModelName='Qwen2.5 0.5B Instruct · WASM CPU';
+const HORDE_BASE='https://aihorde.net/api/v2';
+const HORDE_ANON_KEY='0000000000'; // public anonymous mode; no user key or registration
+const HORDE_AGENT='MY_WORLD:5.1:https://github.com/Shatterblise/my_podwal_space';
+let freeModels=[],freeModelsLoadedAt=0,selectedModelName='Автовыбор · AI Horde',hordeStatus={online:false,textWorkers:0,queued:0,queuedTokens:0};
 const OPENROUTER_BASE='';
-const OPENROUTER_KEY_STORAGE=''; // retained only for legacy data migration; no key is read or requested
+const OPENROUTER_KEY_STORAGE=''; // legacy compatibility only; never read or requested
 const STORE_KEY='my-world-browser-v2';let savedWorlds=[],activeWorldId=null;
 const LABELS={custom:'Занят собственным делом',sleep:'Спит',rest:'Отдыхает',work:'Работает',study:'Учится',create:'Занимается своим делом',music:'Занимается музыкой',explore:'Исследует',talk:'Разговаривает',wait:'Ничего не предпринимает',travelling:'В пути',arrived:'Прибыл(а)'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -265,9 +268,9 @@ function toast(msg){const el=$('toast');el.textContent=msg;el.style.display='blo
 function setConnected(ok,label){const el=$('connectionState');if(!el)return;el.textContent=(ok?'● ':'○ ')+(label||(ok?'ЛОКАЛЬНО':'НЕТ СВЯЗИ'));el.className='pill '+(ok?'good':'warn');}
 async function load(){ensureStore();const rec=activeRecord();world=normalizeWorld(rec.state);ensureWorldSystems();rec.state=world;revision++;render();}
 async function save(){world=normalizeWorld(world);storeActive();revision++;if(persistQueue)await persistQueue;}
-async function init(){ensureStore();await restoreWorldDB();ensureStore();await load();showApp();setConnected(true,'ВЕБ-ПРИЛОЖЕНИЕ');selectedModelId=LOCAL_MODEL_ID; world.settings ||= {}; world.settings.selectedModelId=LOCAL_MODEL_ID;updateModelStatus();refreshWorldPicker();}
+async function init(){ensureStore();await restoreWorldDB();ensureStore();await load();showApp();setConnected(true,'ВЕБ-ПРИЛОЖЕНИЕ');world.settings ||= {};selectedModelId=world.settings.selectedModelId||'auto';if(selectedModelId===LOCAL_MODEL_ID)selectedModelId='auto';world.settings.selectedModelId=selectedModelId;updateSelectedModelLabel();updateModelStatus();refreshWorldPicker();requestPersistentStorage().catch(()=>{});fetchFreeModels().catch(()=>{});}
 function showApp(){$('loginScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('bottomNav').classList.remove('hidden');}
-async function refreshStatus(){aiConfigured=Boolean(localEngine);updateModelStatus();}
+async function refreshStatus(){aiConfigured=Boolean(hordeStatus.online||localEngine);updateModelStatus();}
 const clean = (value, max = 160) => String(value ?? '').trim().replace(/[\u0000-\u001f]/g, ' ').slice(0, max);
 const words = value => new Set(clean(value, 1200).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(x => x.length > 2));
 
@@ -756,7 +759,7 @@ function normalizeWorld(world) {
   world.socialCooldowns ||= {};
   world.settings ||= {};
   world.settings.userProfile ||= {name:'',age:'',pronouns:'',appearance:'',personality:'',background:'',preferences:'',customInstructions:''};
-  world.settings.selectedModelId ||= LOCAL_MODEL_ID;
+  world.settings.selectedModelId ||= 'auto';
   world.background = String(world.background || '');
   world.settings.maxMemoryEpisodes = Math.max(20, Math.min(120, Math.floor(Number(world.settings.maxMemoryEpisodes) || 80)));
   world.settings.maxHistory = Math.max(100, Math.min(500, Math.floor(Number(world.settings.maxHistory) || 300)));
@@ -1147,15 +1150,16 @@ function memoryView(){const c=world.characters.find(x=>x.id===selectedMemory)||w
 function chatView(){return '<div class="empty">Переписка отображается в центральной области.</div>'; }
 function historyView(){return `<section class="panel"><div class="sectionhead"><h2>Журнал действий</h2><span class="pill">${world.history.length} записей</span></div>${world.history.length?world.history.slice(0,100).map(h=>{const who=world.characters.find(c=>c.id===h.actorId)?.identity.name;return `<div class="entry"><div class="between"><strong>${esc(who||h.text||'Событие')}</strong><span class="tag">${esc(h.action||h.type||'event')}</span></div><p class="small muted">День ${h.day} · ${String(h.hour).padStart(2,'0')}:00 · ${esc(h.intent||h.text||'')}</p></div>`}).join(''):'<div class="empty">История пока пуста.</div>'}</section>`;}
 function settingsView(){
- const ready=Boolean(localEngine),loading=Boolean(localEngineLoading);
- return `<section class="panel"><div class="sectionhead"><h2>Локальный ИИ</h2><span class="pill ${ready?'good':loading?'warn':''}">${ready?'готов':loading?'загрузка':'не загружен'}</span></div>
- <p class="small muted">Qwen2.5 0.5B Instruct работает прямо на устройстве через WebAssembly CPU. Никаких API-ключей, регистрации, оплаты за сообщения или дневных серверных квот.</p>
- <div class="model-card"><div><strong>Qwen2.5 0.5B Instruct · Q4</strong><div class="small muted">Локальная модель · 786 МБ при первом скачивании</div></div><button class="primary" id="modelStartSettings">${ready?'Готово':loading?'Загрузка…':'Загрузить ИИ'}</button></div>
- <p class="small muted">После первого скачивания веса сохраняются в кэше браузера. Интернет нужен для первоначальной загрузки, затем генерация выполняется на телефоне/компьютере.</p>
- <div class="divider"></div><h3>Честно о «безлимите»</h3><p class="small muted">В приложении нет счётчика сообщений и квоты провайдера. Количество сообщений не ограничивается сервером. Практические ограничения — память устройства, температура, заряд и место в браузерном кэше. Контекст модели конечен: приложение подбирает последние реплики и релевантные воспоминания.</p>
- <div class="divider"></div><h3>Фильтры MY WORLD</h3><label class="small"><input type="checkbox" id="extraFiltersToggle" ${world.settings.ai?.extraFilters?'checked':''}> Включить дополнительные мягкие ограничения самого MY WORLD</label><p class="small muted">Это управляет только дополнительными инструкциями приложения, а не встроенными ограничениями самой модели.</p>
- <div class="divider"></div><h3>Автообновление состояния</h3><label class="small"><input type="checkbox" id="autoRefresh15Toggle" ${world.settings.ai?.autoRefreshEvery15!==false?'checked':''}> Анализировать состояние персонажа каждые 15 новых сообщений</label><p class="small muted">Или нажми «Обновить» вручную в панелях состояния, мозга, связей, сцены и событий.</p></section>
- <section class="panel"><h2>Хранилище и резервные копии</h2><p class="small muted">Переписки, лорбук, персонажи, связи и сюжетные линии хранятся в IndexedDB этого браузера. Для переноса на другое устройство используй экспорт мира.</p><div class="controls"><button id="export2">Экспорт мира</button><button id="import2">Импорт мира</button></div></section>`;
+ const ready=Boolean(localEngine),online=Boolean(hordeStatus.online);
+ return `<section class="panel"><div class="sectionhead"><h2>ИИ · бесплатная сеть</h2><span class="pill ${online?'good':'warn'}">${online?'AI HORDE ONLINE':'проверить связь'}</span></div>
+ <p class="small muted">Основной движок — AI Horde: генерация на компьютерах добровольцев. Работает из браузера, не скачивает модель на телефон, не просит регистрации или персонального ключа.</p>
+ <div class="model-card"><div><strong>${freeModels.length||'Автовыбор'} текстовых моделей</strong><div class="small muted">${hordeStatus.textWorkers||0} рабочих узлов · ${hordeStatus.queued||0} в очереди</div></div><button class="primary" id="refreshProviderModels">Обновить каталог</button></div>
+ <div class="controls"><button id="openHordeSettings">Настройки и тест ИИ</button><button id="modelStartSettings">Проверить ответ</button></div>
+ <p class="small muted">У анонимных запросов низкий приоритет. При загруженной сети ожидание может быть долгим; гарантировать безлимитную скорость нельзя. Запросы передаются добровольным узлам, поэтому не отправляй секреты.</p>
+ <div class="divider"></div><h3>Резервная локальная модель</h3><p class="small muted">${ready?'Qwen2.5 0.5B уже загружена и доступна офлайн.':'Qwen2.5 0.5B · около 786 МБ. Загрузка необязательна и не запускается при открытии сайта.'}</p><button id="localModelLoadButton">${ready?'Проверить локальную Qwen':'Скачать локальную Qwen · ~786 МБ'}</button>
+ <div class="divider"></div><h3>Фильтры MY WORLD</h3><label class="small"><input type="checkbox" id="extraFiltersToggle" ${world.settings.ai?.extraFilters?'checked':''}> Включить дополнительные мягкие ограничения самого MY WORLD</label><p class="small muted">Это управляет только инструкциями приложения; правила отдельного рабочего узла могут отличаться.</p>
+ <div class="divider"></div><h3>Автообновление состояния</h3><label class="small"><input type="checkbox" id="autoRefresh15Toggle" ${world.settings.ai?.autoRefreshEvery15!==false?'checked':''}> Анализировать состояние персонажа каждые 15 новых сообщений</label></section>
+ <section class="panel"><h2>Хранилище и резервные копии</h2><p class="small muted">Переписки и данные мира сохраняются в IndexedDB браузера. При следующем открытии сайт не должен заново скачивать языковую модель: основной AI Horde не требует установки весов.</p><div class="controls"><button id="export2">Экспорт мира</button><button id="import2">Импорт мира</button></div></section>`;
 }
 async function legacy_generateCharacterProfileWithAI(c,brief){
   const idea=String(brief||'').trim();if(!idea){toast('Опиши хотя бы направление персонажа.');return;}
@@ -1163,7 +1167,6 @@ async function legacy_generateCharacterProfileWithAI(c,brief){
   if(modelBusy){if(btn)btn.disabled=false;toast('ИИ сейчас занят другим действием.');return;}
   modelBusy=true;
   try{
-    await ensureLocalModel();
     const prompt=`Создай полноценного, психологически непротиворечивого вымышленного персонажа для интерактивного мира. Не делай его идеальным или шаблонным. Дай конкретные привычки, внутренние противоречия, ограничения, ценности и естественную манеру речи. Не добавляй пользователя в биографию. Идея автора: ${idea}
 Верни только JSON без Markdown по схеме: {"name":"имя","age":22,"biography":"краткая, но конкретная биография","speechStyle":"как говорит и ведёт себя","values":["..."],"fears":["..."],"interests":["..."],"dislikes":["..."],"habits":["..."],"possessions":["..."],"traits":{"sociability":0,"curiosity":0,"orderliness":0,"creativity":0,"empathy":0,"sensitivity":0},"goals":[{"title":"цель","priority":60}]} Значения traits — целые числа 0–100. goals — 2–4 осмысленные цели. Пиши все текстовые поля по-русски.`;
     const raw=await openRouterChat([{role:'system',content:'Ты — редактор персонажей и психологически точный сценарист. Верни корректный JSON и ничего кроме него.'},{role:'user',content:prompt}],{temperature:0.35,max_tokens:650});const data=parseDecisionText(raw);const d=data.identity||data;
@@ -1203,14 +1206,14 @@ $('addCharacterButton').onclick=addCharacter;
 $('worldChatList').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b)selectCharacter(b.dataset.chat);});
 $('chatSearch').addEventListener('input',()=>renderCharacterList());
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){activeTab=b.dataset.tab;render();}});
-$('view').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]');if(edit)editCharacter(edit.dataset.edit);const msg=e.target.closest('[data-message]');if(msg){selectCharacter(msg.dataset.message);}const mem=e.target.closest('[data-memory]');if(mem){selectedMemory=mem.dataset.memory;activeTab='memory';render();}if(e.target.id==='addCharacter')addCharacter();if(e.target.id==='export2')exportWorld();if(e.target.id==='import2')importWorld();if(e.target.id==='testTurn')doStep();if(e.target.id==='modelStartSettings')ensureLocalModel().then(()=>render()).catch(err=>toast(err.message));});
+$('view').addEventListener('click',e=>{const edit=e.target.closest('[data-edit]');if(edit)editCharacter(edit.dataset.edit);const msg=e.target.closest('[data-message]');if(msg){selectCharacter(msg.dataset.message);}const mem=e.target.closest('[data-memory]');if(mem){selectedMemory=mem.dataset.memory;activeTab='memory';render();}if(e.target.id==='addCharacter')addCharacter();if(e.target.id==='export2')exportWorld();if(e.target.id==='import2')importWorld();if(e.target.id==='testTurn')doStep();if(e.target.id==='modelStartSettings')openAISettings();});
 $('view').addEventListener('change',e=>{if(e.target.id==='memoryCharacter'){selectedMemory=e.target.value;render();}});
 $('view').addEventListener('submit',e=>{if(e.target.id==='chatForm')sendChat(e);});
 $('chatForm').addEventListener('submit',sendChat);
 $('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatForm').requestSubmit();}});
 $('chatInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,190)+'px';});
 $('runButton').onclick=doRun;$('stepButton').onclick=doStep;
-$('modelButton').onclick=()=>ensureLocalModel().catch(err=>toast(err.message));
+$('modelButton').onclick=()=>openAISettings();
 $('refreshButton').onclick=()=>{render();toast('Интерфейс обновлён.');};
 $('modalClose').onclick=closeModal;$('exportBtn').onclick=exportWorld;$('importBtn').onclick=importWorld;
 $('inspectorToggle').onclick=()=>document.body.classList.toggle('inspector-open');$('sidebarClose').onclick=()=>document.body.classList.remove('sidebar-open');$('openSettingsLink').onclick=()=>{activeTab='settings';render();document.body.classList.add('inspector-open');};
@@ -1231,7 +1234,7 @@ let bookSelectedLoreId = null;
 let bookLoreFilter = '';
 let selectedLoreIds = new Set();
 let reasoningDepth = 'standard';
-let selectedModelId = LOCAL_MODEL_ID;
+let selectedModelId = 'auto';
 let webllmModule = null;
 let loadedModelId = null;
 let summonedIds = [];
@@ -1356,62 +1359,84 @@ function closePopovers(){document.querySelectorAll('.composer-popover.open').for
 function populateSummonMenu(){const menu=$('summonMenu');if(!menu)return;menu.innerHTML='<div class="popover-heading">Вызвать в эту переписку</div>'+world.characters.filter(c=>c.id!==chatCharacter).map(c=>`<button data-summon="${esc(c.id)}">${esc(c.identity.emoji||'✦')} ${esc(c.identity.name)} ${summonedIds.includes(c.id)?'✓':''}</button>`).join('')||'<button disabled>Других персонажей нет</button>';}
 function setReasoningDepth(key){if(!DEPTH_CONFIG[key])return;reasoningDepth=key;const t=currentThread();if(t){t.settings ||= {};t.settings.contextDepth=DEPTH_CONFIG[key].messages;}updateDepthLabel();closePopovers();storeActive();}
 function updateLocalAIStatus(){updateModelStatus();}
-function updateModelStatus(message=null){
-  aiConfigured=Boolean(localEngine);
-  const loading=Boolean(localEngineLoading);
-  const label=localEngine?'ИИ · ЛОКАЛЬНО ГОТОВ':loading?'ИИ · ЗАГРУЗКА':'ИИ · ОЖИДАЕТ ПЕРВОГО ЗАПУСКА';
-  const pill=$('modelPill');if(pill){pill.textContent=label;pill.className='model-pill '+(localEngine?'good':loading?'loading':'');}
-  const text=$('modelStatusText');if(text)text.textContent=message||(localEngine?'Qwen2.5 загружена на устройство · без ключа, аккаунта и квоты.':loading?(modelProgress||'Загрузка локальной модели…'):'Первый запуск скачает модель Qwen2.5 0.5B (~786 МБ). После кэширования повторно скачивать её не нужно.');
-  const keyStatus=$('modelKeyStatus');if(keyStatus)keyStatus.textContent=localEngine?'Модель готова · CPU/WASM':'Ключи и регистрация не нужны';
-  const dot=$('modelDot');if(dot)dot.classList.toggle('active',Boolean(localEngine));
-  const notice=$('aiNotice');if(notice)notice.textContent=localEngine?'Локальный ИИ активен · сообщения без серверной квоты':loading?'Загружается локальная модель…':'Локальный ИИ · без аккаунта и API-ключа';
-  const current=$('currentModelLabel');if(current)current.textContent='Qwen2.5 · 0.5B';
-  const btn=$('modelButton');if(btn){btn.textContent=localEngine?'ИИ готов':loading?'Загрузка…':'Загрузить ИИ';btn.disabled=loading||Boolean(localEngine);}
+function updateModelStatus(message){
+  const localReady=Boolean(localEngine),loading=Boolean(localEngineLoading);
+  const online=Boolean(hordeStatus.online);
+  const label=localReady?'ИИ · ЛОКАЛЬНО':online?'ИИ · AI HORDE':'ИИ · НЕТ СВЯЗИ';
+  const pill=$('modelPill');if(pill){pill.textContent=label;pill.className='model-pill '+(localReady||online?'good':'warn');}
+  const text=$('modelStatusText');if(text)text.textContent=message||(localReady?'Резервная Qwen загружена на устройство.':online?`AI Horde доступен · ${hordeStatus.textWorkers} текстовых рабочих потоков · очередь ${hordeStatus.queued}. Анонимный режим.`:loading?(modelProgress||'Загрузка резервной модели…'):'AI Horde подключается при отправке сообщения. Модель не скачивается на устройство.');
+  const keyStatus=$('modelKeyStatus');if(keyStatus)keyStatus.textContent='Без регистрации и личного API-ключа';
+  const dot=$('modelDot');if(dot)dot.classList.toggle('active',Boolean(localReady||online));
+  const notice=$('aiNotice');if(notice)notice.textContent=localReady?'Локальная Qwen активна · без серверной квоты':online?`AI Horde · анонимный доступ · очередь ${hordeStatus.queued}`:'AI Horde · бесплатная общественная сеть';
+  const current=$('currentModelLabel');if(current)current.textContent=selectedModelId==='auto'?'Автовыбор · Horde':(freeModels.find(x=>x.id===selectedModelId)?.name||selectedModelName||'AI Horde');
+  const btn=$('modelButton');if(btn){btn.textContent=localReady?'Локальный ИИ готов':online?'AI Horde · онлайн':'ИИ · настройки';btn.disabled=false;}
 }
 function updateSelectedModelLabel(){
-  selectedModelId=LOCAL_MODEL_ID;selectedModelName='Qwen2.5 0.5B Instruct · локально';
-  const el=$('currentModelLabel');if(el)el.textContent='Qwen2.5 · 0.5B';
+  if(selectedModelId===LOCAL_MODEL_ID)selectedModelName='Qwen2.5 0.5B · локально';
+  else if(selectedModelId==='auto')selectedModelName='Автовыбор · AI Horde';
+  else selectedModelName=freeModels.find(x=>x.id===selectedModelId)?.name||selectedModelId;
+  const el=$('currentModelLabel');if(el)el.textContent=selectedModelId==='auto'?'Автовыбор · Horde':selectedModelName;
 }
-async function fetchFreeModels(){
-  freeModels=[{id:LOCAL_MODEL_ID,name:'Qwen2.5 0.5B Instruct · локально',context_length:8192}];
-  freeModelsLoadedAt=Date.now();createModelOptionList();return freeModels;
+async function hordeFetch(path,options={}){
+  const headers={...(options.headers||{}),'Client-Agent':HORDE_AGENT};
+  if(options.body){headers['Content-Type']='application/json';headers.apikey=HORDE_ANON_KEY;}
+  const response=await fetch(HORDE_BASE+path,{...options,headers,mode:'cors',credentials:'omit',cache:'no-store'});
+  const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{data={message:raw};}
+  if(!response.ok){const detail=data.message||data.detail||data.error||`HTTP ${response.status}`;throw new Error(`AI Horde: ${String(detail).slice(0,260)}`);}
+  return data;
+}
+async function requestPersistentStorage(){
+  try{if(navigator.storage?.persist){const granted=await navigator.storage.persist();world.settings ||= {};world.settings.browserStoragePersistent=Boolean(granted);storeActive();}return await navigator.storage?.estimate?.();}catch{return null;}
+}
+async function fetchFreeModels(force=false){
+  if(!force&&Date.now()-freeModelsLoadedAt<60000&&freeModels.length){createModelOptionList();return freeModels;}
+  try{
+    const models=await hordeFetch('/status/models?type=text&model_state=all');
+    let performance={};try{performance=await hordeFetch('/status/performance');}catch{}
+    const rows=Array.isArray(models)?models:(models.models||[]);
+    freeModels=rows.filter(x=>x&&x.name&&Number(x.count||0)>0).map(x=>({id:x.name,name:x.name,count:Number(x.count||0),performance:Number(x.performance||0),queued:Number(x.queued||0),eta:Number(x.eta||0),context_length:Number(x.max_context_length||2048)})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
+    hordeStatus={online:true,textWorkers:Number(performance.text_worker_count||0),queued:Number(performance.queued_text_requests||0),queuedTokens:Number(performance.queued_tokens||0),threads:Number(performance.text_thread_count||0)};
+    freeModelsLoadedAt=Date.now();modelError='';createModelOptionList();updateModelStatus();return freeModels;
+  }catch(error){
+    hordeStatus={...hordeStatus,online:false};modelError=error.message||String(error);updateModelStatus('Не удалось получить каталог AI Horde: '+modelError);createModelOptionList();throw error;
+  }
 }
 function createModelOptionList(){
   const host=$('modelOptions');if(!host)return;
-  host.innerHTML=`<button type="button" data-model="${LOCAL_MODEL_ID}">Qwen2.5 0.5B Instruct ✓<small>Локально · WASM CPU · без API-ключа · без лимита запросов</small></button>`;
+  const auto=`<button type="button" data-model="auto" class="${selectedModelId==='auto'?'selected':''}">Автовыбор модели${selectedModelId==='auto'?' ✓':''}<small>Любая доступная текстовая модель · выше совместимость</small></button>`;
+  const options=freeModels.slice(0,80).map(m=>`<button type="button" data-model="${esc(m.id)}" class="${selectedModelId===m.id?'selected':''}">${esc(m.name)}${selectedModelId===m.id?' ✓':''}<small>${m.count} рабочих · очередь модели ${m.queued} · ETA ${Math.max(0,Math.round(m.eta))} с</small></button>`).join('');
+  const local=`<div class="menu-separator"></div><button type="button" data-model="${LOCAL_MODEL_ID}" class="${selectedModelId===LOCAL_MODEL_ID?'selected':''}">Qwen2.5 0.5B · локально${selectedModelId===LOCAL_MODEL_ID?' ✓':''}<small>Резерв · скачивание ~786 МБ · только по желанию</small></button>`;
+  host.innerHTML=auto+(options||'<div class="small muted" style="padding:10px">Список моделей пока недоступен. Автовыбор продолжает работать.</div>')+local;
 }
 function selectModel(id){
-  selectedModelId=LOCAL_MODEL_ID;selectedModelName='Qwen2.5 0.5B Instruct · локально';
-  world.settings ||= {};world.settings.selectedModelId=LOCAL_MODEL_ID;updateSelectedModelLabel();closePopovers();storeActive();updateModelStatus();
-  if(id!==LOCAL_MODEL_ID)toast('В этой тестовой версии доступна одна локальная модель.');
+  if(id===LOCAL_MODEL_ID){selectedModelId=id;selectedModelName='Qwen2.5 0.5B · локально';toast('Выбрана локальная резервная модель. Её можно загрузить в настройках ИИ.');}
+  else if(id==='auto'||freeModels.some(x=>x.id===id)){selectedModelId=id;selectedModelName=id==='auto'?'Автовыбор · AI Horde':freeModels.find(x=>x.id===id)?.name||id;}
+  else {toast('Этой модели сейчас нет в каталоге.');return;}
+  world.settings ||= {};world.settings.selectedModelId=selectedModelId;updateSelectedModelLabel();closePopovers();storeActive();updateModelStatus();
 }
-function openAISettings(){
-  const loaded=Boolean(localEngine),loading=Boolean(localEngineLoading);
-  openModal('Локальный ИИ · без ключа и квот',`<div class="book-form">
-    <p><strong>Qwen2.5 0.5B Instruct</strong> работает на CPU телефона через WebAssembly. Не нужны аккаунт, API-ключ, регистрация или платный ИИ-провайдер.</p>
-    <div class="model-card"><div><strong>${loaded?'Модель готова':loading?'Модель загружается':'Первичная загрузка'}</strong><div class="small muted">Около 786 МБ один раз · модель и WASM-библиотека сохраняются в кэше браузера</div></div><span class="pill ${loaded?'good':loading?'warn':''}">${loaded?'ПРОВЕРЕНА':loading?'ЗАГРУЗКА':'НЕ ЗАГРУЖЕНА'}</span></div>
-    <div class="small muted" id="localModelProgressText">${esc(modelProgress||(loaded?'ИИ отвечает локально. Квоты сообщений нет.':'Нужен интернет только для первой загрузки модели и библиотеки. После загрузки ответы считаются на телефоне.'))}</div>
-    <div class="progress-track" style="height:6px;background:#29241c;border-radius:6px;overflow:hidden;margin:10px 0"><div id="localModelProgressBar" style="height:100%;width:${loaded?100:0}%;background:var(--accent);transition:width .2s"></div></div>
-    <div class="controls"><button class="primary" id="loadLocalModelNow" ${loading?'disabled':''}>${loaded?'Проверить ИИ ещё раз':loading?'Загрузка…':'Скачать модель и проверить ИИ'}</button></div>
-    <div class="model-card" id="localModelTestResult" style="display:${loaded?'block':'none'}"><strong>Тестовый ответ</strong><div class="small muted" id="localModelTestText">${loaded?'Модель уже была проверена при загрузке.':'Ожидание проверки…'}</div></div>
-    <p class="book-help">«Безлимит» означает отсутствие дневной квоты или счётчика сообщений со стороны провайдера. Физические ограничения остаются: оперативная память, скорость процессора, заряд и доступное место в браузере. Ответы могут быть медленнее облачных моделей; длинную переписку приложение сжимает в контекст и воспоминания.</p>
+async function openAISettings(){
+  let perf=hordeStatus;
+  try{await fetchFreeModels(true);perf=hordeStatus;}catch{}
+  const count=freeModels.length;
+  openModal('Бесплатный ИИ · AI Horde',`<div class="book-form">
+    <div class="model-card"><div><strong>AI Horde · анонимный режим</strong><div class="small muted">Без регистрации, без личного ключа и без скачивания модели на телефон</div></div><span class="pill ${perf.online?'good':'warn'}">${perf.online?'СЕТЬ ДОСТУПНА':'НЕТ СВЯЗИ'}</span></div>
+    <p>Используется общая сеть добровольцев, предоставляющих вычислительную мощность. MY WORLD отправляет запрос анонимно — тебе не нужно вводить никакие ID или ключи.</p>
+    <div class="model-card"><div><strong>${count} моделей в каталоге</strong><div class="small muted">${perf.textWorkers||0} рабочих узлов · ${perf.threads||0} потоков · ${perf.queued||0} запросов в очереди</div></div><button type="button" id="refreshHordeModels">↻ Обновить</button></div>
+    <div class="small muted" id="hordeTestStatus">${esc(modelError||'Готов к проверке соединения.')}</div>
+    <div class="controls"><button type="button" class="primary" id="testHordeNow">Отправить тестовый запрос</button><button type="button" id="refreshHordeStatus">Проверить сеть</button></div>
+    <div id="hordeTestResult" class="entry hidden"></div>
+    <div class="divider"></div><h3>Резервная локальная модель</h3>
+    <p class="small muted">Qwen2.5 0.5B можно запустить прямо в браузере без сервера, но она скачивает около 786 МБ. По умолчанию не загружается, чтобы сайт открывался быстро. Кэш браузера сохраняется между посещениями, но может быть очищен самим браузером.</p>
+    <div class="controls"><button type="button" id="loadLocalModelNow">Загрузить резервную Qwen · ~786 МБ</button></div>
+    <div class="small muted" id="localModelProgressText">${esc(modelProgress||'Не загружена')}</div>
+    <div class="divider"></div><h3>Что важно знать</h3>
+    <p class="book-help">AI Horde — бесплатная общественная сеть, не платный безлимитный сервер. Анонимные запросы имеют самый низкий приоритет и могут ждать свободного компьютера. В часы высокой нагрузки запросы могут быть ограничены или задержаны. Владелец добровольного узла технически может видеть переданный ему промпт — не отправляй сюда пароли или личные секреты.</p>
+    <p class="small muted">NSFW: сама сеть не фильтрует обычный взрослый текст на уровне сервиса, но отдельные узлы могут иметь собственные правила. Доступная модель и её поведение зависят от узла.</p>
   </div>`);
-  const btn=$('loadLocalModelNow');if(btn)btn.onclick=async()=>{
-    btn.disabled=true;btn.textContent=localEngine?'Проверка…':'Загрузка и тест…';
-    const progress=$('localModelProgressText');
-    try{
-      await ensureLocalModel();
-      const answer=await runLocalModelSmokeTest();
-      const card=$('localModelTestResult');if(card)card.style.display='block';
-      const out=$('localModelTestText');if(out)out.textContent=answer||'Ответ пустой';
-      if(progress)progress.textContent='Успешно: модель сгенерировала ответ на устройстве. Теперь можно закрыть окно и писать персонажам.';
-      btn.textContent='ИИ работает · повторить тест';btn.disabled=false;
-      const bar=$('localModelProgressBar');if(bar)bar.style.width='100%';
-    }catch(e){
-      if(progress)progress.textContent='Не удалось запустить ИИ: '+e.message;
-      btn.disabled=false;btn.textContent='Повторить загрузку / тест';
-    }
-  };
+  $('refreshHordeModels')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Обновляю каталог…';try{await fetchFreeModels(true);if(el)el.textContent=`Готово: ${freeModels.length} моделей, ${hordeStatus.textWorkers} рабочих узлов.`;}catch(e){if(el)el.textContent=e.message;}});
+  $('refreshHordeStatus')?.addEventListener('click',async()=>{const el=$('hordeTestStatus');if(el)el.textContent='Проверяю соединение…';try{await fetchFreeModels(true);if(el)el.textContent=`Сеть доступна · ${hordeStatus.textWorkers} текстовых рабочих узлов · ${hordeStatus.queued} в очереди.`;}catch(e){if(el)el.textContent=e.message;}});
+  $('testHordeNow')?.addEventListener('click',async()=>{const btn=$('testHordeNow'),out=$('hordeTestResult'),status=$('hordeTestStatus');if(btn)btn.disabled=true;if(out){out.classList.remove('hidden');out.textContent='Отправляю тестовый запрос…';}try{const answer=await openRouterChat([{role:'system',content:'Ты тестовый русскоязычный собеседник. Ответь коротко.'},{role:'user',content:'Напиши: «Связь с MY WORLD работает».'}],{max_tokens:40,temperature:.4,onChunk:t=>{if(out)out.textContent=t;}});if(out)out.textContent='✅ '+answer;if(status)status.textContent='Тестовая генерация успешно завершена.';}catch(e){if(out)out.textContent='❌ '+e.message;if(status)status.textContent='Проверь соединение с AI Horde.';}finally{if(btn)btn.disabled=false;}});
+  $('loadLocalModelNow')?.addEventListener('click',async()=>{const btn=$('loadLocalModelNow'),status=$('localModelProgressText');if(btn){btn.disabled=true;btn.textContent='Загрузка резервной модели…';}try{await requestPersistentStorage();await ensureLocalModel();if(status)status.textContent='Резервная Qwen запущена и может использоваться без сети.';if(btn){btn.textContent='Локальная Qwen готова';btn.disabled=false;}}catch(e){if(status)status.textContent='Ошибка: '+e.message;if(btn){btn.textContent='Повторить загрузку';btn.disabled=false;}}});
 }
 async function ensureLocalModel(){
   if(localEngine)return localEngine;
@@ -1460,8 +1485,8 @@ async function runLocalModelSmokeTest(){
   return text.replace(/<think>[\s\S]*?<\/think>/gi,'').trim();
 }
 async function openModelMenu(){
-  selectedModelId=LOCAL_MODEL_ID;updateSelectedModelLabel();
   createModelOptionList();openPopover('modelMenu');
+  try{await fetchFreeModels();}catch{}
 }
 function selectedLore(c,cue,thread){
   ensureCharacterExtras(c);
@@ -1577,26 +1602,53 @@ async function generateCharacterReply(c,thread,message,onChunk=null){
     model:selectedModelId
   });
 }
-async function openRouterChat(messages,{model=LOCAL_MODEL_ID,temperature=.82,max_tokens=360,onChunk=null,signal=null,tools=null}={}){
-  const generator=await ensureLocalModel();
+async function openRouterChat(messages,{model=selectedModelId,temperature=.82,max_tokens=360,onChunk=null,signal=null,tools=null}={}){
   if(signal?.aborted)throw new Error('Запрос отменён.');
-  const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'')}));
-  // Keep the system instructions and newest dialogue while avoiding very long contexts on mobile RAM.
-  const system=normalized.find(m=>m.role==='system');
-  const tail=normalized.filter(m=>m!==system);
-  const kept=[];let room=Math.max(3000,Math.min(24000,Number(currentThread()?.settings?.promptLimit)||9300));
-  for(let i=tail.length-1;i>=0&&room>0;i--){const m=tail[i],content=m.content.slice(-Math.min(room,2200));if(content){kept.unshift({role:m.role,content});room-=content.length;}}
-  const safeSystem=system?{role:'system',content:system.content.slice(0,Math.min(5600,room+5600))}:null;
-  const promptMessages=safeSystem?[safeSystem,...kept]:kept;
-  const maxNew=Math.max(48,Math.min(768,Number(max_tokens)||360));
-  const opts={max_new_tokens:maxNew,do_sample:Number(temperature)>.15,temperature:Math.max(.15,Math.min(1.25,Number(temperature)||.82)),top_p:.9,repetition_penalty:1.08};
-  const result=await generator(promptMessages,opts);
-  const generated=result?.[0]?.generated_text;
-  let text=Array.isArray(generated)?String(generated.at(-1)?.content||''):(typeof generated==='string'?generated:'');
-  text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/^\s*assistant\s*: ?/i,'').trim();
-  if(!text)throw new Error('Qwen2.5 вернула пустой ответ. Попробуй сократить сообщение или отправить ещё раз.');
-  if(onChunk)onChunk(text);
-  return text.slice(0,12000);
+  if(model===LOCAL_MODEL_ID||selectedModelId===LOCAL_MODEL_ID){
+    const generator=await ensureLocalModel();
+    const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'')}));
+    const result=await generator(normalized,{max_new_tokens:Math.max(48,Math.min(768,Number(max_tokens)||360)),do_sample:true,temperature:Math.max(.15,Math.min(1.25,Number(temperature)||.82)),top_p:.9,repetition_penalty:1.08});
+    const generated=result?.[0]?.generated_text;let text=Array.isArray(generated)?String(generated.at(-1)?.content||''):(typeof generated==='string'?generated:'');
+    text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/^\s*assistant\s*: ?/i,'').trim();if(!text)throw new Error('Локальная Qwen вернула пустой ответ.');if(onChunk)onChunk(text);return text.slice(0,12000);
+  }
+  const normalized=(messages||[]).map(m=>({role:['system','user','assistant'].includes(m.role)?m.role:'user',content:String(m.content||'').trim()})).filter(m=>m.content);
+  const system=normalized.find(m=>m.role==='system');const tail=normalized.filter(m=>m!==system);
+  const cap=Math.max(1800,Math.min(5600,Number(currentThread()?.settings?.promptLimit)||4500));
+  let room=Math.max(400,cap-(system?.content.length||0));const kept=[];
+  for(let i=tail.length-1;i>=0&&room>0;i--){const item=tail[i],content=item.content.slice(-Math.min(room,1000));if(content){kept.unshift(`${item.role==='user'?'Пользователь':'Персонаж'}: ${content}`);room-=content.length;}}
+  const prefix=system?.content?.slice(0,Math.min(3000,cap))||'Ты — персонаж в ролевом диалоге. Пиши естественно и последовательно.';
+  const prompt=[prefix,kept.join('\n\n'),'Продолжи сцену от лица персонажа. Не управляй пользователем. Пиши только продолжение, без пояснений.'].filter(Boolean).join('\n\n');
+  const chosen=(model&&model!=='auto'&&freeModels.some(x=>x.id===model))?[model]:undefined;
+  const maxLength=Math.max(32,Math.min(640,Number(max_tokens)||360));
+  const payload={prompt,params:{max_context_length:2048,max_length:maxLength,temperature:Math.max(.15,Math.min(1.5,Number(temperature)||.82)),top_p:.92,rep_pen:1.08,rep_pen_range:512,frmttriminc:false},trusted_workers:false,validated_backends:true,slow_workers:true,extra_slow_workers:true};
+  if(chosen)payload.models=chosen;
+  if(onChunk)onChunk('Отправляю запрос в бесплатную сеть AI Horde…');
+  let accepted;
+  try{accepted=await hordeFetch('/generate/text/async',{method:'POST',body:JSON.stringify(payload),signal});}
+  catch(error){throw new Error(`Не удалось отправить запрос в AI Horde. Проверь интернет или попробуй позже. ${error.message}`);}
+  const requestId=accepted.id||accepted.uuid;if(!requestId)throw new Error('AI Horde не вернул ID задачи. '+JSON.stringify(accepted).slice(0,180));
+  const started=Date.now(),deadline=started+19*60*1000;let lastStatus='';
+  while(Date.now()<deadline){
+    if(signal?.aborted){hordeFetch(`/generate/text/status/${encodeURIComponent(requestId)}`,{method:'DELETE'}).catch(()=>{});throw new Error('Запрос отменён.');}
+    await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,2500);if(signal)signal.addEventListener('abort',()=>{clearTimeout(timer);reject(new Error('Запрос отменён.'));},{once:true});});
+    let status;
+    try{status=await hordeFetch(`/generate/text/status/${encodeURIComponent(requestId)}`,{method:'GET',signal});}
+    catch(error){if(/404/.test(error.message))throw new Error('Задача AI Horde исчезла из очереди. Отправь сообщение ещё раз.');throw error;}
+    if(status.faulted)throw new Error(status.fault||status.message||'Рабочий узел не смог выполнить запрос.');
+    if(status.is_possible===false)throw new Error('Сейчас нет доступного узла, который может выполнить запрос с такой длиной контекста. Уменьши длину промпта или выбери автовыбор модели.');
+    const waiting=Number(status.waiting||status.queue_position||0),processing=Number(status.processing||0),wait=Number(status.wait_time||0);
+    const note=status.done?'Генерация готова…':processing?'ИИ обрабатывает запрос…':`Ожидание бесплатного узла · очередь ${waiting}${wait?` · оценка ${Math.ceil(wait/60)} мин`:''} · ${Math.round((Date.now()-started)/1000)} с`;
+    if(note!==lastStatus&&onChunk){onChunk(note);lastStatus=note;}
+    if(status.done){
+      const generations=Array.isArray(status.generations)?status.generations:[];
+      const text=String(generations[0]?.text||'').trim();
+      if(!text)throw new Error('Рабочий узел завершил задачу, но не вернул текст. Попробуй ещё раз.');
+      if(onChunk)onChunk(text);
+      return text.slice(0,16000);
+    }
+  }
+  hordeFetch(`/generate/text/status/${encodeURIComponent(requestId)}`,{method:'DELETE'}).catch(()=>{});
+  throw new Error('Бесплатная очередь AI Horde не нашла узел за 19 минут. Попробуй позже или выбери другую модель.');
 }
 async function sendChat(event){
   event?.preventDefault();if(modelBusy)return;const input=$('chatInput');let text=String(input?.value||'').trim();if(!text)return;const c=currentCharacter();if(!c){toast('Сначала выбери персонажа.');return;}
@@ -1611,7 +1663,7 @@ async function sendChat(event){
     thread.messages.push({speaker:'character',speakerName:speakingNpc?.name||c.identity.name,speakerEmoji:speakingNpc?.emoji||c.identity.emoji,speakerNpcId:speakingNpc?.id||null,text:reply,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});
     if(speakingNpc){recordNpcMemory(speakingNpc,`Пользователь сказал: ${text.slice(0,350)}`,`Ответ ${speakingNpc.name}: ${reply.slice(0,350)}`);speakingNpc.userRelationship ||= {familiarity:0,trust:0,affinity:0};speakingNpc.userRelationship.familiarity=clamp((speakingNpc.userRelationship.familiarity||0)+.5);}
     else {addMemory(c,{text:`Разговор: пользователь сказал «${text.slice(0,350)}»`,importance:2,visibility:'private'},world);addMemory(c,{text:`Ответ ${c.identity.name}: «${reply.slice(0,350)}»`,importance:2,visibility:'private'},world);rememberUserStatement(c,text);c.userRelationship.familiarity=clamp((c.userRelationship.familiarity||0)+.6);c.psyche ||= createPsyche();c.psyche.needs.connection=clamp((c.psyche.needs.connection||0)-2.5);c.state.socialNeed=clamp((c.state.socialNeed||0)-2);} 
-    world.meta.provider='Локальная модель · WASM CPU';world.meta.model=LOCAL_MODEL_ID;world.meta.lastError=null;thread.updatedAt=Date.now();await save();
+    world.meta.provider=selectedModelId===LOCAL_MODEL_ID?'Локальная Qwen · WASM CPU':'AI Horde · анонимная сеть';world.meta.model=selectedModelId==='auto'?'Автовыбор модели':selectedModelId;world.meta.lastError=null;thread.updatedAt=Date.now();await save();
     const prior=Number(c.stateAnalysis?.lastMessageCount||0);if(world.settings.ai?.autoRefreshEvery15!==false&&thread.messages.length-prior>=15){setTimeout(()=>refreshCharacterState({character:c,thread,silent:true}).then(ok=>{if(ok){render();toast('Показатели персонажа обновлены по последним 15 сообщениям.');}}),500);}
   }catch(error){const err=String(error?.message||error);thread.messages.push({speaker:'system',text:`ИИ не смог ответить: ${err}`,day:world.time.day,hour:world.time.hour,createdAt:Date.now()});world.meta.lastError=err.slice(0,400);await save();toast(`Ошибка ИИ: ${err.slice(0,150)}`);}
   finally{modelBusy=false;streamingDraft='';if(send)send.disabled=false;updateModelStatus();render();input?.focus();}
@@ -1637,7 +1689,7 @@ async function handleSlashCommand(text,thread,c){
   if(cmd==='/event'){generateRandomEvent();return true;}
   if(cmd==='/help'){thread.messages.push({speaker:'system',text:'Команды: /roll [стороны], /scene, /time, /summary. Также доступны режимы прямой речи, действия, мыслей, OOC и пропуски времени.',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});await save();render();return true;}
   if(cmd==='/scene'){activeTab='scene';render();return true;}
-  if(cmd==='/summary'){if(!thread.messages.length){toast('В этой ветке пока нет сообщений.');return true;}try{await ensureLocalModel();const r=await openRouterChat([{role:'system',content:'Суммируй сюжет ветки кратко, сохраняя факты, договорённости, отношения и нерешённые вопросы. Не добавляй ничего от себя.'},{role:'user',content:thread.messages.slice(-50).map(m=>`${m.speaker}: ${m.text}`).join('\n').slice(-12000)}],{max_tokens:600,temperature:.25});thread.summary=r;thread.messages.push({speaker:'system',text:'Сводка ветки создана и сохранена в настройках этой ветки.',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});await save();toast(thread.summary);}catch(e){toast(e.message);}return true;}
+  if(cmd==='/summary'){if(!thread.messages.length){toast('В этой ветке пока нет сообщений.');return true;}try{const r=await openRouterChat([{role:'system',content:'Суммируй сюжет ветки кратко, сохраняя факты, договорённости, отношения и нерешённые вопросы. Не добавляй ничего от себя.'},{role:'user',content:thread.messages.slice(-50).map(m=>`${m.speaker}: ${m.text}`).join('\n').slice(-12000)}],{max_tokens:600,temperature:.25});thread.summary=r;thread.messages.push({speaker:'system',text:'Сводка ветки создана и сохранена в настройках этой ветки.',day:world.time.day,hour:world.time.hour,createdAt:Date.now()});await save();toast(thread.summary);}catch(e){toast(e.message);}return true;}
   return false;
 }
 function openWorldOverview(){
@@ -1846,9 +1898,8 @@ function openCharacterBookSafe(tab){saveBookTab(false);bookTab=tab;renderCharact
 async function generateCharacterProfileWithAI(){
   const c=world.characters.find(x=>x.id===bookCharacterId);if(!c)return;
   saveBookTab(false);
-  const button=$('generateBookCharacter');if(button){button.disabled=true;button.textContent='Загружаю ИИ…';}
+  const button=$('generateBookCharacter');if(button){button.disabled=true;button.textContent='Генерирую профиль…';}
   try{
-    await ensureLocalModel();
     const existing={name:$('bookName')?.value||c.identity.name,age:$('bookAge')?.value||c.identity.age,description:$('bookDescription')?.value||c.identity.description,biography:$('bookBiography')?.value||c.identity.biography,appearance:$('bookAppearance')?.value||c.identity.appearance,speechStyle:$('bookSpeech')?.value||c.identity.speechStyle,values:$('bookValues')?.value||'',fears:$('bookFears')?.value||'',interests:$('bookInterests')?.value||'',dislikes:$('bookDislikes')?.value||'',habits:$('bookHabits')?.value||'',possessions:$('bookPossessions')?.value||''};
     const request='Создай или дополни структурированный профиль вымышленного персонажа. Заполняй только пробелы логично, не противоречь уже заданному. Не добавляй драматичные травмы без основания. Верни только JSON с ключами name, age, description, biography, appearance, speechStyle, values, fears, interests, dislikes, habits, possessions. Текстовые поля — строки, списки — массивы строк. Сохрани уже заполненные поля насколько возможно.\nТекущий профиль:\n'+JSON.stringify(existing);
     const result=await openRouterChat([{role:'system',content:'Ты редактор профилей персонажей. Пиши конкретно, внутренне согласованно и без клише. Верни валидный JSON без markdown.'},{role:'user',content:request}],{temperature:.42,max_tokens:1300});
@@ -1869,7 +1920,7 @@ async function handleSlashCommandWrapper(cmd){const ta=$('chatInput');if(ta){ta.
 function updateScale(v){document.documentElement.style.setProperty('--app-user-scale',Number(v)/100);document.body.style.zoom=String(Number(v)/100);$('scaleValue').textContent=v+'%';localStorage.setItem('my-world-scale',v);}
 function enhanceURVLayout(){
   applySavedTheme();
-  selectedModelId=LOCAL_MODEL_ID; if(world?.settings){world.settings.selectedModelId=LOCAL_MODEL_ID;}
+  selectedModelId=world?.settings?.selectedModelId||'auto';
   const body=document.body;
   // Store all popovers under one dismissal rule.
   $('newChatButton').onclick=createNewThread;$('headerNewChat').onclick=createNewThread;$('headerBookButton').onclick=()=>openCharacterBook('character');$('sidebarClose').onclick=()=>body.classList.remove('sidebar-open');$('addCharacterButton').onclick=addCharacter;
@@ -1877,13 +1928,13 @@ function enhanceURVLayout(){
   $('selectAllThreads').onclick=()=>{for(const t of world.userChats)selectedThreadIds.add(t.id);renderCharacterList();};
   $('exportSelectedThreads').onclick=()=>{const data=world.userChats.filter(t=>selectedThreadIds.has(t.id));download('my-world-selected-chats.json',JSON.stringify(data,null,2),'application/json');};
   $('deleteSelectedThreads').onclick=()=>{const ids=new Set(selectedThreadIds);if(!ids.size){toast('Сначала отметь переписки.');return;}if(!confirm(`Удалить выбранные переписки (${ids.size})?`))return;world.userChats=world.userChats.filter(t=>!ids.has(t.id));selectedThreadIds.clear();if(ids.has(activeThreadId)){const next=world.userChats[0];activeThreadId=next?.id||null;chatCharacter=next?.characterId||world.characters[0]?.id||null;if(!activeThreadId&&chatCharacter)makeThread(chatCharacter);}save().then(()=>render());};
-  $('headerMenuButton').onclick=openHeaderMenu;$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>ensureLocalModel().then(()=>toast('Локальный ИИ готов.')).catch(e=>toast(e.message));
+  $('headerMenuButton').onclick=openHeaderMenu;$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>fetchFreeModels(true).then(()=>toast('Каталог бесплатных моделей обновлён.')).catch(e=>toast(e.message));
   $('headerMenuDropdown').addEventListener('click',e=>{const b=e.target.closest('[data-menu-action]');if(!b)return;const action=b.dataset.menuAction;$('headerMenuDropdown').classList.remove('open');if(action==='branch')openBranchSettings();if(action==='map')openConversationMap();if(action==='lore')openCharacterBook('lore');if(action==='scene'){activeTab='scene';render();document.body.classList.add('inspector-open');}if(action==='events'){activeTab='events';render();document.body.classList.add('inspector-open');}if(action==='vibe')openVibeCoder();if(action==='theme')openThemeSettings();if(action==='light')openThemeSettings();if(action==='fullscreen'){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}if(action==='language')toast('Русский интерфейс выбран.');});
   $('inspectorToggle').onclick=()=>body.classList.toggle('inspector-open');
   $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){activeTab=b.dataset.tab;render();}});
-  $('view').addEventListener('click',e=>{const b=e.target.closest('[data-inspector-book]');if(b)openCharacterBook(b.dataset.inspectorBook);if(e.target.id==='emptyCharacterBook')openCharacterBook('character');if(e.target.id==='emptyLoadModel')openAISettings();if(e.target.id==='providerSettingsButton'||e.target.id==='localModelLoadButton')openAISettings();if(e.target.id==='refreshProviderModels')ensureLocalModel().then(()=>toast('Локальный ИИ готов.')).catch(x=>toast(x.message));if(e.target.id==='extraFiltersToggle'){world.settings.ai.extraFilters=e.target.checked;storeActive();}if(e.target.id==='autoRefresh15Toggle'){world.settings.ai.autoRefreshEvery15=e.target.checked;storeActive();}if(e.target.closest('[data-refresh-state]'))refreshCharacterState();if(e.target.closest('[data-add-custom-state]'))addCustomState();if(e.target.closest('[data-add-plot]'))addOpenPlot();if(e.target.closest('[data-edit-scene]'))editSceneStatus();const rel=e.target.closest('[data-edit-relation]');if(rel)editRelationship(rel.dataset.editRelation);const close=e.target.closest('[data-close-plot]');if(close){const c=currentCharacter(),p=c.openPlots.find(x=>x.id===close.dataset.closePlot);if(p){p.status='closed';p.closedAt=Date.now();p.closeReason='Закрыто вручную пользователем.';storeActive();render();}}});
+  $('view').addEventListener('click',e=>{const b=e.target.closest('[data-inspector-book]');if(b)openCharacterBook(b.dataset.inspectorBook);if(e.target.id==='emptyCharacterBook')openCharacterBook('character');if(e.target.id==='emptyLoadModel')openAISettings();if(e.target.id==='providerSettingsButton'||e.target.id==='openHordeSettings')openAISettings();if(e.target.id==='localModelLoadButton')ensureLocalModel().then(()=>toast('Локальная Qwen готова.')).catch(x=>toast(x.message));if(e.target.id==='refreshProviderModels')fetchFreeModels(true).then(()=>toast('Каталог AI Horde обновлён.')).catch(x=>toast(x.message));if(e.target.id==='extraFiltersToggle'){world.settings.ai.extraFilters=e.target.checked;storeActive();}if(e.target.id==='autoRefresh15Toggle'){world.settings.ai.autoRefreshEvery15=e.target.checked;storeActive();}if(e.target.closest('[data-refresh-state]'))refreshCharacterState();if(e.target.closest('[data-add-custom-state]'))addCustomState();if(e.target.closest('[data-add-plot]'))addOpenPlot();if(e.target.closest('[data-edit-scene]'))editSceneStatus();const rel=e.target.closest('[data-edit-relation]');if(rel)editRelationship(rel.dataset.editRelation);const close=e.target.closest('[data-close-plot]');if(close){const c=currentCharacter(),p=c.openPlots.find(x=>x.id===close.dataset.closePlot);if(p){p.status='closed';p.closedAt=Date.now();p.closeReason='Закрыто вручную пользователем.';storeActive();render();}}});
   $('worldChatList').addEventListener('click',e=>{const more=e.target.closest('[data-thread-menu]');if(more){e.preventDefault();e.stopPropagation();const id=more.dataset.threadMenu;const t=world.userChats.find(x=>x.id===id);if(!t)return;openModal('Действия с чатом',`<div class="book-form"><p class="small muted">${esc(threadLabel(t))}</p><div class="controls"><button class="primary" id="renameThreadButton">Переименовать</button><button id="deleteThreadButton">Удалить чат</button></div></div>`);$('renameThreadButton').onclick=()=>{const name=prompt('Новое название ветки:',threadLabel(t));if(name){t.title=name.trim().slice(0,100);t.updatedAt=Date.now();save();closeModal();render();}};$('deleteThreadButton').onclick=()=>{if(!confirm('Удалить эту ветку со всей её перепиской?'))return;world.userChats=world.userChats.filter(x=>x.id!==id);if(activeThreadId===id){activeThreadId=null;const next=world.userChats[0];if(next){activeThreadId=next.id;chatCharacter=next.characterId;}else makeThread(world.characters[0].id);}save();closeModal();render();};return;}const check=e.target.closest('[data-thread-check]');if(check){if(check.checked)selectedThreadIds.add(check.dataset.threadCheck);else selectedThreadIds.delete(check.dataset.threadCheck);return;}const thread=e.target.closest('[data-thread]');if(thread){if(historySelectionMode){const id=thread.dataset.thread;if(selectedThreadIds.has(id))selectedThreadIds.delete(id);else selectedThreadIds.add(id);renderCharacterList();}else selectThread(thread.dataset.thread);return;}const character=e.target.closest('[data-chat]');if(character)selectCharacter(character.dataset.chat);});
-  $('plusButton').onclick=()=>openPopover('plusMenu');$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>ensureLocalModel().then(()=>toast('Локальный ИИ готов.')).catch(e=>toast(e.message));$('refreshButton').onclick=()=>refreshCharacterState();$('openSettingsLink').onclick=openAISettings;$('summonButton').onclick=()=>{populateSummonMenu();openPopover('summonMenu');};$('depthButton').onclick=()=>openPopover('depthMenu');$('modelSelectButton').onclick=openModelMenu;
+  $('plusButton').onclick=()=>openPopover('plusMenu');$('editAppButton').onclick=openVibeCoder;$('modelKeyButton').onclick=openAISettings;$('refreshFreeModels').onclick=()=>fetchFreeModels(true).then(()=>toast('Каталог бесплатных моделей обновлён.')).catch(e=>toast(e.message));$('refreshButton').onclick=()=>refreshCharacterState();$('openSettingsLink').onclick=openAISettings;$('summonButton').onclick=()=>{populateSummonMenu();openPopover('summonMenu');};$('depthButton').onclick=()=>openPopover('depthMenu');$('modelSelectButton').onclick=openModelMenu;
   $('plusMenu').addEventListener('click',e=>{const b=e.target.closest('[data-plus]');if(!b)return;const action=b.dataset.plus;closePopovers();if(action==='search'){const q=prompt('Что найти в интернете?','');if(q)window.open('https://duckduckgo.com/?q='+encodeURIComponent(q),'_blank','noopener');}if(action==='attach')$('attachTextInput').click();if(action==='dice'){generateRandomEvent();return;}if(action==='scene'){activeTab='scene';render();document.body.classList.add('inspector-open');return;}if(action==='time'){$('chatInput').value+=($('chatInput').value?'\n':'')+worldTimestamp(world);}if(action==='ai'){openAISettings();return;}$('chatInput').dispatchEvent(new Event('input',{bubbles:true}));$('chatInput').focus();});
   $('summonMenu').addEventListener('click',e=>{const b=e.target.closest('[data-summon]');if(!b)return;const id=b.dataset.summon;if(summonedIds.includes(id))summonedIds=summonedIds.filter(x=>x!==id);else summonedIds.push(id);const c=world.characters.find(x=>x.id===id);if(c){const ta=$('chatInput');ta.value+=(ta.value?' ':'')+'@'+c.identity.name;ta.dispatchEvent(new Event('input',{bubbles:true}));}const t=currentThread();if(t)t.summonedCharacterIds=[...summonedIds];populateSummonMenu();storeActive();});
   $('depthMenu').addEventListener('click',e=>{const b=e.target.closest('[data-depth]');if(b)setReasoningDepth(b.dataset.depth);});
